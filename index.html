@@ -194,6 +194,8 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .lnhead{background:color-mix(in srgb,var(--ok) 14%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line));border-radius:10px;padding:10px 12px;font-weight:600}
 .lnrk{color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lnpips{display:inline-flex;gap:3px}.lnpips i{width:10px;height:10px;border:1.5px solid var(--muted);border-radius:2px}.lnpips i.on{background:var(--accent);border-color:var(--accent)}
+.armtot{display:flex;align-items:baseline;gap:8px;min-height:44px}.armtot b{font-size:1.5rem;font-variant-numeric:tabular-nums}.armtot small{color:var(--muted);font-size:.8rem}
+.lvbtns,.note.full{grid-column:1/-1}
 .lvbtns{display:flex;flex-wrap:wrap;gap:8px}
 .btn.ghost{background:transparent;color:var(--muted);border-style:dashed}.btn.ghost.warn{color:var(--bad);border-color:var(--bad);border-style:solid}
 #cw{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
@@ -821,7 +823,9 @@ function renderBogen(){
   return `<h2>Charakter</h2><div class="card grid2">
     ${fld("name","Name",{full:true})}${fld("volk","Volk")}${fld("beruf","Beruf")}
     ${fld("level","Level",{num:true})}${fld("gs","Geistige Stabilität")}
-    ${fld("ruestung","Rüstung")}${fld("ruestungMalus","Rüstungsmalus (Ini)",{num:true})}${fld("trefferzone","Trefferzone")}
+    ${(()=>{armorSync();const a=armorOf();return `<label class="fld full"><span class="lab">Rüstung</span><select id="f-armortype" data-k="armorType" data-prev="${esc(cur.armorType||"")}"><option value="" ${a?"":"selected"}>Eigene / keine Vorlage</option>${ARMOR.map(x=>`<option value="${esc(x[0])}" ${a&&a[0]===x[0]?"selected":""}>${esc(x[0])} · ${x[1]}${x[2]?` · Malus ${x[2]}`:""}</option>`).join("")}</select></label>
+    <label class="fld"><span class="lab">Anpassung (±)</span><input type="number" inputmode="numeric" id="f-armoradj" data-k="armorAdj" data-num value="${esc(cur.armorAdj||0)}"></label>
+    <div class="fld"><span class="lab">Rüstungswert gesamt</span><div class="armtot"><b id="armtot">${num(cur.ruestung)}</b>${a?`<small id="armsub">${a[1]} ${num(cur.armorAdj)<0?"−":"+"} ${Math.abs(num(cur.armorAdj))}${a[3]?` · ${a[3]} kg`:""}</small>`:""}</div></div>`;})()}${fld("ruestungMalus","Rüstungsmalus (Ini)",{num:true})}${fld("trefferzone","Trefferzone")}
     ${fld("lp.max","LP Max",{num:true})}${fld("mp.max","Mana Max",{num:true})}
     ${fld("details","Details",{full:true})}
     ${fld("ausbildung","Ausbildungspunkte übrig",{num:true})}
@@ -1267,6 +1271,11 @@ const sOpen=new Set();
 function curShield(){const i=cur.kampf&&cur.kampf.shield;return i!=null&&cur.shields&&cur.shields[i]?cur.shields[i]:null;}
 function shieldRang(sh){const sk=sh&&sh.skill>=0?cur.skills[sh.skill]:null;return sk?Math.max(0,num(sk.rang)):0;}
 function shieldBonus(){const sh=curShield();if(!sh)return {tz:0,r:0,rang:0};const r=shieldRang(sh);return {tz:num(sh.tz)+r,r,rang:r};}
+const ARMOR=[["Keine",0,0,0],["Leichtes Leder",5,0,8],["Mittleres Leder",6,0,10],["Schweres Leder",7,0,12],["Leichte Kette",9,-1,13],["Mittlere Kette",10,-1,15],["Schwere Kette",11,-1,17],
+  ["Leichte Halbplatte",13,-2,18],["Mittlere Halbplatte",14,-2,20],["Schwere Halbplatte",15,-2,22],["Leichte Platte",17,-3,26],["Mittlere Platte",18,-3,30],["Schwere Platte",19,-3,34],
+  ["Leichte Ritterrüstung",21,-4,36],["Mittlere Ritterrüstung",22,-4,40],["Schwere Ritterrüstung",23,-4,44]];   // Name, Rüstung, Malus, Gewicht
+const armorOf=()=>ARMOR.find(a=>a[0]===cur.armorType);
+function armorSync(){if(cur.armorType==null){cur.armorType="";cur.armorAdj=num(cur.ruestung);}const a=armorOf();cur.ruestung=String((a?a[1]:0)+num(cur.armorAdj));}
 const armorTotal=()=>num(cur.ruestung)+shieldBonus().r;
 function slotLine(slot,label){
   if(slot==="off"&&curShield()){const sh=curShield(),b=shieldBonus();
@@ -1675,12 +1684,15 @@ document.addEventListener("input",e=>{
   {const m=/^attr\.(\w+)\.w$/.exec(k);if(m&&t.value!==""){const bo=attrBonus(t.value);cur.attr[m[1]].b=bo;const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.value=bo;}}
   if(k==="lp.max"||k==="mp.max"){const p=cur[k.slice(0,2)];if(num(p.cur)>num(p.max))p.cur=num(p.max);}
   {const m=/^skills\.(\d+)\.rang$/.exec(k);if(m)cur.skills[+m[1]].x=crossesForRank(num(v));}
+  if(k==="armorType"||k==="armorAdj"){const a0=armorOf();if(k==="armorType"){cur.ruestungMalus=a0?Math.abs(a0[2]):0;if(!t.dataset.prev){cur.armorAdj=0;const ai=$("#f-armoradj");if(ai)ai.value=0;}t.dataset.prev=cur.armorType;}armorSync();
+    const tt=$("#armtot");if(tt)tt.textContent=num(cur.ruestung);{const sb=$("#armsub"),a1=armorOf();if(sb&&a1)sb.textContent=`${a1[1]} ${num(cur.armorAdj)<0?"−":"+"} ${Math.abs(num(cur.armorAdj))}${a1[3]?` · ${a1[3]} kg`:""}`;}const mi=document.getElementById("f-ruestungMalus");if(mi)mi.value=cur.ruestungMalus;}
   autoCalc(k);
   refreshComputed();queueSave(cur);
 });
 document.addEventListener("change",e=>{
   if(e.target.tagName==="SELECT"&&e.target.dataset&&e.target.dataset.k&&/^(weapons|shields)\./.test(e.target.dataset.k))renderAll();
   if(e.target.classList&&e.target.classList.contains("slsel"))renderAll();
+  if(e.target.id==="f-armortype")renderAll();
 });
 let hit={pend:0,base:0,timer:0};
 const HIT_WAIT=1800;
