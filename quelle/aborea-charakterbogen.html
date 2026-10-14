@@ -168,7 +168,8 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .chip{border:1px solid var(--line);background:var(--bg);border-radius:18px;min-height:36px;padding:0 14px;cursor:pointer;font-weight:500}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
 .dots{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
-.w10s .lab{margin-bottom:6px}
+.w10s .sh{margin-bottom:8px}
+.w10s .wsl{border:0;padding:0;background:none}
 .wsl{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;background:var(--card);touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none;outline:none}
 .wsl:focus-visible{box-shadow:0 0 0 2px var(--accent)}
 .wsl-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
@@ -1457,14 +1458,14 @@ function renderKampf(){
   else{
     const [k,r]=splitOf(w),n=wSkill(w),hg=hitGroups(w),dg=dmgGroups(w),both=cur.kampf.main!=null&&cur.kampf.off!=null;
     if(both)h+=`<div class="chips"><button class="chip${atk.slot==="main"?" on":""}" data-act="slot" data-v="main">Mit Haupthand</button><button class="chip${atk.slot==="off"?" on":""}" data-act="slot" data-v="off">Mit Nebenhand</button></div>`;
-    h+=n?`<div class="w10s"><div class="lab">Deine ${n} W10 aus der Waffenfertigkeit aufteilen</div>
+    h+=n?`<div class="stepbox w10s"><div class="sh"><span class="num">1</span><b>W10 aufteilen</b><span class="hint">${n} W10 aus der Waffenfertigkeit</span></div>
       <div class="wsl" data-wsl="${n}" role="slider" tabindex="0" aria-label="W10 zwischen Treffen und Schaden aufteilen" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${k}" aria-valuetext="Treffen ${k}, Schaden ${r}">
         <div class="wsl-top"><span class="t">Treffen <b class="wk">${k}</b></span><span class="s"><b class="wr">${r}</b> Schaden</span></div>
         <div class="wsl-track" style="grid-template-columns:repeat(${n},1fr);--p:${k/n*100}%">${Array.from({length:n},(_,i)=>`<i class="${i<k?"t":"s"}"></i>`).join("")}<span class="wsl-knob" style="left:${k/n*100}%"></span></div>
       </div></div>`
       :`<p class="hint">Diese Waffe hat noch keinen Rang in ihrer Waffenfertigkeit, also gibt es keine W10 zum Aufteilen.</p>`;
     h+=`<div class="stepbox${atk.phase==="ready"||atk.phase==="rolling"?" act":""}">
-      <div class="sh"><span class="num">1</span><b>Treffen</b>${isOff()?'<span class="hint">Nebenhand: ohne GE-Würfel</span>':""}</div>
+      <div class="sh"><span class="num">${n?2:1}</span><b>Treffen</b>${isOff()?'<span class="hint">Nebenhand: ohne GE-Würfel</span>':""}</div>
       ${poolChips(hg)}
       ${atk.hit==null?`<button class="btn pri big" data-act="attack">Treffen würfeln: ${ord(num(cur.kampf.att)+1)} Angriff, ${atkCost(isOff()?1:2)+(atk.special?spCost():0)} AP</button>`:
       `<div class="result"><div class="rl">Treffen: <b class="big">${atk.hit}</b></div><div class="hint">Kopf ab 40, Körper ab 15, jeweils plus erweiterte Trefferzone des Ziels.</div>
@@ -1472,7 +1473,7 @@ function renderKampf(){
         ${atk.zone==="verfehlt"?`<div class="rz">${ZONE.verfehlt}</div>`:""}</div>`}
     </div>
     <div class="stepbox${atk.phase==="hit"||atk.phase==="done"?" act":" off"}">
-      <div class="sh"><span class="num">2</span><b>Schaden</b>${atk.zone==="kopf"?'<span class="hint">Kopftreffer ×2</span>':""}${isOff()?'<span class="hint">Nebenhand: ohne ST-Würfel</span>':""}</div>
+      <div class="sh"><span class="num">${n?3:2}</span><b>Schaden</b>${atk.zone==="kopf"?'<span class="hint">Kopftreffer ×2</span>':""}${isOff()?'<span class="hint">Nebenhand: ohne ST-Würfel</span>':""}</div>
       ${poolChips(dg)}
       ${atk.dmg==null?`<button class="btn big${atk.phase==="hit"?" go":""}" data-act="damage" ${atk.phase==="hit"?"":"disabled"}>${atk.phase==="hit"?"Schaden würfeln":"Erst treffen"}</button>`:
       (()=>{const fin=atk.dmg*atk.mult*(atk.krit?2:1),spm=(spById(atk.spUsed)||{}).fx||{};return `<div class="result kopf"><div class="rl">Schaden: ${atk.dmg}${atk.zone==="kopf"?" ×2 Kopf":""}${spm.mult?" ×"+spm.mult+" "+esc(spById(atk.spUsed).n):""}${atk.krit?" ×2 Krit":""} = <b class="big">${fin}</b></div>
