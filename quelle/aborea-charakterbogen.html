@@ -1120,7 +1120,10 @@ function kampfDo(b){
         atk.kritRoll=total;atk.kritVal=kv;atk.krit=total<=kv;
         return {tag:atk.krit?`Krit! ${total} ≤ ${kv}: doppelter Schaden`:`Kein Krit: ${total} > ${kv}`};
       });return;}
-    case "reset":atk.phase="ready";atk.hit=null;atk.zone="";atk.dmg=null;atk.krit=false;atk.kritRoll=null;atk.spUsed=null;return renderAll();
+    case "reset":{atk.phase="ready";atk.hit=null;atk.zone="";atk.dmg=null;atk.krit=false;atk.kritRoll=null;atk.spUsed=null;renderAll();
+      const ch=$("#kpchips"),hd=ch&&ch.previousElementSibling,top=document.querySelector("header");
+      if(hd){const y=hd.getBoundingClientRect().top+window.scrollY-(top?top.offsetHeight:0)-8;window.scrollTo({top:Math.max(0,y),behavior:calmMotion()?"auto":"smooth"});}
+      return;}
     case "defend":{
       if(!w){showMsg("Leg zuerst unten eine Waffe an.");return;}
       if(num(cur.kampf.defRes)<1){showMsg("Keine Verteidigung bereit. Die musst du in deiner Runde bereithalten.");return;}
