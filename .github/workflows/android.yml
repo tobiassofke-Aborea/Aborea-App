@@ -53,7 +53,7 @@ jobs:
           cd build
           mkdir -p assets
           cp ../android-assets/icon-*.png assets/
-          npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#6b4c25' --iconBackgroundColorDark '#6b4c25' --splashBackgroundColor '#e9e5dc' --splashBackgroundColorDark '#1c1814'
+          npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#e1ceb4' --iconBackgroundColorDark '#e1ceb4' --splashBackgroundColor '#e9e5dc' --splashBackgroundColorDark '#1c1814'
 
       - name: Version und Rechte setzen
         run: |

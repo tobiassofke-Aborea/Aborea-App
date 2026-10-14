@@ -37,7 +37,7 @@ tail=f'''
 '''
 open(A+'/index.html','w').write(head+body+tail)
 man={"name":"Aborea Charakterbogen","short_name":"Aborea","id":"./","start_url":"./","scope":"./","display":"standalone","orientation":"portrait",
- "background_color":"#e9e5dc","theme_color":"#6b4c25","lang":"de","description":"Charakterbogen, Kampf, Würfel, Geldsack und Spruchbuch für Aborea",
+ "background_color":"#e9e5dc","theme_color":"#e1ceb4","lang":"de","description":"Charakterbogen, Kampf, Würfel, Geldsack und Spruchbuch für Aborea",
  "icons":[{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icons/icon-512.png","sizes":"512x512","type":"image/png"},
           {"src":"icons/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
 open(A+'/manifest.webmanifest','w').write(json.dumps(man,ensure_ascii=False,indent=1))
