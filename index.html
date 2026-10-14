@@ -80,8 +80,11 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .prow .minus{color:var(--lp);font-weight:700} .mp .prow .minus{color:var(--mp)}
 .qrow{display:flex;gap:6px;flex-wrap:wrap}
 .qrow .btn{flex:1;min-width:52px;font-variant-numeric:tabular-nums}
-.maxrow{display:flex;align-items:center;gap:8px}
-.maxrow input{width:80px}
+.maxrow{display:flex;align-items:center;gap:6px}
+.maxrow input{width:56px}
+.ptbig{width:46px;height:40px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:1.05rem;cursor:pointer;display:grid;place-items:center;padding:0}
+.cright{margin-left:auto;display:flex;gap:8px;align-items:center}
+.cright .armor{margin-left:0}
 /* dice */
 .die{width:44px;height:44px;flex:none;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);display:grid;place-items:center;cursor:pointer}
 .die svg{width:24px;height:24px}
@@ -424,7 +427,8 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .spuse small{font-size:.75rem;color:var(--muted);line-height:1.2}
 .spc{display:grid;gap:6px;padding:12px;border:1px solid var(--line);border-radius:10px}
 .spc.sel{border-color:var(--accent);border-width:2px}
-.spc.locked{opacity:.6}
+.spc.over>:not(button):not(.row-actions){opacity:.55}
+.spc.over{border-style:dashed}
 .sptag{font-size:.72rem;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:1px 6px;white-space:nowrap}
 .spauto{font-size:.85rem;font-weight:700;color:var(--ok)}
 .spbanner{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid var(--accent)}
@@ -652,8 +656,8 @@ function pool(key,label){
   const p=cur[key],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
   const minus=key==="lp"?"Schaden":"Mana",plus=key==="lp"?"Heilung":"Mana";
   return `<div class="card pool ${key}" data-poolcard="${key}"><div class="pmain">
-    <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}<i>▴</i></button>
-      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}"></span></div>
+    <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button>
+      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}"><button class="ptbig" data-ptog="${key}" aria-label="${label} einklappen">▴</button></span></div>
     <div class="valrow"><div class="val" id="${key}-val">${num(p.cur)}<small> / ${num(p.max)}</small></div><span class="delta" id="${key}-delta"></span>${key==="lp"?armorBtnHtml():""}</div>
     ${key==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}
     <div class="pbar"><i id="${key}-bar" style="width:${pct}%"></i></div>
@@ -1151,7 +1155,6 @@ function kampfDo(b){
     case "spsel":atk.special=b.dataset.sp;atk.spMeter="";atk.spLast="";setKpage("angriff");return;
     case "spclear":atk.special=null;return renderAll();
     case "spgo":setKpage("angriff");return;
-    case "spall":spShowAll=!spShowAll;return renderAll();
     case "spreset":cur.kampf.spUses=0;queueSave(cur);return renderAll();
     case "spreact":{const sp=spById(b.dataset.sp);if(!sp)return;const c=spCost();if(!spendAp(c))return;cur.kampf.spUses=spUses()+1;queueSave(cur);renderAll();showMsg(`${sp.n} eingesetzt: −${c} AP. ${sp.e.join(" · ")}`);return;}
     case "mattr":mag.attr=b.dataset.v;return renderAll();
@@ -1321,7 +1324,7 @@ const SPECIALS=[
 ];
 SPECIALS.forEach((s,i)=>s.id="sp"+i);
 const SP_TYPES=["Nahkampf","Fernkampf","Heimlich"];
-let spArtSel=null,spShowAll=false;try{const v=localStorage.getItem("aborea-spart");if(SP_TYPES.includes(v))spArtSel=v;}catch(e){}
+let spArtSel=null;try{const v=localStorage.getItem("aborea-spart");if(SP_TYPES.includes(v))spArtSel=v;}catch(e){}
 const curSpArt=w=>spArtSel||wArt(w);
 function setSpArt(a){spArtSel=a;try{a?localStorage.setItem("aborea-spart",a):localStorage.removeItem("aborea-spart")}catch(e){}}
 function guessArt(name){const n=String(name||"").toLowerCase();
@@ -1351,29 +1354,28 @@ function spFxText(sp){const f=sp.fx||{},t=[];
   if(f.mult)t.push(`Schaden ×${f.mult}`);
   if(f.autoHit)t.push("trifft automatisch");
   return t.join(" · ");}
-function spCardHtml(sp,unlocked){
+function spCardHtml(sp,usable,over){
   const sel=atk.special===sp.id;
-  return `<div class="spc${unlocked?"":" locked"}${sel?" sel":""}">
+  return `<div class="spc${over?" over":""}${sel?" sel":""}">
     <div class="zhead"><div class="zname"><span class="zlvl">Lvl ${sp.lv}</span>${esc(sp.n)}</div>${sp.z?'<span class="sptag">Zustand</span>':""}${sp.r?'<span class="sptag">Reaktion</span>':""}</div>
     <div class="zeff"><i>${esc(sp.d)}</i></div>
     <div class="zeff">${sp.e.map(x=>"<b>Effekt:</b> "+esc(x)).join("<br>")}${sp.a?`<br><span class="hint">${esc(sp.a)}</span>`:""}</div>
-    ${!unlocked?`<div class="hint">Ab Level ${sp.lv}</div>`:""}
-    ${unlocked&&sp.fx?`<div class="spauto">Wird verrechnet: ${esc(spFxText(sp))}</div>`:""}
-    ${unlocked?(sp.r?`<button class="btn pri" data-act="spreact" data-sp="${sp.id}">Einsetzen: +${spCost()} AP</button>`
+    ${over?`<div class="hint">Regulär ab Level ${sp.lv}, trotzdem einsetzbar</div>`:""}
+    ${usable&&sp.fx?`<div class="spauto">Wird verrechnet: ${esc(spFxText(sp))}</div>`:""}
+    ${usable?(sp.r?`<button class="btn${over?"":" pri"}" data-act="spreact" data-sp="${sp.id}">Einsetzen: +${spCost()} AP</button>`
       :sel?`<div class="row-actions"><button class="btn go" data-act="spgo">Zum Angriff</button><button class="btn" data-act="spclear">Abwählen</button></div>`
-      :`<button class="btn pri" data-act="spsel" data-sp="${sp.id}">Für nächsten Angriff: +${spCost()} AP</button>`):""}
+      :`<button class="btn${over?"":" pri"}" data-act="spsel" data-sp="${sp.id}">Für nächsten Angriff: +${spCost()} AP</button>`):""}
   </div>`;
 }
 function specialInner(w){
-  const art=curSpArt(w),{lv,src}=spBase(w),mine=SPECIALS.filter(s=>s.t===art),open=mine.filter(s=>s.lv<=lv),locked=mine.filter(s=>s.lv>lv);
-  return `<div class="spinfo"><div><div class="lab">${w?esc(w.name||"Waffe")+" · ":""}${art}${w&&spArtSel&&spArtSel!==wArt(w)?" (manuell)":""}</div><div class="hint">Freigeschaltet bis Level ${lv} (${esc(src)})</div>
+  const art=curSpArt(w),{lv,src}=spBase(w),mine=SPECIALS.filter(s=>s.t===art),open=mine.filter(s=>s.lv<=lv),over=mine.filter(s=>s.lv>lv);
+  return `<div class="spinfo"><div><div class="lab">${w?esc(w.name||"Waffe")+" · ":""}${art}${w&&spArtSel&&spArtSel!==wArt(w)?" (manuell)":""}</div><div class="hint">Regulär bis Level ${lv} (${esc(src)}), höhere sind ausgegraut, aber nutzbar</div>
       ${!w?`<div class="hint">Keine Waffe angelegt: zum Einsetzen unten bei „Waffen“ eine anlegen. Klasse über „Spezial ▾“ wählen.</div>`:""}
       ${w&&spArtSel&&spArtSel!==wArt(w)?`<button class="linkbtn" data-spart="">Zurück zu ${wArt(w)} (Waffe)</button>`:""}</div>
       <div class="spuse"><b>${spUses()}</b><small>Einsätze in diesem Kampf<br>nächster +${spCost()} AP</small></div></div>
     <div class="row-actions"><button class="btn small" data-act="spreset" ${spUses()?"":"disabled"}>Neuer Kampf: Einsätze zurücksetzen</button></div>
-    ${open.length?open.map(s=>spCardHtml(s,!!w)).join(""):(w?`<p class="hint">Noch keine ${art}-Fähigkeit freigeschaltet. Ab ${esc(src)} Rang 1 geht es los.</p>`:"")}
-    ${locked.length?((spShowAll||!w)?`<div class="lab" style="margin-top:4px">Noch nicht freigeschaltet</div>${locked.map(s=>spCardHtml(s,false)).join("")}${w?`<button class="linkbtn" data-act="spall">− Weniger anzeigen</button>`:""}`
-      :`<button class="linkbtn" data-act="spall">+ ${locked.length} weitere anzeigen (noch gesperrt)</button>`):""}`;
+    ${open.map(s=>spCardHtml(s,!!w,false)).join("")}
+    ${over.length?`<div class="lab" style="margin-top:4px">Über deinem Level</div>${over.map(s=>spCardHtml(s,!!w,true)).join("")}`:""}`;
 }
 
 function defendInner(w){return `    <div class="stepbox${num(cur.kampf.defRes)?"":" act"}">
@@ -1443,7 +1445,7 @@ let poolsCompact={lp:false,mp:false};try{const v=localStorage.getItem("aborea-co
 function hasMana(){return num(cur.mp.max)>0;}
 function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b></button>`;}
 function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
-  return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}<i>▾</i></button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small></span><span class="delta" id="${k}-delta"></span>${k==="lp"?armorBtnHtml():""}</div>
+  return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}</button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small></span><span class="delta" id="${k}-delta"></span><span class="cright">${k==="lp"?armorBtnHtml():""}<button class="ptbig" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">▾</button></span></div>
     <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
 function poolsHtml(){
   const one=k=>poolsCompact[k]
@@ -1676,7 +1678,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.wtog!=null){const i=+b.dataset.wtog;wOpen.has(i)?wOpen.delete(i):wOpen.add(i);renderAll();return;}
   if(b.dataset.kpage){setKpage(b.dataset.kpage);return;}
   if(b.dataset.spmenu){const now=performance.now();if(now-lastSpTap<320){lastSpTap=0;closeOvMenu();setKpage("spezial");return;}lastSpTap=now;toggleSpMenu(b);return;}
-  if(b.dataset.spart!=null){closeOvMenu();setSpArt(b.dataset.spart||null);spShowAll=false;if(kpage!=="spezial")setKpage("spezial");else renderAll();return;}
+  if(b.dataset.spart!=null){closeOvMenu();setSpArt(b.dataset.spart||null);if(kpage!=="spezial")setKpage("spezial");else renderAll();return;}
   if(b.dataset.zlist){const ids=zKnownIds(),{ch}=sbParse();const d=ids.indexOf(b.dataset.zlist)-ids.indexOf(ch.activeList||ids[0]);zSetList(b.dataset.zlist,d>0?1:d<0?-1:0);return;}
   if(b.dataset.sbopen!=null){const sk=cur.skills[+b.dataset.sbopen];const id=sk&&sbListIds()[sk.name];
     if(id){const {ch}=sbParse();ch.pointsListSelect=id;ch.activeList=id;ch.__openAdmin=1;zSaveCh(ch);}
@@ -2188,6 +2190,7 @@ document.addEventListener("click",e=>{
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&tb&&!tb.el.hidden)tClose();});
 
 /* ---------- Geldsack ---------- */
+const COIN_PL={gf:"Goldfalken",tt:"Trionthaler",kl:"Kupferlinge",mu:"Muena"};
 const COINS=[
   {k:"gf",name:"Goldfalke",short:"GF",ch:"G",r:35,col:["#fbe08a","#e0ac2e","#8a5d0c"],pitch:1},
   {k:"tt",name:"Trionthaler",short:"TT",ch:"T",r:33,col:["#f4f5f7","#b9bec7","#5d636d"],pitch:1.35},
@@ -2217,7 +2220,7 @@ function mBuild(){
     <details class="mpanel"><summary>Betrag auf einmal</summary>
       <div class="mamt">${COINS.map(c=>`<label class="fld"><span class="lab">${c.name}</span><input type="number" inputmode="numeric" min="0" id="ma-${c.k}" placeholder="0"></label>`).join("")}</div>
       <div class="row-actions"><button class="btn small pri" id="mpayin">Einzahlen</button><button class="btn small" id="mpayout">Bezahlen</button><button class="btn small" id="mtidy">Zusammenlegen</button></div>
-      <p class="note">Bezahlen wechselt automatisch, wenn Kleingeld fehlt. Zusammenlegen tauscht Kleingeld in größere Münzen.</p></details>
+      <p class="note">Bezahlen nimmt genau die eingetragenen Münzen, gewechselt wird nicht automatisch. Zusammenlegen tauscht Kleingeld in größere Münzen.</p></details>
     <details class="mpanel"><summary>Wechselkurse</summary>
       <div class="mrates">1 Goldfalke = <input type="number" inputmode="numeric" id="mr-0"> Trionthaler<br>1 Trionthaler = <input type="number" inputmode="numeric" id="mr-1"> Kupferlinge<br>1 Kupferling = <input type="number" inputmode="numeric" id="mr-2"> Muena</div>
       <p class="note">Bitte mit dem Regelbuch abgleichen. Voreingestellt ist jeweils 10.</p></details>`;
@@ -2252,8 +2255,8 @@ function mUI(){
   ms.el.querySelectorAll("[data-mmode]").forEach(b=>b.setAttribute("aria-selected",b.dataset.mmode===mMode));
   $("#mcounts").innerHTML=COINS.map(c=>`<span><i style="background:${c.col[1]}"></i><b>${fmtN(p[c.k])}</b> ${c.name}</span>`).join("");
   $("#mtotal").textContent="";
-  $("#mhint").innerHTML=mMode==="in"?"Münze unten antippen: eine rein.<br>Gedrückt halten: immer schneller.":"Münze unten antippen: eine raus.<br>Fehlt Kleingeld, wird automatisch gewechselt.";
-  $("#mhint").hidden=ms.shown>2;
+  if(!mToastT){$("#mhint").innerHTML=mMode==="in"?"Münze unten antippen: eine rein.<br>Gedrückt halten: immer schneller.":"Münze unten antippen: eine raus.<br>Gedrückt halten: immer schneller.";
+    $("#mhint").hidden=ms.shown>2;}
   $("#mundo").disabled=!mUndo.length;
   p.rates.forEach((r,i)=>{const e=$("#mr-"+i);if(e&&document.activeElement!==e)e.value=r;});
 }
@@ -2276,26 +2279,6 @@ function thud(vol){
   clack((vol||.3)*.5,.6);
 }
 
-/* spending with change: returns false if not enough */
-function planPay(amounts){
-  const p=JSON.parse(JSON.stringify(purse())),ev=[];
-  const need=COINS.reduce((a,c,i)=>a+num(amounts[i])*coinVal(i),0);
-  if(need>purseValue())return null;
-  // first pay exact coins where possible, breaking larger coins when a type runs out
-  let rem=need;
-  const take=(i,n)=>{p[COINS[i].k]-=n;for(let k=0;k<n;k++)ev.push({t:"out",i});rem-=n*coinVal(i);};
-  for(let i=0;i<4;i++){const want=num(amounts[i]),n=Math.min(want,p[COINS[i].k]);if(n>0)take(i,n);}
-  let guard=0;
-  while(rem>0&&guard++<500){
-    for(let i=0;i<4;i++){const v=coinVal(i),n=Math.min(p[COINS[i].k],Math.floor(rem/v));if(n>0)take(i,n);}
-    if(rem<=0)break;
-    let j=-1;for(let i=3;i>=0;i--)if(p[COINS[i].k]>0&&coinVal(i)>rem){j=i;break;}
-    if(j<0)for(let i=3;i>=0;i--)if(p[COINS[i].k]>0){j=i;break;}
-    if(j<0||j===3)return null;
-    p[COINS[j].k]--;p[COINS[j+1].k]+=Math.max(1,num(p.rates[j]));ev.push({t:"break",i:j});
-  }
-  return {ev,p};
-}
 /* Münzen: antippen = 1, gedrückt halten = immer schneller. Keine Flug-Animation, damit nichts hängt. */
 let mSndT=0,mBuzT=0,mUIq=0;
 function mFx(i,n,out){
@@ -2311,18 +2294,15 @@ function mFx(i,n,out){
 function mAct(i,n){
   const p=purse(),k=COINS[i].k;
   if(mMode==="in"){p[k]+=n;mFx(i,n,false);return true;}
-  if(p[k]>=n){p[k]-=n;mFx(i,n,true);return true;}
-  const before=JSON.stringify(p),plan=planPay([0,0,0,0].map((v,j)=>j===i?n:0));
-  if(!plan){mToast(`Nicht genug Geld für ${fmtN(n)} ${COINS[i].name}.`);thud(.2);return false;}
-  const broke=plan.ev.filter(e=>e.t==="break");
-  Object.assign(p,plan.p);mFx(i,n,true);
-  if(broke.length){const b=broke[0].i;mToast(`${broke.length}× ${COINS[b].name} gewechselt`);for(let q=0;q<Math.min(3,broke.length);q++)setTimeout(()=>clink(COINS[b].pitch*1.2,.2),60+q*70);}
-  void before;return true;
+  const take=Math.min(n,p[k]);
+  if(take>0){p[k]-=take;mFx(i,take,true);}
+  if(take<n){mToast(`Keine ${COIN_PL[k]} mehr im Sack.`);thud(.2);return false;}
+  return true;
 }
 function payCoins(amounts){
-  const plan=planPay(amounts);
-  if(!plan){mToast("Dafür reicht das Geld im Sack nicht.");thud(.2);return false;}
-  mSnap();Object.assign(purse(),plan.p);ms.open=1;ms.squish=.6;
+  const p=purse(),miss=COINS.filter((c,i)=>num(amounts[i])>p[c.k]);
+  if(miss.length){mToast(`Nicht genug ${miss.map(c=>COIN_PL[c.k]).join(" und ")} im Sack.`);thud(.2);return false;}
+  mSnap();COINS.forEach((c,i)=>{p[c.k]-=num(amounts[i]);});ms.open=1;ms.squish=.6;
   for(let q=0;q<4;q++)setTimeout(()=>clink(1+Math.random()*.5,.2),q*70);buzz(15);mSave();mLoop();return true;
 }
 function tidy(){
@@ -2332,7 +2312,7 @@ function tidy(){
   ms.squish=1;thud(.3);for(let k=0;k<5;k++)setTimeout(()=>clink(1+Math.random()*.6,.18),k*60);mSave();mLoop();
 }
 let mToastT;
-function mToast(t){const h=$("#mhint");h.hidden=false;h.textContent=t;clearTimeout(mToastT);mToastT=setTimeout(()=>{ms.shown=99;mUI();},1800);}
+function mToast(t){const h=$("#mhint");h.hidden=false;h.textContent=t;clearTimeout(mToastT);mToastT=setTimeout(()=>{mToastT=0;ms.shown=99;mUI();},1800);}
 
 /* pointer */
 function mHit(x,y){const g=geo();for(let i=0;i<4;i++){const b=g.bank[i];if(Math.abs(b.x-x)<g.W/8&&Math.abs(b.y-y)<COINS[i].r+26)return i;}return -1;}
