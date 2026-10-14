@@ -92,6 +92,16 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .skill .det > div{display:grid;gap:3px}
 .skill .det input[type=number]{width:62px}
 .skill .det .kost{width:84px}
+.sk2{grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 8px;padding:6px 0}
+.sk2 .skmain{display:grid;gap:1px;min-width:0;background:none;border:0;padding:6px 0;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
+.sknm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sknm.ph{color:var(--muted);font-weight:500}
+.sknm .sltag{margin-left:6px}
+.skmeta{font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sk2 .die{width:40px;height:40px}
+.sk2 .slbook{width:34px;height:34px}
+.sk2.zero .tot{color:var(--muted);font-weight:500}
+.sk2.open{background:color-mix(in srgb,var(--accent) 5%,transparent);margin:0 -14px;padding:6px 14px;border-radius:0}
+.sk2 .det{padding:4px 0 6px}.sk2 .detn{flex:1 0 100%}.sk2 .detn input,.sk2 .detn select{width:100%}
 .skill .tot{font-weight:700;font-size:1.3rem;font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
 .comb{display:grid;gap:8px}
 .comb .head{display:flex;align-items:center;gap:10px}
@@ -811,24 +821,32 @@ function skillNameCell(s,i){
   }
   return `<input id="s-${i}-n" data-k="skills.${i}.name" value="${esc(s.name)}" placeholder="${esc(s.placeholder||"Eigene Fertigkeit")}">`;
 }
+let skOpen=-1;
+function skillRow(s,i){
+  const spell=s.kind==="spell",open=skOpen===i,tot=skillTotal(s),c=skillCost(s);
+  const nm=s.name||"",shown=spell?(nm||"Spruchliste wählen"):(nm||s.placeholder||"Eigene Fertigkeit");
+  const meta=[`Rang ${num(s.rang)}`,num(s.boni)?`Boni ${num(s.boni)>0?"+":""}${num(s.boni)}`:"",c?`Kosten ${esc(c)}`:""].filter(Boolean).join(" · ");
+  return `<div class="skill sk2${open?" open":""}${tot?"":" zero"}">
+    <button class="skmain" data-skopen="${i}" aria-expanded="${open}"><span class="sknm${nm||s.fixed?"":" ph"}">${esc(shown)}${spell&&!nm?'<span class="sltag">Spruchliste</span>':""}</span><span class="skmeta">${meta}</span></button>
+    ${spell&&nm?`<button class="slbook" data-sbopen="${i}" aria-label="${esc(nm)} in der Zauberbibliothek öffnen">${ICON_BOOK}</button>`:""}
+    <span class="tot" id="s-${i}-t">${tot}</span>
+    <button class="die" data-roll="skill:${i}" aria-label="${esc(shown)} würfeln">${DIE}</button>
+    ${open?`<div class="det">
+      ${s.fixed?"":`<div class="detn">${skillNameCell(s,i)}</div>`}
+      <div><span class="lab">Rang</span><div class="step"><button data-step="skills.${i}.rang" data-d="-1" aria-label="Rang senken">−</button><input type="number" inputmode="numeric" id="s-${i}-r" data-k="skills.${i}.rang" data-num value="${esc(s.rang)}"><button data-step="skills.${i}.rang" data-d="1" aria-label="Rang erhöhen">+</button></div></div>
+      <div><span class="lab">Boni</span><input type="number" inputmode="numeric" id="s-${i}-b" data-k="skills.${i}.boni" data-num value="${esc(s.boni)}"></div>
+    </div>`:""}</div>`;
+}
 function renderSkills(){
   const n=cur.skills.length;
   return `<h2>Fertigkeiten</h2><div class="card${skillEdit?" sedit":""}">${skillEdit?`<p class="hint" style="margin:0 0 6px">Reihenfolge ändern mit ↑ ↓, eigene Zeilen entfernen mit ✕. Die Kosten kommen automatisch aus dem Beruf. Hier kannst du sie für einzelne Fertigkeiten anders eintragen, leer heißt automatisch.</p>`:""}${cur.skills.map((s,i)=>skillEdit?`<div class="skill srow">
     <div class="nm">${esc(s.name||(s.kind==="spell"?"Spruchliste (leer)":s.placeholder||"Eigene Fertigkeit"))}${s.kind==="spell"?' <span class="sltag">Spruchliste</span>':""}</div>
     <label class="kedit"><span class="lab">Kosten</span><input class="kost" id="s-${i}-k" data-k="skills.${i}.kosten" value="${esc(s.kosten)}" placeholder="${esc(skillCostAuto(s)||"–")}" aria-label="Kosten ${esc(s.name||"")}"></label>
     <div class="mv"><button class="btn small" data-mv="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="btn small" data-mv="${i}" data-d="1" ${i===n-1?"disabled":""} aria-label="Nach unten">↓</button>
-    ${s.fixed?"":`<button class="btn small danger" data-sdel="${i}" aria-label="Entfernen">✕</button>`}</div></div>`:`<div class="skill${s.kind==="spell"?" isspell":""}">
-    <div class="nm">${skillNameCell(s,i)}</div>
-    <span class="tot" id="s-${i}-t">${skillTotal(s)}</span>
-    <button class="die" data-roll="skill:${i}" aria-label="${esc(s.name||"Fertigkeit")} würfeln">${DIE}</button>
-    <div class="det">
-      <div><span class="lab">Rang</span><div class="step"><button data-step="skills.${i}.rang" data-d="-1" aria-label="Rang senken">−</button><input type="number" inputmode="numeric" id="s-${i}-r" data-k="skills.${i}.rang" data-num value="${esc(s.rang)}"><button data-step="skills.${i}.rang" data-d="1" aria-label="Rang erhöhen">+</button></div></div>
-      <div><span class="lab">Boni</span><input type="number" inputmode="numeric" id="s-${i}-b" data-k="skills.${i}.boni" data-num value="${esc(s.boni)}"></div>
-      ${skillCost(s)?`<div class="kostro"><span class="lab">Kosten</span><b>${esc(skillCost(s))}</b></div>`:""}
-    </div></div>`).join("")}
+    ${s.fixed?"":`<button class="btn small danger" data-sdel="${i}" aria-label="Entfernen">✕</button>`}</div></div>`:skillRow(s,i)).join("")}
     <div class="sfoot">${skillEdit?`<button class="btn small pri" id="skilldone">Fertig</button>`:`<button class="btn small" id="addskill">+ Fertigkeit hinzufügen</button><button class="btn small" id="addspell">+ Spruchliste hinzufügen</button>`}
       <span class="ovspace"></span><button class="gear${skillEdit?" on":""}" id="skillgear" aria-label="Reihenfolge ändern" aria-pressed="${skillEdit}">${ICON_GEAR}</button></div>
-  </div>${skillEdit?"":`<p class="note">Wert = Rang + Boni. Würfeln: W10 + Wert.</p>`}`;
+  </div>${skillEdit?"":`<p class="note">Antippen zum Bearbeiten. Wert = Rang + Boni, gewürfelt wird W10 + Wert.</p>`}`;
 }
 function moveSkill(i,j){
   const sk=cur.skills;if(j<0||j>=sk.length)return;
@@ -1787,6 +1805,7 @@ document.addEventListener("change",e=>{
   if(e.target.tagName==="SELECT"&&e.target.dataset&&e.target.dataset.k&&/^(weapons|shields)\./.test(e.target.dataset.k))renderAll();
   if(e.target.classList&&e.target.classList.contains("slsel"))renderAll();
   if(e.target.id==="f-armortype")renderAll();
+  else if(tab==="skills"&&e.target.closest&&e.target.closest(".sk2 .det")&&e.target.tagName==="INPUT"){const st=window.scrollY;renderAll();window.scrollTo(0,st);}
   else if(tab==="bogen"&&e.target.closest&&e.target.closest(".accbody")&&e.target.tagName==="INPUT"){const st=window.scrollY;renderAll();window.scrollTo(0,st);}
   if(e.target.dataset&&e.target.dataset.choice&&cur){const k=e.target.dataset.choice,v=e.target.value,old=String(cur[k]||"");
     if(v==="__own"){ownOpen[k]=true;if(k==="volk"&&VOLK[old])shiftVolk(old,"");cur[k]=VOLK[old]||BERUF[old]?"":old;}
@@ -1858,6 +1877,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.spmenu){const now=performance.now();if(now-lastSpTap<320){lastSpTap=0;closeOvMenu();setKpage("spezial");return;}lastSpTap=now;toggleSpMenu(b);return;}
   if(b.dataset.spart!=null){closeOvMenu();setSpArt(b.dataset.spart||null);if(kpage!=="spezial")setKpage("spezial");else renderAll();return;}
   if(b.dataset.zlist){const ids=zKnownIds(),{ch}=sbParse();const d=ids.indexOf(b.dataset.zlist)-ids.indexOf(ch.activeList||ids[0]);zSetList(b.dataset.zlist,d>0?1:d<0?-1:0);return;}
+  if(b.dataset.skopen!=null){const k=+b.dataset.skopen;skOpen=skOpen===k?-1:k;renderAll();return;}
   if(b.dataset.sbopen!=null){const sk=cur.skills[+b.dataset.sbopen];const id=sk&&sbListIds()[sk.name];
     if(id){const {ch}=sbParse();ch.pointsListSelect=id;ch.activeList=id;ch.__openAdmin=1;zSaveCh(ch);}
     sbCharId=null;ovOpen("book");return;}
@@ -1894,7 +1914,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.pool){const key=b.dataset.pool,inp=$("#"+key+"-amt"),a=Math.abs(num(inp.value));if(!a){inp.focus();return;}
     changePool(key,a*(+b.dataset.dir));inp.value="";return;}
   if(b.dataset.step){const k=b.dataset.step;const v=Math.max(0,num(getPath(cur,k))+(+b.dataset.d));setPath(cur,k,v);
-    const i=b.parentElement.querySelector("input");if(i)i.value=v;{const m=/^skills\.(\d+)\.rang$/.exec(k);if(m)cur.skills[+m[1]].x=crossesForRank(v);}autoCalc(k);refreshComputed();queueSave(cur);return;}
+    const i=b.parentElement.querySelector("input");if(i)i.value=v;{const m=/^skills\.(\d+)\.rang$/.exec(k);if(m)cur.skills[+m[1]].x=crossesForRank(v);}autoCalc(k);refreshComputed();queueSave(cur);if(tab==="skills"&&/^skills\./.test(k)){const st=window.scrollY;renderAll();window.scrollTo(0,st);}return;}
   if(b.id==="addskill"){cur.skills.push({name:"",placeholder:"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""});queueSave(cur);renderAll();return;}
   if(b.id==="addspell"){cur.skills.push({name:"",placeholder:"Spruchliste",kind:"spell",fixed:false,rang:0,boni:0,kosten:""});queueSave(cur);renderAll();
     const sel=document.getElementById("s-"+(cur.skills.length-1)+"-n");if(sel)sel.focus();return;}
