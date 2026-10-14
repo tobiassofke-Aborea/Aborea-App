@@ -1461,8 +1461,7 @@ function renderKampf(){
       <div class="wsl" data-wsl="${n}" role="slider" tabindex="0" aria-label="W10 zwischen Treffen und Schaden aufteilen" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${k}" aria-valuetext="Treffen ${k}, Schaden ${r}">
         <div class="wsl-top"><span class="t">Treffen <b class="wk">${k}</b></span><span class="s"><b class="wr">${r}</b> Schaden</span></div>
         <div class="wsl-track" style="grid-template-columns:repeat(${n},1fr);--p:${k/n*100}%">${Array.from({length:n},(_,i)=>`<i class="${i<k?"t":"s"}"></i>`).join("")}<span class="wsl-knob" style="left:${k/n*100}%"></span></div>
-      </div>
-      <p class="hint" style="margin:6px 0 0">Würfel mit dem Daumen nach links oder rechts schieben. Mehr auf Treffen: du triffst eher. Mehr auf Schaden: es tut mehr weh.</p></div>`
+      </div></div>`
       :`<p class="hint">Diese Waffe hat noch keinen Rang in ihrer Waffenfertigkeit, also gibt es keine W10 zum Aufteilen.</p>`;
     h+=`<div class="stepbox${atk.phase==="ready"||atk.phase==="rolling"?" act":""}">
       <div class="sh"><span class="num">1</span><b>Treffen</b>${isOff()?'<span class="hint">Nebenhand: ohne GE-Würfel</span>':""}</div>
