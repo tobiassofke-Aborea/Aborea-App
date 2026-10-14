@@ -207,13 +207,13 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .cwpts b{font-size:2rem;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
 .cwpts.done b{color:var(--ok)}.cwpts.bad b{color:var(--bad)}
 .cwattr{display:grid;gap:8px}
-.cwar{display:grid;grid-template-columns:minmax(0,1fr) auto 88px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.cwar{display:grid;grid-template-columns:minmax(0,1fr) auto 96px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .cwan{display:grid;min-width:0}.cwan small{color:var(--muted);font-size:.78rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
-.cwres{display:grid;grid-template-columns:auto auto;justify-content:end;align-items:baseline;gap:0 8px;text-align:right}
+.cwres{display:grid;justify-items:end;gap:1px;text-align:right}
 .cwres small{grid-column:1/-1;font-size:.72rem;color:var(--muted)}
 .cwres b{font-size:1.5rem;font-variant-numeric:tabular-nums}
-.cwbo{font-weight:700;font-size:.95rem;color:var(--muted)}.cwbo.up{color:var(--ok)}.cwbo.down{color:var(--bad)}
+.cwbo{grid-column:1/-1;justify-self:end;font-weight:700;font-size:.92rem;color:var(--muted);background:var(--bg);border-radius:12px;padding:1px 8px;display:inline-flex;gap:5px;align-items:baseline}.cwbo i{font-style:normal;font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}.cwbo.up{color:var(--ok)}.cwbo.down{color:var(--bad)}
 .cwsk{display:grid;gap:6px}
 .cwsr{display:grid;grid-template-columns:minmax(0,1fr) auto 52px;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .cwsr.on{border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
@@ -817,7 +817,7 @@ function renderBogen(){
     ${fld("lp.max","LP Max",{num:true})}${fld("mp.max","Mana Max",{num:true})}
     ${fld("details","Details",{full:true})}
     ${fld("ausbildung","Ausbildungspunkte übrig",{num:true})}
-    ${BERUF[cur.beruf]?`<div class="fld" style="align-self:end"><button class="btn small" id="recalc">LP, Mana, AP neu berechnen</button></div><p class="note full" style="margin:0">Nach einem Stufenaufstieg oder neuen Rängen: rechnet LP, Mana, AP und Trefferzone nach den Regeln für ${esc(cur.beruf)} neu.</p>`:""}
+    ${BERUF[cur.beruf]?`<div class="fld" style="align-self:end"><button class="btn small pri" id="levelup">Stufe aufsteigen</button></div><p class="note full" style="margin:0">LP, Mana, AP und Trefferzone rechnet die App nach den Regeln für ${esc(cur.beruf)} automatisch mit, sobald sich Stufe, Attribute oder Ränge ändern. „Stufe aufsteigen“ erhöht die Stufe um 1 und gibt 8 neue Ausbildungspunkte.</p>`:""}
   </div>
   <h2>Geldsack</h2>
   <div class="card mcard"><div class="mline">${COINS.map(c=>`<span><i style="background:${c.col[1]}"></i><b>${fmtN(purse()[c.k])}</b> ${c.short}</span>`).join("")}</div>
@@ -1665,6 +1665,7 @@ document.addEventListener("input",e=>{
   setPath(cur,k,v);
   {const m=/^attr\.(\w+)\.w$/.exec(k);if(m&&t.value!==""){const bo=attrBonus(t.value);cur.attr[m[1]].b=bo;const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.value=bo;}}
   if(k==="lp.max"||k==="mp.max"){const p=cur[k.slice(0,2)];if(num(p.cur)>num(p.max))p.cur=num(p.max);}
+  autoCalc(k);
   refreshComputed();queueSave(cur);
 });
 document.addEventListener("change",e=>{
@@ -1746,7 +1747,9 @@ document.addEventListener("click",e=>{
     return;}
   if(b.id==="rollx"){$("#roll").innerHTML="";curRoll=null;markAgain();return;}
   if(b.id==="new1"||b.id==="newc"){cwOpen();return;}
-  if(b.id==="recalc"){const r=recalcChar(cur);queueSave(cur);renderAll();showMsg("Neu berechnet: "+r.join(" · "));return;}
+  if(b.id==="levelup"){const lp0=num(cur.lp.max),mp0=num(cur.mp.max);cur.level=(num(cur.level)||1)+1;cur.ausbildung=num(cur.ausbildung)+8;recalcChar(cur);queueSave(cur);renderAll();
+    const dl=num(cur.lp.max)-lp0,dm=num(cur.mp.max)-mp0;
+    showMsg(`Stufe ${cur.level}: ${cur.lp.max} LP${dl?` (+${dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${dm?` (+${dm})`:""}`:""}, ${sum(cur.ap)} AP. ${cur.ausbildung} Ausbildungspunkte zum Lernen.`);buzz(20);return;}
   if(b.id==="ex1"||b.id==="exc"){addChar(example());return;}
   if(b.id==="delc"){if(!confirmDel){confirmDel=true;renderAll();return;}
     const c=chars.find(x=>x.id===selId())||cur,wasCur=c===cur;removeChar(c);if(wasCur)setCur(chars[0]||null);charSel=null;confirmDel=false;renderAll();return;}
@@ -1765,7 +1768,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.pool){const key=b.dataset.pool,inp=$("#"+key+"-amt"),a=Math.abs(num(inp.value));if(!a){inp.focus();return;}
     changePool(key,a*(+b.dataset.dir));inp.value="";return;}
   if(b.dataset.step){const k=b.dataset.step;const v=Math.max(0,num(getPath(cur,k))+(+b.dataset.d));setPath(cur,k,v);
-    const i=b.parentElement.querySelector("input");if(i)i.value=v;refreshComputed();queueSave(cur);return;}
+    const i=b.parentElement.querySelector("input");if(i)i.value=v;autoCalc(k);refreshComputed();queueSave(cur);return;}
   if(b.id==="addskill"){cur.skills.push({name:"",placeholder:"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""});queueSave(cur);renderAll();return;}
   if(b.id==="addspell"){cur.skills.push({name:"",placeholder:"Spruchliste",kind:"spell",fixed:false,rang:0,boni:0,kosten:""});queueSave(cur);renderAll();
     const sel=document.getElementById("s-"+(cur.skills.length-1)+"-n");if(sel)sel.focus();return;}
@@ -2295,6 +2298,13 @@ function skillCostAuto(s){
   return "";
 }
 const skillCost=s=>String(s.kosten||"").trim()||skillCostAuto(s);
+const CALC_KEY=/^(level|beruf|attr\.\w+\.(w|b)|skills\.\d+\.(rang|name))$/;
+function syncCalcFields(){
+  const set=(sel,v)=>{const e=document.querySelector(sel);if(e&&e!==document.activeElement)e.value=v;};
+  set('[id="f-lp.max"]',cur.lp.max);set('[id="f-mp.max"]',cur.mp.max);set("#lp-max",cur.lp.max);set("#mp-max",cur.mp.max);
+  (cur.ap||[]).forEach((v,i)=>set("#ap-"+i,v));set('[id="f-trefferzone"]',cur.trefferzone);
+}
+function autoCalc(k){if(!cur||!BERUF[cur.beruf]||!CALC_KEY.test(k))return;recalcChar(cur);syncCalcFields();}
 function recalcChar(c){
   const B=BERUF[c.beruf],lvl=Math.max(1,num(c.level)||1),b=a=>num(c.attr[a]&&c.attr[a].b),out=[];
   const rank=n=>{const s=(c.skills||[]).find(x=>x.name===n);return s?num(s.rang):0;};
@@ -2342,10 +2352,10 @@ function cwRender(keepScroll){
     const ep=cwEP(),adj=VOLK[cw.volk]||[0,0,0,0,0];
     h=`<div class="cwpts${ep<0?" bad":ep===0?" done":""}"><b>${ep}</b><span>von 35 Entwicklungspunkten übrig</span></div>
       <div class="cwattr">${ATTR.map((a,i)=>{const v=cw.buy[a],f=cwFinal(a),bo=attrBonus(f),nextCost=v<10?ATTR_PRICE[v+1]-ATTR_PRICE[v]:0;
-        return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>kostet ${ATTR_PRICE[v]}${v<10?` · +1 kostet ${nextCost} mehr`:" · Maximum"}</small></div>
+        return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${ATTR_PRICE[v]} EP${v<10?` · nächster +${nextCost}`:" · Maximum"}</small></div>
           <div class="step"><button data-cwattr="${a}" data-d="-1" ${v<=1?"disabled":""} aria-label="${ATTR_LONG[a]} senken">−</button><output>${v}</output><button data-cwattr="${a}" data-d="1" ${v>=10||nextCost>ep?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
-          <div class="cwres">${adj[i]?`<small>${adj[i]>0?"+":"−"}${Math.abs(adj[i])} ${esc(cw.volk)}</small>`:""}<b>${f}</b><span class="cwbo${bo>0?" up":bo<0?" down":""}">${bo>0?"+":""}${bo}</span></div></div>`;}).join("")}</div>
-      <p class="note">Werte über 5 sind überdurchschnittlich. Gib alle Punkte aus, sie verfallen nach der Erstellung. Die Volksanpassung ist rechts schon eingerechnet, daneben steht der Bonus.</p>`;
+          <div class="cwres">${adj[i]?`<small>${adj[i]>0?"+":"−"}${Math.abs(adj[i])} ${esc(cw.volk)}</small>`:"<small>Wert</small>"}<b>${f}</b><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>
+      <p class="note">Werte über 5 sind überdurchschnittlich. Gib alle Punkte aus, sie verfallen nach der Erstellung. Rechts steht der Endwert mit Volksanpassung und darunter der Bonus, mit dem du später würfelst.</p>`;
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
     h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span></div>
