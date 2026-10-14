@@ -2322,19 +2322,19 @@ function skillCostAuto(s){
   return "";
 }
 const skillCost=s=>String(s.kosten||"").trim()||skillCostAuto(s);
-const CALC_KEY=/^(level|beruf|attr\.\w+\.(w|b)|skills\.\d+\.(rang|name))$/;
+const CALC_KEY=/^(level|beruf|attr\.\w+\.(w|b)|skills\.\d+\.(rang|boni|name))$/;
 function syncCalcFields(){
   const set=(sel,v)=>{const e=document.querySelector(sel);if(e&&e!==document.activeElement)e.value=v;};
   set('[id="f-lp.max"]',cur.lp.max);set('[id="f-mp.max"]',cur.mp.max);set("#lp-max",cur.lp.max);set("#mp-max",cur.mp.max);
   (cur.ap||[]).forEach((v,i)=>set("#ap-"+i,v));set('[id="f-trefferzone"]',cur.trefferzone);
 }
-function autoCalc(k){if(!cur||!BERUF[cur.beruf]||!CALC_KEY.test(k))return;recalcChar(cur);syncCalcFields();}
+function autoCalc(k){if(!cur||!CALC_KEY.test(k))return;recalcChar(cur);syncCalcFields();}
 function recalcChar(c){
   const B=BERUF[c.beruf],lvl=Math.max(1,num(c.level)||1),b=a=>num(c.attr[a]&&c.attr[a].b),out=[];
   const rank=n=>{const s=(c.skills||[]).find(x=>x.name===n);return s?num(s.rang):0;};
   if(B){const max=Math.max(1,(B.tp+b("Ko"))*lvl),d=max-num(c.lp.max);c.lp.max=max;c.lp.cur=Math.min(max,num(c.lp.cur)+Math.max(0,d));out.push(`LP ${max}`);
     const r=rank("Magie entwickeln"),mmax=r>0?Math.max(0,(b(B.mp)+3)*r):0,md=mmax-num(c.mp.max);c.mp.max=mmax;c.mp.cur=Math.max(0,Math.min(mmax,num(c.mp.cur)+Math.max(0,md)));out.push(`Mana ${mmax}`);}
-  const hb=Math.max(...ATTR.map(b)),ath=rank("Athletik");
+  const hb=Math.max(...ATTR.map(b)),athS=(c.skills||[]).find(x=>x.name==="Athletik"),ath=athS?num(athS.rang)+num(athS.boni):0;
   c.ap=[3,hb,ath];out.push(`AP ${3+hb+ath}`);
   c.trefferzone=`${15+ath} / ${40+ath}`;
   return out;
@@ -2482,7 +2482,7 @@ function skillLearn(s,add){
     const e=done[done.length-1],L=lvLog();L.splice(L.lastIndexOf(e),1);s.x=Math.max(0,sxOf(s)-1);cur.ausbildung=num(cur.ausbildung)+e.c;
   }
   s.rang=rankFromCrosses(sxOf(s)).r;
-  if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);return "";
+  recalcChar(cur);queueSave(cur);return "";
 }
 function attrLearn(a,add){
   const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a);
@@ -2494,12 +2494,12 @@ function attrLearn(a,add){
     if(!done.length)return "";
     const e=done[done.length-1],L=lvLog();L.splice(L.lastIndexOf(e),1);A.w=String(Math.max(0,w-1));cur.ausbildung=num(cur.ausbildung)+e.c;
   }
-  A.b=attrBonus(A.w);if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);return "";
+  A.b=attrBonus(A.w);recalcChar(cur);queueSave(cur);return "";
 }
 function levelUp(){
   const lp0=num(cur.lp.max),mp0=num(cur.mp.max);
   cur.level=lvlNow()+1;cur.ausbildung=num(cur.ausbildung)+8;lvLog().length=0;lvLog().push({t:"lvl",c:8});
-  if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);
+  recalcChar(cur);queueSave(cur);
   return {dl:num(cur.lp.max)-lp0,dm:num(cur.mp.max)-mp0};
 }
 function levelDown(){
@@ -2512,7 +2512,7 @@ function levelDown(){
   const gained=log.some(e=>e.t==="lvl")?8:8;
   cur.ausbildung=Math.max(0,num(cur.ausbildung)-gained);
   delete cur.lvlog[L];cur.level=L-1;
-  if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);return true;
+  recalcChar(cur);queueSave(cur);return true;
 }
 
 let lnHead="";
