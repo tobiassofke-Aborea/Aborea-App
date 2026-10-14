@@ -194,6 +194,16 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .lnhead{background:color-mix(in srgb,var(--ok) 14%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line));border-radius:10px;padding:10px 12px;font-weight:600}
 .lnrk{color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lnpips{display:inline-flex;gap:3px}.lnpips i{width:10px;height:10px;border:1.5px solid var(--muted);border-radius:2px}.lnpips i.on{background:var(--accent);border-color:var(--accent)}
+.lvlbox{display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--accent) 7%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:12px;padding:10px 12px}
+.lvlnum{display:grid;justify-items:center;min-width:56px}.lvlnum b{font-family:var(--display);font-size:2.2rem;line-height:1;color:var(--accent)}
+.lvup{flex:1;display:flex;align-items:center;gap:10px;border:0;border-radius:10px;padding:10px 14px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));color:var(--card);font:inherit;cursor:pointer;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.lvup span{display:grid}.lvup b{font-size:1.05rem}.lvup small{opacity:.85;font-size:.78rem}
+.lvup:active{transform:scale(.98)}
+.grid2>.full{grid-column:1/-1}
+.armfold{grid-column:1/-1}
+.maxbox{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}.maxbox>div{display:grid;gap:2px}.maxbox b{font-size:1.6rem;font-variant-numeric:tabular-nums}.maxbox .lpc{color:var(--lp)}.maxbox .mpc{color:var(--mp)}.maxbox .armtog{grid-column:1/-1}
+.armtog{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:8px 2px;color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer;text-align:left}
+.armtog span{flex:1}.armtog b{color:var(--ink);font-variant-numeric:tabular-nums}.armtog i{font-style:normal;font-size:.75rem}
 .armtot{display:flex;align-items:baseline;gap:8px;min-height:44px}.armtot b{font-size:1.5rem;font-variant-numeric:tabular-nums}.armtot small{color:var(--muted);font-size:.8rem}
 .kwhead{display:flex;align-items:center;gap:8px;margin:22px 0 8px}
 .kwtog{flex:1;display:flex;align-items:baseline;gap:8px;background:none;border:0;padding:4px 0;color:var(--ink);cursor:pointer;text-align:left;font:inherit}
@@ -736,7 +746,7 @@ function pool(key,label){
   const minus=key==="lp"?"Schaden":"Mana",plus=key==="lp"?"Heilung":"Mana";
   return `<div class="card pool ${key}" data-poolcard="${key}"><div class="pmain">
     <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button>
-      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}"></span></div>
+      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}" ${BERUF[cur.beruf]?'readonly tabindex="-1" class="ro" title="Wird automatisch berechnet, Boni im Bogen"':""}></span></div>
     <div class="valrow"><div class="val" id="${key}-val">${num(p.cur)}<small> / ${num(p.max)}</small></div><span class="delta" id="${key}-delta"></span>${key==="lp"?armorBtnHtml():""}</div>
     ${key==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}
     <div class="pbar"><i id="${key}-bar" style="width:${pct}%"></i></div>
@@ -838,28 +848,40 @@ function renderKrit(){
       <div class="fld"><span class="lab">Krit-Wert Waffe</span><div class="kw">${cur.kwManual?`<input type="number" inputmode="numeric" id="krit-1" data-k="krit.1" data-num value="${esc(cur.krit[1])}">`:`<b id="krit-1">${cur.krit[1]}</b>`}${k&&!String(k.w.krit||"").trim()?"<span>bei der Waffe nicht eingetragen</span>":""}</div></div>
     </div></div>`;
 }
+let armOpen=false,maxOpen=false;const ownOpen={volk:false,beruf:false};
+function choiceFld(k,label,opts){const v=String(cur[k]||""),known=opts.includes(v),own=ownOpen[k]||(v&&!known);
+  return `<label class="fld"><span class="lab">${label}</span><select id="f-${k}-sel" data-choice="${k}"><option value="" ${!v&&!own?"selected":""}>– wählen –</option>${opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}<option value="__own" ${own?"selected":""}>Eigene …</option></select>
+    ${own?`<input id="f-${k}" data-k="${k}" value="${esc(v)}" placeholder="Eigene Bezeichnung" style="margin-top:6px">`:""}</label>`;}
 function renderBogen(){
   return `<h2>Charakter</h2><div class="card grid2">
-    ${fld("name","Name",{full:true})}${fld("volk","Volk")}${fld("beruf","Beruf")}
-    ${fld("level","Level",{num:true})}${fld("gs","Geistige Stabilität")}
+    ${fld("name","Name",{full:true})}${choiceFld("volk","Volk",Object.keys(VOLK))}${choiceFld("beruf","Beruf",Object.keys(BERUF))}
+    <div class="lvlbox full"><div class="lvlnum"><span class="lab">Stufe</span><b>${lvlNow()}</b></div>
+      <button class="lvup" id="levelup"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V6M6 11l6-6 6 6"/></svg><span><b>Stufe aufsteigen</b><small>+8 Ausbildungspunkte, dann verteilen</small></span></button></div>
+    ${fld("gs","Geistige Stabilität")}${fld("ausbildung","Ausbildungspunkte übrig",{num:true})}
     ${(()=>{armorSync();const a=armorOf();return `<label class="fld full"><span class="lab">Rüstung</span><select id="f-armortype" data-k="armorType" data-prev="${esc(cur.armorType||"")}"><option value="" ${a?"":"selected"}>Eigene / keine Vorlage</option>${ARMOR.map(x=>`<option value="${esc(x[0])}" ${a&&a[0]===x[0]?"selected":""}>${esc(x[0])} · ${x[1]}${x[2]?` · Malus ${x[2]}`:""}</option>`).join("")}</select></label>
+    <div class="full armfold"><button class="armtog" data-armtog="1" aria-expanded="${armOpen}"><span>Anpassung, Gesamtwert, Malus</span><b>${num(cur.ruestung)} Rüstung${num(cur.ruestungMalus)?` · Malus ${num(cur.ruestungMalus)}`:""}</b><i>${armOpen?"▴":"▾"}</i></button></div>
+    ${armOpen?`
     <label class="fld"><span class="lab">Anpassung (±)</span><input type="number" inputmode="numeric" id="f-armoradj" data-k="armorAdj" data-num value="${esc(cur.armorAdj||0)}"></label>
-    <div class="fld"><span class="lab">Rüstungswert gesamt</span><div class="armtot"><b id="armtot">${num(cur.ruestung)}</b>${a?`<small id="armsub">${a[1]} ${num(cur.armorAdj)<0?"−":"+"} ${Math.abs(num(cur.armorAdj))}${a[3]?` · ${a[3]} kg`:""}</small>`:""}</div></div>`;})()}${fld("ruestungMalus","Rüstungsmalus (Ini)",{num:true})}${fld("trefferzone","Trefferzone")}
-    ${fld("lp.max","LP Max",{num:true})}${fld("mp.max","Mana Max",{num:true})}
+    <div class="fld"><span class="lab">Rüstungswert gesamt</span><div class="armtot"><b id="armtot">${num(cur.ruestung)}</b>${a?`<small id="armsub">${a[1]} ${num(cur.armorAdj)<0?"−":"+"} ${Math.abs(num(cur.armorAdj))}${a[3]?` · ${a[3]} kg`:""}</small>`:""}</div></div>${fld("ruestungMalus","Rüstungsmalus (Ini)",{num:true})}`:""}`;})()}
+    ${BERUF[cur.beruf]?`<div class="full maxbox"><div><span class="lab">LP Max</span><b class="lpc">${num(cur.lp.max)}</b></div><div><span class="lab">Mana Max</span><b class="mpc">${num(cur.mp.max)}</b></div>
+      <button class="armtog" data-maxtog="1" aria-expanded="${maxOpen}"><span>Boni${num(cur.lpBonus)||num(cur.mpBonus)?`: LP ${num(cur.lpBonus)>=0?"+":""}${num(cur.lpBonus)}, Mana ${num(cur.mpBonus)>=0?"+":""}${num(cur.mpBonus)}`:""}</span><i>${maxOpen?"▴":"▾"}</i></button></div>
+      ${maxOpen?`${fld("lpBonus","LP Bonus (±)",{num:true})}${fld("mpBonus","Mana Bonus (±)",{num:true})}<p class="note full" style="margin:0">Für Gegenstände, Segen o. Ä. Der Bonus kommt auf den berechneten Wert drauf.</p>`:""}`
+      :`${fld("lp.max","LP Max",{num:true})}${fld("mp.max","Mana Max",{num:true})}`}
     ${fld("details","Details",{full:true})}
-    ${fld("ausbildung","Ausbildungspunkte übrig",{num:true})}
-    <div class="lvbtns full"><button class="btn small pri" id="levelup">Stufe aufsteigen</button><button class="btn small" id="learnopen">Ausbildungspunkte ausgeben${num(cur.ausbildung)?` (${num(cur.ausbildung)})`:""}</button>${lvlNow()>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvlNow()-1}?`:"Stufe zurück"}</button>`:""}</div>
-    <p class="note full" style="margin:0">${BERUF[cur.beruf]?`LP, Mana, AP und Trefferzone rechnet die App nach den Regeln für ${esc(cur.beruf)} automatisch mit. `:""}„Stufe aufsteigen“ gibt 8 Ausbildungspunkte und öffnet das Lernen. „Stufe zurück“ nimmt die Stufe und alles in ihr Gelernte wieder zurück.</p>
+    <div class="lvbtns full"><button class="btn small" id="learnopen">Ausbildungspunkte ausgeben${num(cur.ausbildung)?` (${num(cur.ausbildung)})`:""}</button>${lvlNow()>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvlNow()-1}?`:"Stufe zurück"}</button>`:""}</div>
+    <p class="note full" style="margin:0">${BERUF[cur.beruf]?`LP, Mana, AP und Trefferzone rechnet die App nach den Regeln für ${esc(cur.beruf)} automatisch mit. `:""}${VOLK[cur.volk]?`Ein Volkswechsel passt die Attribute um die Volksanpassung an. `:""}„Stufe zurück“ nimmt die Stufe und alles in ihr Gelernte wieder zurück.</p>
   </div>
   <h2>Geldsack</h2>
   <div class="card mcard"><div class="mline">${COINS.map(c=>`<span><i style="background:${c.col[1]}"></i><b>${fmtN(purse()[c.k])}</b> ${c.short}</span>`).join("")}</div>
     <button class="btn pri big" id="openmoney">Geldsack öffnen</button></div>
-  <div class="kwhead"><button class="kwtog" data-kwtog="1" aria-expanded="${kwOpen}"><h2>Kampfwerte</h2><i>${kwOpen?"▴":"▾"}</i>${kwOpen?"":`<span class="kwsum">AP ${sum(cur.ap)} · Krit ${(syncKrit(),sum(cur.krit))}</span>`}</button>
+  <div class="kwhead"><button class="kwtog" data-kwtog="1" aria-expanded="${kwOpen}"><h2>Kampfwerte</h2><i>${kwOpen?"▴":"▾"}</i>${kwOpen?"":`<span class="kwsum">AP ${sum(cur.ap)} · Krit ${(syncKrit(),sum(cur.krit))} · TZ ${esc(tzText())}</span>`}</button>
     ${kwOpen?`<button class="gearmini${cur.kwManual?" on":""}" data-kwman="1" aria-pressed="${!!cur.kwManual}" title="${cur.kwManual?"Wieder automatisch berechnen":"Werte von Hand ändern"}" aria-label="${cur.kwManual?"Kampfwerte wieder automatisch berechnen":"Kampfwerte von Hand ändern"}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>`:""}</div>
   ${kwOpen?`<div class="card">
     ${cur.kwManual?`<p class="note" style="margin:0 0 8px">Von Hand: die Werte werden nicht mehr automatisch berechnet. Zahnrad nochmal antippen für automatisch.</p>`:""}
     ${combat("ap","Aktionspunkte",["Basis","Höchster Attr.-Bonus","Athletik"])}
     ${renderKrit()}
+    <div class="comb"><div class="head"><span class="t">Trefferzone</span><span class="tot">${esc(tzText())}</span></div>
+      ${cur.kwManual?`<label class="fld"><span class="lab">Körper / Kopf</span><input id="f-trefferzone" data-k="trefferzone" value="${esc(cur.trefferzone)}" placeholder="z. B. 16 / 41"></label>`:`<p class="hint" style="margin:0">Körper 15 / Kopf 40, jeweils + Athletik${shieldBonus().tz?` + Schild ${shieldBonus().tz}`:""}.</p>`}</div>
   </div>`:""}
   <h2>Notizen</h2><div class="card"><textarea id="f-notes" data-k="notes" placeholder="Ausrüstung, Geld, Kontakte …">${esc(cur.notes)}</textarea></div>
   <h2>Charaktere</h2><div class="card">
@@ -1724,6 +1746,10 @@ document.addEventListener("change",e=>{
   if(e.target.tagName==="SELECT"&&e.target.dataset&&e.target.dataset.k&&/^(weapons|shields)\./.test(e.target.dataset.k))renderAll();
   if(e.target.classList&&e.target.classList.contains("slsel"))renderAll();
   if(e.target.id==="f-armortype")renderAll();
+  if(e.target.dataset&&e.target.dataset.choice&&cur){const k=e.target.dataset.choice,v=e.target.value,old=String(cur[k]||"");
+    if(v==="__own"){ownOpen[k]=true;if(k==="volk"&&VOLK[old])shiftVolk(old,"");cur[k]=VOLK[old]||BERUF[old]?"":old;}
+    else{ownOpen[k]=false;if(k==="volk")shiftVolk(old,v);cur[k]=v;}
+    recalcChar(cur);queueSave(cur);renderAll();}
 });
 let hit={pend:0,base:0,timer:0};
 const HIT_WAIT=1800;
@@ -1801,6 +1827,8 @@ document.addEventListener("click",e=>{
   if(b.id==="rollx"){$("#roll").innerHTML="";curRoll=null;markAgain();return;}
   if(b.id==="new1"||b.id==="newc"){cwOpen();return;}
   if(b.dataset.kwman){cur.kwManual=!cur.kwManual;if(!cur.kwManual){recalcChar(cur);syncKrit();}queueSave(cur);renderAll();return;}
+  if(b.dataset.maxtog){maxOpen=!maxOpen;renderAll();return;}
+  if(b.dataset.armtog){armOpen=!armOpen;renderAll();return;}
   if(b.dataset.kwtog){kwOpen=!kwOpen;try{localStorage.setItem("aborea-kwopen",kwOpen?"1":"0")}catch(x){}renderAll();return;}
   if(b.id==="levelup"){lvConfirm=false;const r=levelUp();renderAll();buzz(20);
     lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);return;}
@@ -2355,21 +2383,25 @@ function skillCostAuto(s){
   return "";
 }
 const skillCost=s=>String(s.kosten||"").trim()||skillCostAuto(s);
-const CALC_KEY=/^(level|beruf|attr\.\w+\.(w|b)|skills\.\d+\.(rang|boni|name))$/;
+const CALC_KEY=/^(level|beruf|lpBonus|mpBonus|attr\.\w+\.(w|b)|skills\.\d+\.(rang|boni|name))$/;
 function syncCalcFields(){
   const set=(sel,v)=>{const e=document.querySelector(sel);if(e&&e!==document.activeElement)e.value=v;};
   set('[id="f-lp.max"]',cur.lp.max);set('[id="f-mp.max"]',cur.mp.max);set("#lp-max",cur.lp.max);set("#mp-max",cur.mp.max);
   (cur.ap||[]).forEach((v,i)=>set("#ap-"+i,v));set('[id="f-trefferzone"]',cur.trefferzone);
+  {const l=document.querySelector(".maxbox .lpc"),m=document.querySelector(".maxbox .mpc");if(l)l.textContent=num(cur.lp.max);if(m)m.textContent=num(cur.mp.max);}
 }
 function autoCalc(k){if(!cur||!CALC_KEY.test(k))return;recalcChar(cur);syncCalcFields();}
+function shiftVolk(from,to){const A=VOLK[from]||[0,0,0,0,0],B=VOLK[to]||[0,0,0,0,0],ch=[];
+  ATTR.forEach((a,i)=>{const d=B[i]-A[i];if(!d)return;const at=cur.attr[a];at.w=String(Math.max(0,num(at.w)+d));at.b=attrBonus(at.w);ch.push(`${a} ${d>0?"+":"−"}${Math.abs(d)}`);});
+  if(ch.length)showMsg(`Attribute angepasst: ${ch.join(", ")}`);}
 function recalcChar(c){
   const B=BERUF[c.beruf],lvl=Math.max(1,num(c.level)||1),b=a=>num(c.attr[a]&&c.attr[a].b),out=[];
   const rank=n=>{const s=(c.skills||[]).find(x=>x.name===n);return s?num(s.rang):0;};
-  if(B){const max=Math.max(1,(B.tp+b("Ko"))*lvl),d=max-num(c.lp.max);c.lp.max=max;c.lp.cur=Math.min(max,num(c.lp.cur)+Math.max(0,d));out.push(`LP ${max}`);
-    const r=rank("Magie entwickeln"),mmax=r>0?Math.max(0,(b(B.mp)+3)*r):0,md=mmax-num(c.mp.max);c.mp.max=mmax;c.mp.cur=Math.max(0,Math.min(mmax,num(c.mp.cur)+Math.max(0,md)));out.push(`Mana ${mmax}`);}
+  if(B){const max=Math.max(1,(B.tp+b("Ko"))*lvl+num(c.lpBonus)),d=max-num(c.lp.max);c.lp.max=max;c.lp.cur=Math.min(max,num(c.lp.cur)+Math.max(0,d));out.push(`LP ${max}`);
+    const r=rank("Magie entwickeln"),mmax=Math.max(0,(r>0?(b(B.mp)+3)*r:0)+num(c.mpBonus)),md=mmax-num(c.mp.max);c.mp.max=mmax;c.mp.cur=Math.max(0,Math.min(mmax,num(c.mp.cur)+Math.max(0,md)));out.push(`Mana ${mmax}`);}
   const hb=Math.max(...ATTR.map(b)),athS=(c.skills||[]).find(x=>x.name==="Athletik"),ath=athS?num(athS.rang)+num(athS.boni):0;
   if(!c.kwManual)c.ap=[3,hb,ath];out.push(`AP ${sum(c.ap)}`);
-  c.trefferzone=`${15+ath} / ${40+ath}`;
+  if(!c.kwManual)c.trefferzone=`${15+ath} / ${40+ath}`;
   return out;
 }
 
@@ -2570,12 +2602,12 @@ function lnRender(keep){
   el.innerHTML=`<div class="tbar"><h1>Lernen · Stufe ${lvlNow()}</h1><button class="btn small" id="lnclose">Fertig</button></div>
     <div class="cwbody">${lnHead?`<div class="lnhead">${esc(lnHead)}</div>`:""}
       <div class="cwpts${ap===0?" done":""}"><b>${ap}</b><span>Ausbildungspunkte übrig${ap?" · Rest wird aufgespart":""}</span></div>
-      <div class="lab cwh">Fertigkeiten</div>
-      <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 drei. Ein Kreuz in dieser Stufe nimmst du durch erneutes Antippen zurück.</p>
-      <div class="cwsk">${rows}</div>
       <div class="lab cwh">Attribute</div>
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts, z. B. von 7 auf 8 zehn Punkte.</p>
       <div class="cwattr">${attrs}</div>
+      <div class="lab cwh">Fertigkeiten</div>
+      <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 drei. Ein Kreuz in dieser Stufe nimmst du durch erneutes Antippen zurück.</p>
+      <div class="cwsk">${rows}</div>
     </div><div class="cwmsg" hidden></div>`;
   const nb=el.querySelector(".cwbody");if(nb)nb.scrollTop=st;
 }
