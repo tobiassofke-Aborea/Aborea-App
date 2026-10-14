@@ -54,14 +54,12 @@ jobs:
           mkdir -p assets
           cp ../android-assets/icon-*.png assets/
           npx --yes @capacitor/assets@3 generate --android --iconBackgroundColor '#e9e5dc' --iconBackgroundColorDark '#e9e5dc' --splashBackgroundColor '#e9e5dc' --splashBackgroundColorDark '#1c1814'
-          # Monochrom-Ebene für Android-13-Designsymbole (das A)
-          RES=android/app/src/main/res
-          cp -r ../android-assets/monochrome/. $RES/
-          for f in $RES/mipmap-anydpi-v26/ic_launcher.xml $RES/mipmap-anydpi-v26/ic_launcher_round.xml; do
-            [ -f "$f" ] && ! grep -q monochrome "$f" && sed -i 's#</adaptive-icon>#    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>\n</adaptive-icon>#' "$f"
-            [ -f "$f" ] && cat "$f"
-          done
-          true
+
+      - name: Eigene Symbol-Ebenen
+        run: |
+          # ohne den Einzug, den das Werkzeug sonst einfügt; mit Monochrom-Ebene für Android-13-Designsymbole
+          cp -r android-assets/res/. build/android/app/src/main/res/
+          cat build/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
 
       - name: Version und Rechte setzen
         run: |

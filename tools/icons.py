@@ -24,11 +24,30 @@ place(wuerfel_grund,N,S,BG).convert('RGB').save(os.path.join(R,'android-assets',
 place(A,N,S).save(os.path.join(R,'android-assets','icon-foreground.png'))
 gesamt.resize((N,N),Image.LANCZOS).save(os.path.join(R,'android-assets','icon-only.png'))
 
-# Monochrom-Ebene je Dichte (108 dp)
-for name,px in [('mdpi',108),('hdpi',162),('xhdpi',216),('xxhdpi',324),('xxxhdpi',432)]:
-    d=os.path.join(R,'android-assets','monochrome','mipmap-'+name);os.makedirs(d,exist_ok=True)
-    m=place(mono,px,S);a=m.getchannel('A');w=Image.new('RGBA',(px,px),(255,255,255,0));w.putalpha(a)
+# Android-Ressourcen direkt (ohne zusätzlichen Einzug), 108 dp je Ebene, 48 dp fürs alte Symbol
+from PIL import ImageDraw
+RES=os.path.join(R,'android-assets','res')
+DENS=[('ldpi',.75),('mdpi',1),('hdpi',1.5),('xhdpi',2),('xxhdpi',3),('xxxhdpi',4)]
+for name,f in DENS:
+    d=os.path.join(RES,'mipmap-'+name);os.makedirs(d,exist_ok=True)
+    px=round(108*f)
+    place(wuerfel_grund,px,S,BG).convert('RGB').save(os.path.join(d,'ic_launcher_background.png'))
+    place(A,px,S).save(os.path.join(d,'ic_launcher_foreground.png'))
+    m=place(mono,px,S);w=Image.new('RGBA',(px,px),(255,255,255,0));w.putalpha(m.getchannel('A'))
     w.save(os.path.join(d,'ic_launcher_monochrome.png'))
+    lp=round(48*f);g=gesamt.resize((lp,lp),Image.LANCZOS)
+    g.save(os.path.join(d,'ic_launcher.png'))
+    k=Image.new('L',(lp*4,lp*4),0);ImageDraw.Draw(k).ellipse([0,0,lp*4-1,lp*4-1],fill=255);k=k.resize((lp,lp),Image.LANCZOS)
+    r=g.convert('RGBA');r.putalpha(k);r.save(os.path.join(d,'ic_launcher_round.png'))
+d=os.path.join(RES,'mipmap-anydpi-v26');os.makedirs(d,exist_ok=True)
+XML="""<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@mipmap/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_launcher_monochrome"/>
+</adaptive-icon>
+"""
+for f in ('ic_launcher.xml','ic_launcher_round.xml'):open(os.path.join(d,f),'w').write(XML)
 
 # Web-App
 I=os.path.join(R,'icons')
