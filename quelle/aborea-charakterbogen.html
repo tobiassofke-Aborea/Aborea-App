@@ -92,7 +92,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .skill .det > div{display:grid;gap:3px}
 .skill .det input[type=number]{width:62px}
 .skill .det .kost{width:84px}
-.sk2{grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:4px 8px;padding:6px 0}
+.sk2{grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 8px;padding:6px 0}
 .sk2 .skmain{display:grid;gap:1px;min-width:0;background:none;border:0;padding:6px 0;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
 .sknm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sknm.ph{color:var(--muted);font-weight:500}
 .skline{display:flex;align-items:center;gap:8px;min-width:0}.skline .sknm{min-width:0}
@@ -834,7 +834,6 @@ function skillRow(s,i){
     <button class="skmain" data-skopen="${i}" aria-expanded="${open}"><span class="sknm${nm||s.fixed?"":" ph"}">${esc(shown)}</span>${meta?`<span class="skmeta">${meta}</span>`:""}</button>
     <span class="skrk${num(s.rang)?"":" r0"}" aria-label="Rang ${num(s.rang)}"><i>Rang</i><b>${num(s.rang)}</b></span>
     ${spell&&nm?`<button class="slbook" data-sbopen="${i}" aria-label="${esc(nm)} in der Zauberbibliothek öffnen">${ICON_BOOK}</button>`:""}
-    <span class="tot" id="s-${i}-t">${tot}</span>
     <button class="die" data-roll="skill:${i}" aria-label="${esc(shown)} würfeln">${DIE}</button>
     ${open?`<div class="det">
       ${s.fixed?"":`<div class="detn">${skillNameCell(s,i)}</div>`}
