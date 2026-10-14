@@ -83,7 +83,9 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .row.attr{display:grid;grid-template-columns:minmax(34px,52px) minmax(0,1fr) minmax(0,1fr) auto;gap:8px}
 .attr .name{display:none}
 .attr .key{font-family:var(--display);font-size:1.35rem;min-width:0}
-.attr .f{min-width:0;max-width:90px}.attr .f input{width:100%} .attr .f .lab{font-size:.65rem}
+.attr .f{min-width:0;max-width:90px}
+.attr .fro b{display:block;font-size:1.4rem;line-height:1.3;font-variant-numeric:tabular-nums}.attr .fro b.up{color:var(--ok)}.attr .fro b.down{color:var(--bad)}
+.afoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.afoot .gearmini{flex:0 0 34px}.attr .f input{width:100%} .attr .f .lab{font-size:.65rem}
 .step{display:flex;align-items:center;border:1px solid var(--line);border-radius:7px;overflow:hidden}
 .step button{width:34px;height:38px;border:0;background:var(--bg);cursor:pointer;font-size:1.1rem}
 .step input{width:40px;min-height:38px;border:0;border-radius:0;padding:0;background:var(--card)}
@@ -804,13 +806,17 @@ function combat(key,title,labels){
     ${key!=="ap"?`<button class="die" data-roll="${key}" aria-label="${title} würfeln">${DIE}</button>`:""}</div>
     <div class="parts">${labels.map((l,i)=>`<div><span class="lab" title="${esc(l)}">${esc(l)}</span><input type="number" inputmode="numeric" id="${key}-${i}" data-k="${key}.${i}" data-num value="${esc(arr[i])}" ${key==="ap"&&!cur.kwManual?'readonly tabindex="-1" class="ro"':""}></div>`).join("")}</div></div>`;
 }
+let attrEdit=false;
 function renderAttr(){
   return `<h2>Attribute</h2><div class="card rows">${ATTR.map(a=>{const v=cur.attr[a];return `<div class="row attr">
     <span class="key" title="${ATTR_LONG[a]}">${a}</span>
-    <div class="f"><span class="lab">Wert</span><input type="number" inputmode="numeric" id="a-${a}-w" data-k="attr.${a}.w" value="${esc(v.w)}"></div>
-    <div class="f"><span class="lab">Bonus</span><input type="number" inputmode="numeric" id="a-${a}-b" data-k="attr.${a}.b" data-num value="${esc(v.b)}"></div>
+    ${attrEdit?`<div class="f"><span class="lab">Wert</span><input type="number" inputmode="numeric" id="a-${a}-w" data-k="attr.${a}.w" value="${esc(v.w)}"></div>
+    <div class="f"><span class="lab">Bonus</span><input type="number" inputmode="numeric" id="a-${a}-b" data-k="attr.${a}.b" data-num value="${esc(v.b)}"></div>`
+    :`<div class="f fro"><span class="lab">Wert</span><b>${esc(v.w===""?"–":v.w)}</b></div>
+    <div class="f fro"><span class="lab">Bonus</span><b class="${num(v.b)>0?"up":num(v.b)<0?"down":""}">${num(v.b)>0?"+":num(v.b)<0?"−":"±"}${Math.abs(num(v.b))}</b></div>`}
     <span class="name"></span>
-    <button class="die" data-roll="attr:${a}" aria-label="${ATTR_LONG[a]} würfeln">${DIE6}</button></div>`}).join("")}</div>
+    <button class="die" data-roll="attr:${a}" aria-label="${ATTR_LONG[a]} würfeln">${DIE6}</button></div>`}).join("")}
+    <div class="afoot"><span class="hint">${attrEdit?"Von Hand: Werte direkt eintragen, der Bonus folgt automatisch.":"Steigern über Stufenaufstieg und Lernen."}</span><button class="gearmini${attrEdit?" on":""}" id="attrgear" aria-pressed="${attrEdit}" aria-label="${attrEdit?"Fertig":"Attribute von Hand ändern"}">${ICON_GEAR}</button></div></div>
     <p class="note">Würfeln auf ein Attribut: so viele W6 wie der Bonus. Bei Bonus 0 ein Plus- und ein Minus-W6, bei −1 ein Plus- und zwei Minus-W6 usw. Minus-Würfel sind rot.</p>`;
 }
 const SB_DEFAULT_LISTS=["Elementare Magie","Zeichen & Wunder","Wilde Magie","Blutmagie","Weiße Magie","Freie Magie"];
@@ -1895,6 +1901,7 @@ document.addEventListener("click",e=>{
   if(b.id==="rollx"){$("#roll").innerHTML="";curRoll=null;markAgain();return;}
   if(b.id==="new1"||b.id==="newc"){cwOpen();return;}
   if(b.dataset.kwman){cur.kwManual=!cur.kwManual;if(!cur.kwManual){recalcChar(cur);syncKrit();}queueSave(cur);renderAll();return;}
+  if(b.id==="attrgear"){attrEdit=!attrEdit;renderAll();return;}
   if(b.dataset.bog){bogOpen=bogOpen===b.dataset.bog?"":b.dataset.bog;renderAll();return;}
   if(b.dataset.maxtog){maxOpen=!maxOpen;renderAll();return;}
   if(b.dataset.armtog){armOpen=!armOpen;renderAll();return;}
