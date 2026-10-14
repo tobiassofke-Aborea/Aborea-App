@@ -194,6 +194,13 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .lnhead{background:color-mix(in srgb,var(--ok) 14%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line));border-radius:10px;padding:10px 12px;font-weight:600}
 .lnrk{color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lnpips{display:inline-flex;gap:3px}.lnpips i{width:10px;height:10px;border:1.5px solid var(--muted);border-radius:2px}.lnpips i.on{background:var(--accent);border-color:var(--accent)}
+#cdlg{position:fixed;inset:0;z-index:40;background:rgba(20,14,8,.45);display:grid;place-items:center;padding:24px}
+.cdbox{width:min(340px,100%);background:var(--card);color:var(--ink);border-radius:16px;padding:20px 18px 16px;box-shadow:0 12px 40px rgba(0,0,0,.35);display:grid;gap:8px;text-align:center;animation:cdpop .16s ease-out}
+@keyframes cdpop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.cdbox{animation:none}}
+.cdt{font-family:var(--display);font-size:1.6rem}.cds{color:var(--muted)}
+.cdb{display:flex;gap:8px;margin-top:8px}.cdb .btn{flex:1;min-height:48px;font-weight:700;color:var(--ink)}.cdb .btn.pri{color:var(--card)}
+.cddots{display:flex;gap:6px;justify-content:center;margin-top:4px}.cddots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.cddots i.on{background:var(--accent)}
 .hero{display:grid;gap:12px}
 .hrow{display:flex;align-items:flex-start;gap:12px}
 .hname{flex:1;min-width:0;display:grid;gap:2px}
@@ -879,6 +886,17 @@ let armOpen=false,maxOpen=false,bogOpen="";const ownOpen={volk:false,beruf:false
 function choiceFld(k,label,opts){const v=String(cur[k]||""),known=opts.includes(v),own=ownOpen[k]||(v&&!known);
   return `<label class="fld"><span class="lab">${label}</span><select id="f-${k}-sel" data-choice="${k}"><option value="" ${!v&&!own?"selected":""}>– wählen –</option>${opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}<option value="__own" ${own?"selected":""}>Eigene …</option></select>
     ${own?`<input id="f-${k}" data-k="${k}" value="${esc(v)}" placeholder="Eigene Bezeichnung" style="margin-top:6px">`:""}</label>`;}
+/* kleines Bestätigungsfenster, mehrere Schritte nacheinander */
+function askSteps(steps,onOk){let i=0;let el=$("#cdlg");if(!el){el=document.createElement("div");el.id="cdlg";el.setAttribute("role","alertdialog");el.setAttribute("aria-modal","true");document.body.appendChild(el);}
+  const show=()=>{const [t,sub]=steps[i];el.innerHTML=`<div class="cdbox"><div class="cdt">${esc(t)}</div>${sub?`<div class="cds">${esc(sub)}</div>`:""}<div class="cdb"><button class="btn" data-cd="no">Abbrechen</button><button class="btn pri" data-cd="yes">Ja</button></div>${steps.length>1?`<div class="cddots">${steps.map((_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>`:""}</div>`;
+    el.hidden=false;buzz(8);const y=el.querySelector('[data-cd="yes"]');if(y)y.focus();};
+  el.onclick=e=>{const b=e.target.closest("[data-cd]");if(!b){if(e.target===el){el.hidden=true;}return;}
+    if(b.dataset.cd==="no"){el.hidden=true;return;}
+    i++;if(i<steps.length)show();else{el.hidden=true;onOk();}};
+  show();}
+function doLevelUp(){const r=levelUp();renderAll();buzz(20);
+  lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);}
+document.addEventListener("keydown",e=>{const el=$("#cdlg");if(e.key==="Escape"&&el&&!el.hidden)el.hidden=true;});
 function bogRow(key,title,summary,body){const open=bogOpen===key;
   return `<div class="accrow${open?" open":""}"><button class="acchead" data-bog="${key}" aria-expanded="${open}"><span class="acct">${title}</span><span class="accs">${summary}</span><i aria-hidden="true">${open?"▴":"▾"}</i></button>${open?`<div class="accbody">${body}</div>`:""}</div>`;}
 function renderBogen(){
@@ -1871,8 +1889,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.maxtog){maxOpen=!maxOpen;renderAll();return;}
   if(b.dataset.armtog){armOpen=!armOpen;renderAll();return;}
   if(b.dataset.kwtog){kwOpen=!kwOpen;try{localStorage.setItem("aborea-kwopen",kwOpen?"1":"0")}catch(x){}renderAll();return;}
-  if(b.id==="levelup"){lvConfirm=false;const r=levelUp();renderAll();buzz(20);
-    lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);return;}
+  if(b.id==="levelup"){lvConfirm=false;askSteps([["Bist du sicher?",`Stufe ${lvlNow()} → ${lvlNow()+1}`],["Wirklich?","Dann steigt "+(cur.name||"dein Charakter")+" jetzt auf."]],doLevelUp);return;}
   if(b.id==="learnopen"){lvConfirm=false;lnOpen();return;}
   if(b.id==="leveldown"){if(!lvConfirm){lvConfirm=true;renderAll();return;}lvConfirm=false;const L=lvlNow();levelDown();renderAll();showMsg(`Zurück auf Stufe ${cur.level} (von ${L}): ${cur.lp.max} LP, ${num(cur.ausbildung)} Ausbildungspunkte.`);return;}
   if(b.id==="ex1"||b.id==="exc"){addChar(example());return;}
