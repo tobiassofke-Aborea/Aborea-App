@@ -618,6 +618,8 @@ textarea.wnote{min-height:64px;font-family:var(--body);font-size:.95rem}
 .ptl i,.crow .cl i{font-style:normal;font-size:.7rem;opacity:.7}
 .crow .cl{background:none;border:0;padding:6px 0;font-family:inherit;cursor:pointer;display:inline-flex;gap:4px;align-items:center;text-align:left}
 .mini .lpmp.solo{grid-template-rows:1fr}
+.mini .gs{display:grid;place-items:center;align-content:center;gap:1px;height:48px;min-width:44px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}.mini .gs small{font-size:.62rem;font-weight:700;letter-spacing:.08em;color:var(--muted);line-height:1}.mini .gs b{font-size:1rem;line-height:1.05;font-variant-numeric:tabular-nums}
+#roll .tag.ok{background:#3d6b35;color:#fff}#roll .tag.bad{background:#a3302a;color:#fff}
 </style>
 
 <header><div class="hbar">
@@ -766,7 +768,7 @@ function renderHeader(){
   if(!cur){$("#hname").textContent="Aborea";$("#hsub").textContent="Kein Charakter";$("#hmini").innerHTML="";return;}
   $("#hname").textContent=cur.name||"Ohne Namen";
   $("#hsub").textContent=[cur.volk,cur.beruf,"Level "+(cur.level||1)].filter(Boolean).join(" · ");
-  $("#hmini").innerHTML=`<span class="lpmp${hasMana()?"":" solo"}"><button class="l" id="golp" aria-label="Lebenspunkte ${num(cur.lp.cur)}, zum Kampf">${num(cur.lp.cur)}</button>${hasMana()?`<button class="m" id="gomp" aria-label="Manapunkte ${num(cur.mp.cur)}, zum Kampf">${num(cur.mp.cur)}</button>`:""}</span><button class="a sw" id="opentable3" aria-label="Menü: ${OV_NAME[ovLast]}. Tippen zum Ausklappen, doppelt tippen zum Öffnen, wischen zum Wechseln" aria-haspopup="menu" aria-expanded="false">${OV_ICON[ovLast]()}<span class="dots">${OV_ORDER.map(k=>`<i class="${k===ovLast?"on":""}"></i>`).join("")}</span></button>`;
+  $("#hmini").innerHTML=`<button class="gs" id="rollgs" aria-label="Geistige Stabilität ${esc(cur.gs||"nicht eingetragen")}, tippen für GS-Test (W100)"><small>GS</small><b>${esc(String(cur.gs||"").trim()||"–")}</b></button><span class="lpmp${hasMana()?"":" solo"}"><button class="l" id="golp" aria-label="Lebenspunkte ${num(cur.lp.cur)}, zum Kampf">${num(cur.lp.cur)}</button>${hasMana()?`<button class="m" id="gomp" aria-label="Manapunkte ${num(cur.mp.cur)}, zum Kampf">${num(cur.mp.cur)}</button>`:""}</span><button class="a sw" id="opentable3" aria-label="Menü: ${OV_NAME[ovLast]}. Tippen zum Ausklappen, doppelt tippen zum Öffnen, wischen zum Wechseln" aria-haspopup="menu" aria-expanded="false">${OV_ICON[ovLast]()}<span class="dots">${OV_ORDER.map(k=>`<i class="${k===ovLast?"on":""}"></i>`).join("")}</span></button>`;
 }
 function pool(key,label){
   const p=cur[key],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
@@ -1233,7 +1235,7 @@ function rollPool(title,spec,onDone){
     if(spec.flat)lines.push(spec.flatLabel?spec.flatLabel+" "+num(spec.flat):"Bonus "+sgn(num(spec.flat)));
     const c=$("#rcalc");c.textContent=lines.join(" · ");c.hidden=false;
     const res=onDone?onDone(total):null;
-    if(res&&res.tag){const tg=$("#rtag");tg.textContent=res.tag;tg.hidden=false;}
+    if(res&&res.tag){const tg=$("#rtag");tg.textContent=res.tag;tg.className="tag"+(res.cls?" "+res.cls:"");tg.hidden=false;}
     if(tab==="kampf"&&!document.activeElement.matches("input,textarea,select"))renderAll();
     rollTimer=setTimeout(()=>{$("#roll").innerHTML=""},12000);
   }
@@ -1722,7 +1724,8 @@ function renderRegeln(){
     <ol><li><b>Würfel verteilen.</b> Die Waffenfertigkeit gibt die Anzahl W10. Du verteilst sie auf Treffen und Schaden.</li>
     <li><b>Treffen:</b> W10 aus der Waffenfertigkeit + GE-Bonus als W6 + Trefferwürfel der Waffe. Treffer ab 15 (Körper) oder 40 (Kopf).</li>
     <li><b>Schaden</b> (nur bei Treffer): W10 aus der Waffenfertigkeit + ST-Bonus als W6 + Schadenswürfel der Waffe.</li></ol>
-    <p><b>Kritischer Treffer:</b> Nach dem Schaden W100 würfeln (2 W10: Zehner und Einer, 00 + 0 = 100). Ist der Wurf kleiner oder gleich dem Krit-Wert (Waffenfertigkeit + Krit-Wert der Waffe), gibt es doppelten Schaden.</p>`)
+    <p><b>Kritischer Treffer:</b> Nach dem Schaden W100 würfeln (2 W10: Zehner und Einer, 00 + 0 = 100). Ist der Wurf kleiner oder gleich dem Krit-Wert (Waffenfertigkeit + Krit-Wert der Waffe), gibt es doppelten Schaden.</p>
+    <p><b>GS-Test:</b> Oben im Kopf auf „GS“ tippen. Gewürfelt wird ein W100 (2 W10). Liegt der Wurf unter oder gleich deiner Geistigen Stabilität, ist der Test geschafft.</p>`)
   +sec("Trefferzone & Kontern",`
     <dl><dt>Kopftreffer</dt><dd>ab 40, doppelter Schaden</dd><dt>Körpertreffer</dt><dd>ab 15, einfacher Schaden</dd></dl>
     <p><b>Erweiterte Trefferzone:</b> Die Athletik des Ziels wird auf die Trefferzone addiert. Der Treffer muss größer sein als dieser Wert.</p>
@@ -1880,6 +1883,10 @@ document.addEventListener("click",e=>{
   if(b.dataset.sbopen!=null){const sk=cur.skills[+b.dataset.sbopen];const id=sk&&sbListIds()[sk.name];
     if(id){const {ch}=sbParse();ch.pointsListSelect=id;ch.activeList=id;ch.__openAdmin=1;zSaveCh(ch);}
     sbCharId=null;ovOpen("book");return;}
+  if(b.id==="rollgs"){const gs=num(cur.gs);
+    if(!String(cur.gs||"").trim()){tab="bogen";renderAll();const f=$("#f-gs");if(f){window.scrollTo(0,0);f.focus();}showMsg("Trag zuerst deine Geistige Stabilität (GS) ein.");return;}
+    rollPool(`GS-Test (Wert ${gs})`,{groups:[{label:"Zehner",n:1,s:10,tens:true},{label:"Einer",n:1,s:10,ones:true}],flat:0,d100:true},
+      t=>t<=gs?{tag:`Geschafft: ${t} ≤ ${gs}`,cls:"ok"}:{tag:`Nicht geschafft: ${t} > ${gs}`,cls:"bad"});return;}
   if(b.id==="golp"||b.id==="gomp"){const k=b.id==="golp"?"lp":"mp";tab="kampf";renderAll();
     const el=document.querySelector('[data-poolcard="'+k+'"]'),hd=document.querySelector("header");
     if(el){const y=el.getBoundingClientRect().top+window.scrollY-(hd?hd.offsetHeight:0)-10;window.scrollTo({top:Math.max(0,y),behavior:calmMotion()?"auto":"smooth"});
