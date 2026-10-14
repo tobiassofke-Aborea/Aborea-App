@@ -14,4 +14,5 @@ Die Daten liegen nur auf dem Handy. Charaktere zieht man mit „Charakter als Te
 
 - `quelle/aborea-charakterbogen.html`: die App selbst
 - `tools/build.py`: erzeugt daraus `index.html`, `manifest.webmanifest` und `sw.js` (offline-fähig)
+- `tools/icons.py`: erzeugt alle App-Symbole aus dem Artwork in `android-assets/quelle` (Würfel als Hintergrund, A als Vordergrund und Monochrom-Ebene)
 - `.github/workflows/android.yml`: baut bei jeder Änderung die APK und legt sie unter Releases ab
