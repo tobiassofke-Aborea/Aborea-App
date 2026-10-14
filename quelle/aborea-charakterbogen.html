@@ -92,10 +92,14 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .skill .det > div{display:grid;gap:3px}
 .skill .det input[type=number]{width:62px}
 .skill .det .kost{width:84px}
-.sk2{grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 8px;padding:6px 0}
+.sk2{grid-template-columns:minmax(0,1fr) auto auto auto auto;gap:4px 8px;padding:6px 0}
 .sk2 .skmain{display:grid;gap:1px;min-width:0;background:none;border:0;padding:6px 0;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
 .sknm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sknm.ph{color:var(--muted);font-weight:500}
-.sknm .sltag{margin-left:6px}
+.skline{display:flex;align-items:center;gap:8px;min-width:0}.skline .sknm{min-width:0}
+.skrk{display:grid;justify-items:center;min-width:40px;padding:3px 6px;border-radius:9px;background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent);line-height:1}
+.skrk i{font-style:normal;font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.skrk b{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.skrk.r0{background:var(--bg);color:var(--muted)}
 .skmeta{font-size:.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sk2 .die{width:40px;height:40px}
 .sk2 .slbook{width:34px;height:34px}
@@ -825,9 +829,10 @@ let skOpen=-1;
 function skillRow(s,i){
   const spell=s.kind==="spell",open=skOpen===i,tot=skillTotal(s),c=skillCost(s);
   const nm=s.name||"",shown=spell?(nm||"Spruchliste wählen"):(nm||s.placeholder||"Eigene Fertigkeit");
-  const meta=[`Rang ${num(s.rang)}`,num(s.boni)?`Boni ${num(s.boni)>0?"+":""}${num(s.boni)}`:"",c?`Kosten ${esc(c)}`:""].filter(Boolean).join(" · ");
+  const meta=[num(s.boni)?`Boni ${num(s.boni)>0?"+":""}${num(s.boni)}`:"",c?`Kosten ${esc(c)}`:""].filter(Boolean).join(" · ");
   return `<div class="skill sk2${open?" open":""}${tot?"":" zero"}">
-    <button class="skmain" data-skopen="${i}" aria-expanded="${open}"><span class="sknm${nm||s.fixed?"":" ph"}">${esc(shown)}${spell&&!nm?'<span class="sltag">Spruchliste</span>':""}</span><span class="skmeta">${meta}</span></button>
+    <button class="skmain" data-skopen="${i}" aria-expanded="${open}"><span class="sknm${nm||s.fixed?"":" ph"}">${esc(shown)}</span>${meta?`<span class="skmeta">${meta}</span>`:""}</button>
+    <span class="skrk${num(s.rang)?"":" r0"}" aria-label="Rang ${num(s.rang)}"><i>Rang</i><b>${num(s.rang)}</b></span>
     ${spell&&nm?`<button class="slbook" data-sbopen="${i}" aria-label="${esc(nm)} in der Zauberbibliothek öffnen">${ICON_BOOK}</button>`:""}
     <span class="tot" id="s-${i}-t">${tot}</span>
     <button class="die" data-roll="skill:${i}" aria-label="${esc(shown)} würfeln">${DIE}</button>
