@@ -66,8 +66,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .qrow{display:flex;gap:6px;flex-wrap:wrap}
 .qrow .btn{flex:1;min-width:52px;font-variant-numeric:tabular-nums}
 .maxrow{display:flex;align-items:center;gap:6px}
-.maxrow input{width:56px}
-.ptbig{width:46px;height:40px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:1.05rem;cursor:pointer;display:grid;place-items:center;padding:0}
+.maxrow input{width:72px}
 .cright{margin-left:auto;display:flex;gap:8px;align-items:center}
 .cright .armor{margin-left:0}
 /* dice */
@@ -466,7 +465,7 @@ textarea.wnote{min-height:64px;font-family:var(--body);font-size:.95rem}
 #hitnow{background:var(--ok);border-color:var(--ok);color:var(--card)}
 .armor.drain{border-color:var(--lp);color:var(--lp);box-shadow:0 0 0 3px color-mix(in srgb,var(--lp) 20%,transparent)}
 .armor.drain b{color:var(--lp)}
-.pcomp{display:flex;gap:10px;align-items:center;padding:10px 12px}
+.pcomp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px 0}
 .pcmain{flex:1;min-width:0;display:grid;gap:8px;position:relative}
 .crow .cl{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .crow{display:grid;gap:4px;min-width:0}
@@ -483,6 +482,9 @@ textarea.wnote{min-height:64px;font-family:var(--body);font-size:.95rem}
 .crow.lp .cknob{color:var(--lp)} .crow.mp .cknob{color:var(--mp)}
 .cbar.drag .cknob{width:28px;height:28px;margin:-14px 0 0 -14px}
 .cbar:focus-visible .pbar{box-shadow:0 0 0 2px var(--accent)}
+.pfold{grid-column:1/-1;flex:1 0 100%;display:flex;align-items:center;justify-content:center;height:26px;margin:-4px -14px -14px;padding:0;border:0;border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent);border-radius:0 0 10px 10px;background:transparent;color:var(--muted);opacity:.7;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pfold:active{background:color-mix(in srgb,var(--line) 35%,transparent);opacity:1}
+.pcomp .pfold{margin:0 -12px;width:calc(100% + 24px);flex-basis:calc(100% + 24px)}
 .pcomp .hitbox{top:calc(100% + 6px);bottom:auto}
 .pcomp.mp{padding-right:12px}
 .ptl{background:none;border:0;padding:4px 0;margin:-4px 0;cursor:pointer;font-family:inherit;display:inline-flex;gap:6px;align-items:center}
@@ -642,7 +644,7 @@ function pool(key,label){
   const minus=key==="lp"?"Schaden":"Mana",plus=key==="lp"?"Heilung":"Mana";
   return `<div class="card pool ${key}" data-poolcard="${key}"><div class="pmain">
     <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button>
-      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}"><button class="ptbig" data-ptog="${key}" aria-label="${label} einklappen">▴</button></span></div>
+      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}"></span></div>
     <div class="valrow"><div class="val" id="${key}-val">${num(p.cur)}<small> / ${num(p.max)}</small></div><span class="delta" id="${key}-delta"></span>${key==="lp"?armorBtnHtml():""}</div>
     ${key==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}
     <div class="pbar"><i id="${key}-bar" style="width:${pct}%"></i></div>
@@ -657,6 +659,7 @@ function pool(key,label){
       <button class="btn small" data-full="${key}">Voll</button>
     </div></div>
     <div class="wheel" id="${key}-wheel" data-wheel="${key}" role="slider" tabindex="0" aria-label="${label} am Rad drehen" aria-valuemin="${key==="lp"?-num(p.max):0}" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="drum" id="${key}-drum"></div><div class="band"></div></div>
+    <button class="pfold" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen"><svg viewBox="0 0 24 12" width="22" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7-6 7 6"/></svg></button>
   </div>`;
 }
 function combat(key,title,labels){
@@ -1430,11 +1433,11 @@ let poolsCompact={lp:false,mp:false};try{const v=localStorage.getItem("aborea-co
 function hasMana(){return num(cur.mp.max)>0;}
 function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b></button>`;}
 function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
-  return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}</button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small></span><span class="delta" id="${k}-delta"></span><span class="cright">${k==="lp"?armorBtnHtml():""}<button class="ptbig" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">▾</button></span></div>
+  return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}</button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small></span><span class="delta" id="${k}-delta"></span><span class="cright">${k==="lp"?armorBtnHtml():""}</span></div>
     <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
 function poolsHtml(){
   const one=k=>poolsCompact[k]
-    ?`<div class="card pcomp ${k}" data-poolcard="${k}"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div></div>`
+    ?`<div class="card pcomp ${k}" data-poolcard="${k}"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div><button class="pfold" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen"><svg viewBox="0 0 24 12" width="22" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l7 6 7-6"/></svg></button></div>`
     :pool(k,k==="lp"?"Lebenspunkte":"Manapunkte");
   return one("lp")+(hasMana()?`<div style="height:${poolsCompact.lp&&poolsCompact.mp?8:12}px"></div>`+one("mp"):"");
 }
