@@ -42,8 +42,8 @@ button,input,textarea,select{font:inherit;color:inherit}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 .hbar{max-width:560px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
 .charbtn{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:0;text-align:left;cursor:pointer}
-.charbtn .n{font-family:var(--display);font-size:1.45rem;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.charbtn .s{font-size:.85rem;color:var(--muted)}
+.charbtn .n{font-family:var(--display);font-size:clamp(1.2rem,5.4vw,1.45rem);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.charbtn .s{font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .mini{display:flex;gap:6px;font-variant-numeric:tabular-nums;font-weight:700;font-size:.95rem}
 .mini span{padding:3px 8px;border-radius:6px}
 .mini .l{background:var(--lp-soft);color:var(--lp)} .mini .m{background:var(--mp-soft);color:var(--mp)}
@@ -635,6 +635,25 @@ textarea.wnote{min-height:64px;font-family:var(--body);font-size:.95rem}
 .mini .lpmp.solo{grid-template-rows:1fr}
 .mini .gs{display:grid;place-items:center;align-content:center;gap:1px;height:48px;min-width:44px;padding:0 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}.mini .gs small{font-size:.62rem;font-weight:700;letter-spacing:.08em;color:var(--muted);line-height:1}.mini .gs b{font-size:1rem;line-height:1.05;font-variant-numeric:tabular-nums}
 #roll .tag.ok{background:#3d6b35;color:#fff}#roll .tag.bad{background:#a3302a;color:#fff}
+
+/* Kopf: GS, LP/MP und Menü als ein zusammenhängender Block */
+.hp{display:flex;align-items:stretch;height:46px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden;flex:0 0 auto}
+.hp>*+*{border-left:1px solid var(--line)}
+.hp button{font:inherit;cursor:pointer;color:inherit}
+.hp .gs,.hp .lpmp button{border:0;border-radius:0;background:none;height:auto;min-width:0}
+.hp small{font-size:.6rem;font-weight:700;letter-spacing:.06em;color:var(--muted);line-height:1}
+.hp b{font-weight:700;font-variant-numeric:tabular-nums;line-height:1.05}
+.hp .gs{display:grid;align-content:center;justify-items:center;gap:2px;padding:0 9px}
+.hp .gs b{font-size:1rem}
+.hp .lpmp{display:grid;grid-template-rows:1fr 1fr;gap:0;height:auto;padding:0;border-radius:0}
+.hp .lpmp button{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:0 9px;font-size:.95rem}
+.hp .lpmp .l b{color:var(--lp)}.hp .lpmp .m b{color:var(--mp)}
+.hp .lpmp .m{border-top:1px solid var(--line)}
+.hp .lpmp.solo{grid-template-rows:1fr}
+.hp .lpmp.solo button{flex-direction:column;justify-content:center;align-items:center;gap:2px}
+.hp .lpmp.solo b{font-size:1rem}
+.hp .a.sw{height:auto;min-width:48px;padding:0 9px;border:0;border-radius:0;background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.hp .a.sw svg{width:20px;height:20px}
 </style>
 
 <header><div class="hbar">
@@ -782,8 +801,8 @@ function iniBase(){return iniParts().reduce((a,x)=>a+x[1],0);}
 function renderHeader(){
   if(!cur){$("#hname").textContent="Aborea";$("#hsub").textContent="Kein Charakter";$("#hmini").innerHTML="";return;}
   $("#hname").textContent=cur.name||"Ohne Namen";
-  $("#hsub").textContent=[cur.volk,cur.beruf,"Level "+(cur.level||1)].filter(Boolean).join(" · ");
-  $("#hmini").innerHTML=`<button class="gs" id="rollgs" aria-label="Geistige Stabilität ${esc(cur.gs||"nicht eingetragen")}, tippen für GS-Test (W100)"><small>GS</small><b>${esc(String(cur.gs||"").trim()||"–")}</b></button><span class="lpmp${hasMana()?"":" solo"}"><button class="l" id="golp" aria-label="Lebenspunkte ${num(cur.lp.cur)}, zum Kampf">${num(cur.lp.cur)}</button>${hasMana()?`<button class="m" id="gomp" aria-label="Manapunkte ${num(cur.mp.cur)}, zum Kampf">${num(cur.mp.cur)}</button>`:""}</span><button class="a sw" id="opentable3" aria-label="Menü: ${OV_NAME[ovLast]}. Tippen zum Ausklappen, doppelt tippen zum Öffnen, wischen zum Wechseln" aria-haspopup="menu" aria-expanded="false">${OV_ICON[ovLast]()}<span class="dots">${OV_ORDER.map(k=>`<i class="${k===ovLast?"on":""}"></i>`).join("")}</span></button>`;
+  $("#hsub").textContent=[cur.volk,cur.beruf,"Stufe "+(cur.level||1)].filter(Boolean).join(" · ");
+  $("#hmini").innerHTML=`<div class="hp"><button class="gs" id="rollgs" aria-label="Geistige Stabilität ${esc(cur.gs||"nicht eingetragen")}, tippen für GS-Test (W100)"><small>GS</small><b>${esc(String(cur.gs||"").trim()||"–")}</b></button><span class="lpmp${hasMana()?"":" solo"}"><button class="l" id="golp" aria-label="Lebenspunkte ${num(cur.lp.cur)}, zum Kampf"><small>LP</small><b>${num(cur.lp.cur)}</b></button>${hasMana()?`<button class="m" id="gomp" aria-label="Manapunkte ${num(cur.mp.cur)}, zum Kampf"><small>MP</small><b>${num(cur.mp.cur)}</b></button>`:""}</span><button class="a sw" id="opentable3" aria-label="Menü: ${OV_NAME[ovLast]}. Tippen zum Ausklappen, doppelt tippen zum Öffnen, wischen zum Wechseln" aria-haspopup="menu" aria-expanded="false">${OV_ICON[ovLast]()}<span class="dots">${OV_ORDER.map(k=>`<i class="${k===ovLast?"on":""}"></i>`).join("")}</span></button></div>`;
 }
 function pool(key,label){
   const p=cur[key],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
