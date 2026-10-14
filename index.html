@@ -439,7 +439,9 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .slsel{font-weight:700}
 .skill.isspell .nm::before{content:"Spruchliste";display:block;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mp);font-weight:700;margin-bottom:2px}
 .sltag{font-size:.7rem;font-weight:700;color:var(--mp);background:var(--mp-soft);padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:1px}
-.srow{grid-template-columns:1fr auto}
+.srow{grid-template-columns:minmax(0,1fr) auto auto;align-items:center}
+.kedit{display:grid;gap:2px}.kedit .lab{font-size:.62rem}.kedit .kost{width:64px;min-height:36px;text-align:center}
+.kostro{display:grid;gap:3px;margin-left:auto;text-align:right}.kostro b{min-height:38px;display:flex;align-items:center;justify-content:flex-end;font-variant-numeric:tabular-nums;color:var(--muted)}
 .srow .mv{display:flex;gap:6px}
 .srow .mv .btn{min-width:40px;padding:0 8px}
 .zinfo{border-top:1px dashed var(--line);padding-top:6px}
@@ -755,8 +757,9 @@ function skillNameCell(s,i){
 }
 function renderSkills(){
   const n=cur.skills.length;
-  return `<h2>Fertigkeiten</h2><div class="card${skillEdit?" sedit":""}">${skillEdit?`<p class="hint" style="margin:0 0 6px">Reihenfolge ändern mit ↑ ↓. Eigene Zeilen kannst du hier auch entfernen.</p>`:""}${cur.skills.map((s,i)=>skillEdit?`<div class="skill srow">
+  return `<h2>Fertigkeiten</h2><div class="card${skillEdit?" sedit":""}">${skillEdit?`<p class="hint" style="margin:0 0 6px">Reihenfolge ändern mit ↑ ↓, eigene Zeilen entfernen mit ✕. Die Kosten kommen automatisch aus dem Beruf. Hier kannst du sie für einzelne Fertigkeiten anders eintragen, leer heißt automatisch.</p>`:""}${cur.skills.map((s,i)=>skillEdit?`<div class="skill srow">
     <div class="nm">${esc(s.name||(s.kind==="spell"?"Spruchliste (leer)":s.placeholder||"Eigene Fertigkeit"))}${s.kind==="spell"?' <span class="sltag">Spruchliste</span>':""}</div>
+    <label class="kedit"><span class="lab">Kosten</span><input class="kost" id="s-${i}-k" data-k="skills.${i}.kosten" value="${esc(s.kosten)}" placeholder="${esc(skillCostAuto(s)||"–")}" aria-label="Kosten ${esc(s.name||"")}"></label>
     <div class="mv"><button class="btn small" data-mv="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="btn small" data-mv="${i}" data-d="1" ${i===n-1?"disabled":""} aria-label="Nach unten">↓</button>
     ${s.fixed?"":`<button class="btn small danger" data-sdel="${i}" aria-label="Entfernen">✕</button>`}</div></div>`:`<div class="skill${s.kind==="spell"?" isspell":""}">
     <div class="nm">${skillNameCell(s,i)}</div>
@@ -765,7 +768,7 @@ function renderSkills(){
     <div class="det">
       <div><span class="lab">Rang</span><div class="step"><button data-step="skills.${i}.rang" data-d="-1" aria-label="Rang senken">−</button><input type="number" inputmode="numeric" id="s-${i}-r" data-k="skills.${i}.rang" data-num value="${esc(s.rang)}"><button data-step="skills.${i}.rang" data-d="1" aria-label="Rang erhöhen">+</button></div></div>
       <div><span class="lab">Boni</span><input type="number" inputmode="numeric" id="s-${i}-b" data-k="skills.${i}.boni" data-num value="${esc(s.boni)}"></div>
-      <div><span class="lab">Kosten</span><input class="kost" id="s-${i}-k" data-k="skills.${i}.kosten" value="${esc(s.kosten)}"></div>
+      ${skillCost(s)?`<div class="kostro"><span class="lab">Kosten</span><b>${esc(skillCost(s))}</b></div>`:""}
     </div></div>`).join("")}
     <div class="sfoot">${skillEdit?`<button class="btn small pri" id="skilldone">Fertig</button>`:`<button class="btn small" id="addskill">+ Fertigkeit hinzufügen</button><button class="btn small" id="addspell">+ Spruchliste hinzufügen</button>`}
       <span class="ovspace"></span><button class="gear${skillEdit?" on":""}" id="skillgear" aria-label="Reihenfolge ändern" aria-pressed="${skillEdit}">${ICON_GEAR}</button></div>
@@ -2283,6 +2286,15 @@ const costOf=(beruf,skill)=>{const b=BERUF[beruf];return b?b.k[CW_SKILLS.indexOf
 const costParts=s=>String(s||"").split("/").map(x=>num(x)).filter(x=>x>0);
 
 /* Werte aus Volk, Beruf, Attributen und Fertigkeiten neu berechnen (Erstellung und Stufenaufstieg) */
+function skillCostAuto(s){
+  if(!cur||!BERUF[cur.beruf])return "";
+  const n=String(s.name||""),ph=String(s.placeholder||"");
+  if(s.kind==="spell")return costOf(cur.beruf,"Spruchlisten");
+  if(CW_SKILLS.includes(n))return costOf(cur.beruf,n);
+  for(const g of ["Waffen","Wissen","Kunst"])if(n.startsWith(g)||ph===g)return costOf(cur.beruf,g);
+  return "";
+}
+const skillCost=s=>String(s.kosten||"").trim()||skillCostAuto(s);
 function recalcChar(c){
   const B=BERUF[c.beruf],lvl=Math.max(1,num(c.level)||1),b=a=>num(c.attr[a]&&c.attr[a].b),out=[];
   const rank=n=>{const s=(c.skills||[]).find(x=>x.name===n);return s?num(s.rang):0;};
@@ -2370,11 +2382,11 @@ function cwFinish(){
   Object.assign(c,{volk:cw.volk,beruf:cw.beruf,details:cw.details,level:1});
   ATTR.forEach(a=>{const f=cwFinal(a);c.attr[a]={w:String(f),b:attrBonus(f)};});
   const row=n=>cw.rows.find(r=>r.skill===n);
-  const fixed=FIXED.map(n=>{const r=row(n);return {name:n,fixed:true,rang:r?r.n:0,boni:0,kosten:costOf(cw.beruf,n)};});
+  const fixed=FIXED.map(n=>{const r=row(n);return {name:n,fixed:true,rang:r?r.n:0,boni:0,kosten:""};});
   const extra=[];
-  cw.rows.filter(r=>r.type==="spell").forEach(r=>extra.push({name:r.spec,placeholder:"Spruchliste",kind:"spell",fixed:false,rang:r.n,boni:0,kosten:costOf(cw.beruf,"Spruchlisten")}));
-  cw.rows.filter(r=>r.type==="weapon").forEach(r=>extra.push({name:r.spec?`Waffen: ${r.spec}`:"",placeholder:"Waffen",fixed:false,rang:r.n,boni:0,kosten:costOf(cw.beruf,"Waffen")}));
-  ["Kunst","Wissen"].forEach(n=>{const r=row(n);extra.push({name:r.spec?`${n}: ${r.spec}`:n,placeholder:n,fixed:false,rang:r.n,boni:0,kosten:costOf(cw.beruf,n)});});
+  cw.rows.filter(r=>r.type==="spell").forEach(r=>extra.push({name:r.spec,placeholder:"Spruchliste",kind:"spell",fixed:false,rang:r.n,boni:0,kosten:""}));
+  cw.rows.filter(r=>r.type==="weapon").forEach(r=>extra.push({name:r.spec?`Waffen: ${r.spec}`:"",placeholder:"Waffen",fixed:false,rang:r.n,boni:0,kosten:""}));
+  ["Kunst","Wissen"].forEach(n=>{const r=row(n);extra.push({name:r.spec?`${n}: ${r.spec}`:n,placeholder:n,fixed:false,rang:r.n,boni:0,kosten:""});});
   c.skills=fixed.concat(extra,[{name:"",placeholder:"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""}]);
   c.lp={cur:0,max:0};c.mp={cur:0,max:0};recalcChar(c);c.lp.cur=c.lp.max;c.mp.cur=c.mp.max;
   c.ausbildung=Math.max(0,cwAPleft());
