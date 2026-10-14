@@ -1884,7 +1884,7 @@ function tResize(){
   tb.ctx.setTransform(dpr,0,0,dpr,0,0);
   tb.R=Math.max(19,Math.min(30,tb.W/13));
   if(!tb.grab)tCupHome();
-  tb.dice.forEach(d=>{d.x=Math.min(tb.W-tb.R,Math.max(tb.R,d.x));d.y=Math.min(tb.H-tb.R,Math.max(tb.R,d.y));});
+  tb.dice.forEach(d=>{d.x=Math.min(tb.W-tb.R,Math.max(tb.R,d.x));d.y=Math.min(tb.H-tb.R,Math.max(tb.R,d.y));tAvoidCup(d,false);});
   tDraw();
 }
 function tCupHome(){tb.cx=tb.W/2;tb.cy=tb.H-58;tCupPos();}
@@ -2026,12 +2026,24 @@ function tThrow(x,y,vx,vy){
   $("#fhint").hidden=true;$("#tsum").textContent="…";$("#tsum").classList.remove("pop");$("#tdet").textContent="Rollt …";
   tb.shown=false;tLoop();
 }
+/* Würfel dürfen nie unter dem Becher (Ruheplatz unten Mitte) liegen bleiben */
+function tAvoidCup(d,bounce){
+  const ox=tb.W/2,oy=tb.H-58,rad=46+tb.R*1.25;
+  let dx=d.x-ox,dy=d.y-oy,dist=Math.hypot(dx,dy);
+  if(dist>=rad)return false;
+  let nx,ny;
+  if(dy>0||dist<1){nx=dx>=0?1:-1;ny=0;d.x=ox+nx*rad;}            // unterhalb der Mitte: zur Seite raus
+  else{nx=dx/dist;ny=dy/dist;d.x=ox+nx*rad;d.y=oy+ny*rad;}
+  if(bounce){const vn=d.vx*nx+d.vy*ny;if(vn<0){d.vx-=1.5*vn*nx;d.vy-=1.5*vn*ny;}}
+  d.x=Math.min(tb.W-tb.R,Math.max(tb.R,d.x));d.y=Math.min(tb.H-tb.R,Math.max(tb.R,d.y));
+  return true;
+}
 function tLoop(){if(!tb.raf){tb.last=performance.now();tb.raf=requestAnimationFrame(tTick);}}
 function tTick(now){
   tb.raf=0;
   let dt=Math.min(1/30,(now-tb.last)/1000);tb.last=now;
   const calm=calmMotion();
-  if(calm){tb.dice.forEach(d=>{d.vx=d.vy=d.va=d.vz=0;d.z=0;d.done=true;});}
+  if(calm){tb.dice.forEach((d,i)=>{d.vx=d.vy=d.va=d.vz=0;d.z=0;d.done=true;if(tAvoidCup(d,false)){d.y=Math.max(tb.R,tb.H-58-44-tb.R*1.2-(i%3)*tb.R*2.1);d.x=tb.R+((i*2.3*tb.R)%(tb.W-2*tb.R));}});}
   else{const steps=2;for(let i=0;i<steps;i++)tStep(dt/steps);}
   tb.dice.forEach(d=>{if(d.pop>0)d.pop=Math.max(0,d.pop-dt*2.5);});
   tDraw();
@@ -2058,6 +2070,7 @@ function tStep(dt){
     const wall=(v)=>{const m=Math.abs(v);if(m>70){clack(Math.min(.6,m/1600),toneOf(d.s));d.va+=(Math.random()-.5)*m*.02;}return m*.55;};
     if(d.x<R){d.x=R;d.vx=wall(d.vx);}else if(d.x>W-R){d.x=W-R;d.vx=-wall(d.vx);}
     if(d.y<R){d.y=R;d.vy=wall(d.vy);}else if(d.y>H-R){d.y=H-R;d.vy=-wall(d.vy);}
+    if(!tb.grab&&d.z<R*1.5&&tAvoidCup(d,true)){d.rest=0;d.done=false;}
     sp=Math.hypot(d.vx,d.vy);
     d.trav+=(sp+Math.abs(d.va)*R*.6+Math.abs(d.vz)*.3)*dt;
     if(d.trav>R*.85&&(sp>35||d.z>0)){d.face=1+Math.floor(Math.random()*d.s);d.trav=0;}
