@@ -99,7 +99,6 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .sk2{grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px 8px;padding:6px 0}
 .sk2 .skmain{display:grid;gap:1px;min-width:0;background:none;border:0;padding:6px 0;text-align:left;color:var(--ink);font:inherit;cursor:pointer}
 .sknm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sknm.ph{color:var(--muted);font-weight:500}
-.skline{display:flex;align-items:center;gap:8px;min-width:0}.skline .sknm{min-width:0}
 .skrk{display:grid;justify-items:center;min-width:40px;padding:3px 6px;border-radius:9px;background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent);line-height:1}
 .skrk i{font-style:normal;font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .skrk b{font-size:1.15rem;font-variant-numeric:tabular-nums}
@@ -121,7 +120,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .kw{display:flex;align-items:center;gap:10px;min-height:42px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--card)}
 .kw b{font-size:1.15rem;font-variant-numeric:tabular-nums}
 .kw span{font-size:.85rem;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kparts{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px;align-items:end}
+.kparts{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px;align-items:end}.kparts>*{min-width:0}.kparts .kw input{width:100%;min-width:0}
 .comb .head .tot small{font-size:.8rem;color:var(--muted);font-weight:600}
 .initog{background:none;border:0;padding:0;text-align:left;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .initog i{font-style:normal;font-family:var(--body);font-size:.75rem;color:var(--muted)}
@@ -229,28 +228,22 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .acchead i{font-style:normal;color:var(--muted);font-size:.8rem;width:14px;text-align:center}
 .accrow.open .acchead{background:color-mix(in srgb,var(--accent) 6%,var(--card))}
 .accbody{padding:4px 14px 16px;display:grid;gap:4px}
+.chev{display:inline-grid;place-items:center;font-style:normal;color:var(--muted);transition:transform .18s}.chev.up{transform:rotate(180deg)}.chev.side{transform:rotate(-90deg)}
+.chip svg{width:14px;height:14px;vertical-align:-2px}
 .wtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.lvlbox{display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--accent) 7%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:12px;padding:10px 12px}
-.lvlnum{display:grid;justify-items:center;min-width:56px}.lvlnum b{font-family:var(--display);font-size:2.2rem;line-height:1;color:var(--accent)}
 .lvup{flex:1;display:flex;align-items:center;gap:10px;border:0;border-radius:10px;padding:10px 14px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));color:var(--card);font:inherit;cursor:pointer;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .lvup span{display:grid}.lvup b{font-size:1.05rem}.lvup small{opacity:.85;font-size:.78rem}
 .lvup:active{transform:scale(.98)}
 .grid2>.full{grid-column:1/-1}
-.armfold{grid-column:1/-1}
 .maxbox{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}.maxbox>div{display:grid;gap:2px}.maxbox b{font-size:1.6rem;font-variant-numeric:tabular-nums}.maxbox .lpc{color:var(--lp)}.maxbox .mpc{color:var(--mp)}.maxbox .armtog{grid-column:1/-1}
 .armtog{width:100%;display:flex;align-items:center;gap:8px;background:none;border:0;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:8px 2px;color:var(--muted);font:inherit;font-size:.85rem;cursor:pointer;text-align:left}
 .armtog span{flex:1}.armtog b{color:var(--ink);font-variant-numeric:tabular-nums}.armtog i{font-style:normal;font-size:.75rem}
 .armtot{display:flex;align-items:baseline;gap:8px;min-height:44px}.armtot b{font-size:1.5rem;font-variant-numeric:tabular-nums}.armtot small{color:var(--muted);font-size:.8rem}
-.kwhead{display:flex;align-items:center;gap:8px;margin:22px 0 8px}
-.kwtog{flex:1;display:flex;align-items:baseline;gap:8px;background:none;border:0;padding:4px 0;color:var(--ink);cursor:pointer;text-align:left;font:inherit}
-.kwtog h2{margin:0}.kwtog i{font-style:normal;font-size:.8rem;color:var(--muted)}
-.kwsum{margin-left:auto;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
 .kw input{width:64px;min-height:34px;padding:4px}
-.gearmini{width:34px;height:34px;padding:0;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--muted);opacity:.6;display:grid;place-items:center;cursor:pointer}
+.gearmini{flex:0 0 auto;width:36px;height:36px;padding:0;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--muted);opacity:.6;display:grid;place-items:center;cursor:pointer}
 .gearmini.on{opacity:1;border-style:solid;border-color:var(--accent);color:var(--accent)}
 input.ro{background:transparent;border-color:transparent;color:var(--muted);pointer-events:none}
-.lvbtns,.note.full{grid-column:1/-1}
-.lvbtns{display:flex;flex-wrap:wrap;gap:8px}
+.note.full{grid-column:1/-1}
 .btn.ghost{background:transparent;color:var(--muted);border-style:dashed}.btn.ghost.warn{color:var(--bad);border-color:var(--bad);border-style:solid}
 #cw{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 #cw .tbar,#cw .cwsteps,#cw .cwbody>*,#cw .cwfoot,#cw .cwmsg{max-width:720px;width:calc(100% - 32px);margin-inline:auto}
@@ -447,8 +440,8 @@ body.kampf .wrap{padding-bottom:250px}
 .mfield{background:#4a3220;min-height:330px;flex:1 0 330px;box-shadow:0 0 0 6px #2d1e10,0 8px 24px rgba(0,0,0,.3)}
 .mfield .fhint{top:14px;bottom:auto;font-size:.88rem;color:rgba(255,244,222,.85);text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .msum{display:grid;gap:4px;padding-block:12px 4px;flex:none}
-.mcounts,.mline{display:flex;gap:6px 14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
-.mcounts i,.mline i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.mcounts{display:flex;gap:6px 14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.mcounts i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
 .mtotal{color:var(--muted);font-size:.9rem}
 .mpanel{border-top:1px solid var(--line);padding-block:8px;flex:none}
 .mpanel summary{cursor:pointer;font-weight:700;min-height:36px;display:flex;align-items:center}
@@ -456,7 +449,6 @@ body.kampf .wrap{padding-bottom:250px}
 .mamt .lab{font-size:.6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mrates{line-height:2.4}
 .mrates input{width:64px;display:inline-block;min-height:36px;padding:4px}
-.mcard{display:grid;gap:12px}
 .ovspace{flex:1}
 .tbar{touch-action:pan-y}
 @keyframes slidel{from{transform:translateX(40%);opacity:.3}to{transform:none;opacity:1}}
@@ -500,14 +492,10 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .zcast .step output{min-width:30px;text-align:center;font-weight:700}
 .zcast .btn{flex:1;min-width:180px}
 .sfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
-.gear{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--muted);display:grid;place-items:center;cursor:pointer}
-.gear.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
 .slsel{font-weight:700}
-.skill.isspell .nm::before{content:"Spruchliste";display:block;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mp);font-weight:700;margin-bottom:2px}
 .sltag{font-size:.7rem;font-weight:700;color:var(--mp);background:var(--mp-soft);padding:1px 6px;border-radius:5px;margin-left:4px;vertical-align:1px}
 .srow{grid-template-columns:minmax(0,1fr) auto auto;align-items:center}
 .kedit{display:grid;gap:2px}.kedit .lab{font-size:.62rem}.kedit .kost{width:64px;min-height:36px;text-align:center}
-.kostro{display:grid;gap:3px;margin-left:auto;text-align:right}.kostro b{min-height:38px;display:flex;align-items:center;justify-content:flex-end;font-variant-numeric:tabular-nums;color:var(--muted)}
 .srow .mv{display:flex;gap:6px}
 .srow .mv .btn{min-width:40px;padding:0 8px}
 .zinfo{border-top:1px dashed var(--line);padding-top:6px}
@@ -535,8 +523,6 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .ichips{will-change:transform}
 .ichips.slidel{animation:slidel .26s cubic-bezier(.2,.8,.3,1)} .ichips.slider{animation:slider .26s cubic-bezier(.2,.8,.3,1)}
 .kpages.slidel{animation:slidel .26s cubic-bezier(.2,.8,.3,1)} .kpages.slider{animation:slider .26s cubic-bezier(.2,.8,.3,1)}
-.cbadge{font-size:.75rem;font-weight:700;background:var(--ok);color:var(--card);border-radius:8px;padding:1px 6px;margin-left:4px}
-.chip.on .cbadge{background:var(--card);color:var(--ok)}
 .spinfo{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .spuse{display:flex;align-items:center;gap:8px;text-align:right}
 .spuse b{font-size:1.6rem;font-variant-numeric:tabular-nums}
@@ -659,6 +645,8 @@ const DIE6='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 const ICON_DICE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="7" width="12" height="12" rx="2.5"/><path d="M15 9.5 19 6l2 9-6 4"/><circle cx="7" cy="11" r="1.1" fill="currentColor" stroke="none"/><circle cx="11" cy="15" r="1.1" fill="currentColor" stroke="none"/></svg>';
 const ICON_COIN='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="7" rx="7" ry="3"/><path d="M5 7v4c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 11v4c0 1.7 3.1 3 7 3s7-1.3 7-3v-4"/></svg>';
 const ICON_BOOK='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5c-.8 0-1.5.5-1.5 1.2z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v15h5.5c.8 0 1.5.5 1.5 1.2z"/><path d="M6.5 8h2.5M15 8h2.5"/></svg>';
+const ICON_CHEV='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const chev=up=>`<i class="chev${up?" up":""}" aria-hidden="true">${ICON_CHEV}</i>`;
 const ICON_GEAR='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/><circle cx="12" cy="12" r="6.3"/></svg>';
 const ICON_SWORD='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 3.5H20v5.5L9 20l-5-5z"/><path d="m6.5 12.5 5 5M3 21l2.5-2.5"/></svg>';
 const ICON_BOW='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3c7 2 14 9 16 16"/><path d="M5 3 21 19"/><path d="M15 3h6v6M21 3 11 13"/></svg>';
@@ -767,7 +755,7 @@ function iniParts(){const ws=[cur.kampf.main,cur.kampf.off].filter(i=>i!=null&&c
     ["Rüstungsmalus",num(cur.ruestungMalus),"im Bogen"],["Waffenmalus",ws.reduce((a,w)=>a+num(w.malus),0),ws.length?ws.map(w=>w.name||"Waffe").join(" + "):"keine Waffe"]];}
 let iniOpen=false;try{iniOpen=localStorage.getItem("aborea-iniopen")==="1";}catch(e){}
 function iniHtml(){const last=cur.kampf.iniLast;
-  return `<div class="comb"><div class="head"><button class="t initog" data-initog="1" aria-expanded="${iniOpen}">Initiative<i>${iniOpen?"▴":"▾"}</i></button><span class="tot">${iniBase()} <small>− W6</small></span><button class="die" data-roll="ini" aria-label="Initiative würfeln">${DIE6}</button></div>
+  return `<div class="comb"><div class="head"><button class="t initog" data-initog="1" aria-expanded="${iniOpen}">Initiative${chev(iniOpen)}</button><span class="tot">${iniBase()} <small>− W6</small></span><button class="die" data-roll="ini" aria-label="Initiative würfeln">${DIE6}</button></div>
     ${iniOpen?`<div class="inil">${iniParts().map(([l,v,h],i)=>`<div><span>${l}${h?` <i>${esc(h)}</i>`:""}</span><b>${i?(v<0?"−"+(-v):"+"+v):v}</b></div>`).join("")}</div>`:""}
     ${last!=null?`<p class="note" style="margin:0">Zuletzt gewürfelt: <b>${last}</b></p>`:""}</div>`;}
 function iniBase(){return iniParts().reduce((a,x)=>a+x[1],0);}
@@ -799,7 +787,7 @@ function pool(key,label){
       <button class="btn small" data-full="${key}">Voll</button>
     </div></div>
     <div class="wheel" id="${key}-wheel" data-wheel="${key}" role="slider" tabindex="0" aria-label="${label} am Rad drehen" aria-valuemin="${key==="lp"?-num(p.max):0}" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="drum" id="${key}-drum"></div><div class="band"></div></div>
-    <button class="pfold" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen"><svg viewBox="0 0 24 12" width="22" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7-6 7 6"/></svg></button>
+    <button class="pfold" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${chev(true)}</button>
   </div>`;
 }
 function combat(key,title,labels){
@@ -859,7 +847,7 @@ function renderSkills(){
     <div class="mv"><button class="btn small" data-mv="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="btn small" data-mv="${i}" data-d="1" ${i===n-1?"disabled":""} aria-label="Nach unten">↓</button>
     ${s.fixed?"":`<button class="btn small danger" data-sdel="${i}" aria-label="Entfernen">✕</button>`}</div></div>`:skillRow(s,i)).join("")}
     <div class="sfoot">${skillEdit?`<button class="btn small pri" id="skilldone">Fertig</button>`:`<button class="btn small" id="addskill">+ Fertigkeit hinzufügen</button><button class="btn small" id="addspell">+ Spruchliste hinzufügen</button>`}
-      <span class="ovspace"></span><button class="gear${skillEdit?" on":""}" id="skillgear" aria-label="Reihenfolge ändern" aria-pressed="${skillEdit}">${ICON_GEAR}</button></div>
+      <span class="ovspace"></span><button class="gearmini${skillEdit?" on":""}" id="skillgear" aria-label="Reihenfolge ändern" aria-pressed="${skillEdit}">${ICON_GEAR}</button></div>
   </div>${skillEdit?"":`<p class="note">Antippen zum Bearbeiten. Wert = Rang + Boni, gewürfelt wird W10 + Wert.</p>`}`;
 }
 function moveSkill(i,j){
@@ -895,10 +883,10 @@ function renderKrit(){
     <div class="kparts">
       <div class="fld"><span class="lab">Waffenfertigkeit</span>
         <div class="kw">${k?`${cur.kwManual?`<input type="number" inputmode="numeric" id="krit-0" data-k="krit.0" data-num value="${esc(cur.krit[0])}">`:`<b id="krit-0">${cur.krit[0]}</b>`}<span>${esc(k.w.name||"Waffe")}${sk?" · "+esc(sk.name||sk.placeholder||""):""}${k.off?" (Nebenhand)":""}</span>`:`<b id="krit-0">0</b><span>Keine Waffe angelegt. Im Kampf eine anlegen.</span>`}</div></div>
-      <div class="fld"><span class="lab">Krit-Wert Waffe</span><div class="kw">${cur.kwManual?`<input type="number" inputmode="numeric" id="krit-1" data-k="krit.1" data-num value="${esc(cur.krit[1])}">`:`<b id="krit-1">${cur.krit[1]}</b>`}${k&&!String(k.w.krit||"").trim()?"<span>bei der Waffe nicht eingetragen</span>":""}</div></div>
+      <div class="fld"><span class="lab">Krit Waffe</span><div class="kw">${cur.kwManual?`<input type="number" inputmode="numeric" id="krit-1" data-k="krit.1" data-num value="${esc(cur.krit[1])}">`:`<b id="krit-1">${cur.krit[1]}</b>`}${k&&!String(k.w.krit||"").trim()?"<span>bei der Waffe nicht eingetragen</span>":""}</div></div>
     </div></div>`;
 }
-let armOpen=false,maxOpen=false,bogOpen="";const ownOpen={volk:false,beruf:false};
+let bogOpen="";const ownOpen={volk:false,beruf:false};
 function choiceFld(k,label,opts){const v=String(cur[k]||""),known=opts.includes(v),own=ownOpen[k]||(v&&!known);
   return `<label class="fld"><span class="lab">${label}</span><select id="f-${k}-sel" data-choice="${k}"><option value="" ${!v&&!own?"selected":""}>– wählen –</option>${opts.map(o=>`<option ${o===v?"selected":""}>${esc(o)}</option>`).join("")}<option value="__own" ${own?"selected":""}>Eigene …</option></select>
     ${own?`<input id="f-${k}" data-k="${k}" value="${esc(v)}" placeholder="Eigene Bezeichnung" style="margin-top:6px">`:""}</label>`;}
@@ -914,7 +902,7 @@ function doLevelUp(){const r=levelUp();renderAll();buzz(20);
   lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);}
 document.addEventListener("keydown",e=>{const el=$("#cdlg");if(e.key==="Escape"&&el&&!el.hidden)el.hidden=true;});
 function bogRow(key,title,summary,body){const open=bogOpen===key;
-  return `<div class="accrow${open?" open":""}"><button class="acchead" data-bog="${key}" aria-expanded="${open}"><span class="acct">${title}</span><span class="accs">${summary}</span><i aria-hidden="true">${open?"▴":"▾"}</i></button>${open?`<div class="accbody">${body}</div>`:""}</div>`;}
+  return `<div class="accrow${open?" open":""}"><button class="acchead" data-bog="${key}" aria-expanded="${open}"><span class="acct">${title}</span><span class="accs">${summary}</span>${chev(open)}</button>${open?`<div class="accbody">${body}</div>`:""}</div>`;}
 function renderBogen(){
   armorSync();syncKrit();
   const a=armorOf(),lvl=lvlNow(),apts=num(cur.ausbildung),hasB=!!BERUF[cur.beruf];
@@ -939,7 +927,7 @@ function renderBogen(){
     <div class="grid2" style="margin-top:10px"><label class="fld"><span class="lab">Anpassung (±)</span><input type="number" inputmode="numeric" id="f-armoradj" data-k="armorAdj" data-num value="${esc(cur.armorAdj||0)}"></label>
       ${fld("ruestungMalus","Malus (Ini)",{num:true})}</div>
     <div class="armtot" style="margin-top:6px"><b id="armtot">${num(cur.ruestung)}</b><small id="armsub">${a?`${a[1]} ${num(cur.armorAdj)<0?"−":"+"} ${Math.abs(num(cur.armorAdj))}${a[3]?` · ${a[3]} kg`:""}`:"Rüstungswert"}</small></div>`;
-  const werte=`<div class="wtop"><span class="hint">${cur.kwManual?"Von Hand eingetragen":"Automatisch berechnet"}</span><button class="gearmini${cur.kwManual?" on":""}" data-kwman="1" aria-pressed="${!!cur.kwManual}" title="${cur.kwManual?"Wieder automatisch berechnen":"Werte von Hand ändern"}" aria-label="${cur.kwManual?"Kampfwerte wieder automatisch berechnen":"Kampfwerte von Hand ändern"}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
+  const werte=`<div class="wtop"><span class="hint">${cur.kwManual?"Von Hand eingetragen":"Automatisch berechnet"}</span><button class="gearmini${cur.kwManual?" on":""}" data-kwman="1" aria-pressed="${!!cur.kwManual}" title="${cur.kwManual?"Wieder automatisch berechnen":"Werte von Hand ändern"}" aria-label="${cur.kwManual?"Kampfwerte wieder automatisch berechnen":"Kampfwerte von Hand ändern"}">${ICON_GEAR}</button></div>
     ${combat("ap","Aktionspunkte",["Basis","Höchster Attr.-Bonus","Athletik"])}
     ${renderKrit()}
     <div class="comb"><div class="head"><span class="t">Trefferzone</span><span class="tot">${esc(tzText())}</span></div>
@@ -954,7 +942,7 @@ function renderBogen(){
     ${bogRow("herkunft","Volk & Beruf",esc([cur.volk||"–",cur.beruf||"–"].join(" · ")),herkunft)}
     ${bogRow("ruestung","Rüstung",`${esc(a?a[0]:"Eigene")} · ${num(cur.ruestung)}`,ruest)}
     ${bogRow("werte","Kampfwerte & Boni",`AP ${sum(cur.ap)} · Krit ${sum(cur.krit)}`,werte)}
-    <div class="accrow"><button class="acchead" id="openmoney"><span class="acct">Geldsack</span><span class="accs">${COINS.map(c=>`${fmtN(p[c.k])} ${c.short}`).join(" · ")}</span><i aria-hidden="true">›</i></button></div>
+    <div class="accrow"><button class="acchead" id="openmoney"><span class="acct">Geldsack</span><span class="accs">${COINS.map(c=>`${fmtN(p[c.k])} ${c.short}`).join(" · ")}</span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i></button></div>
     ${bogRow("notizen","Details & Notizen",esc(String(cur.details||cur.notes||"").split("\n")[0].slice(0,32)||"–"),notizen)}
   </div>
   <h2>Charaktere</h2><div class="card">
@@ -1118,15 +1106,6 @@ function snap(label){
   if(!cur)return;
   undoStack.push({label,cid:cur.id,state:JSON.stringify({kampf:cur.kampf,lp:cur.lp,mp:cur.mp}),atk:JSON.stringify(atk),def,spell});
   if(undoStack.length>30)undoStack.shift();
-}
-function undo(){
-  const u=undoStack.pop();if(!u)return;
-  if(!cur||u.cid!==cur.id){undoStack=[];renderAll();return;}
-  runId++;anim.forEach(clearInterval);anim=[];$("#roll").innerHTML="";
-  clearTimeout(hit.timer);hit.pend=0;{const bx=$("#lp-hit");if(bx)bx.hidden=true;}
-  const st=JSON.parse(u.state);cur.kampf=st.kampf;cur.lp=st.lp;cur.mp=st.mp;
-  atk=JSON.parse(u.atk);def=u.def;spell=u.spell;
-  queueSave(cur);renderAll();showMsg("Rückgängig: "+u.label);
 }
 const UNDO_LABEL={sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
@@ -1590,7 +1569,7 @@ let kpage="angriff",kSlide="";try{const v=localStorage.getItem("aborea-kpage");i
 function kpHead(){
   const r=num(cur.kampf.defRes),pages=KPAGES;
   return `<div class="zhd"><h2>${(KPAGES.find(k=>k[0]===kpage)||KPAGES[0])[1]}</h2><div class="zdots">${pages.map(([k,t])=>`<button data-kpage="${k}" class="${k===kpage?"on":""}" aria-label="${t}"></button>`).join("")}</div></div>
-  <div class="zchips kchips ichips${kSlide?" "+kSlide:""}" id="kpchips" data-for="kpages">${pages.map(([k,t])=>`<button class="chip${k===kpage?" on":""}" ${k==="spezial"?'data-spmenu="1"':`data-kpage="${k}"`}>${k==="spezial"?`<span>Spezial ▾</span><small>${curSpArt(curWeapon())}</small>`:`<span>${t}</span>`}${k==="verteidigen"&&r?`<small class="cb">${r} bereit</small>`:""}${k==="spezial"&&atk.special?`<i class="cdot" aria-label="gewählt"></i>`:""}</button>`).join("")}</div>`;
+  <div class="zchips kchips ichips${kSlide?" "+kSlide:""}" id="kpchips" data-for="kpages">${pages.map(([k,t])=>`<button class="chip${k===kpage?" on":""}" ${k==="spezial"?'data-spmenu="1"':`data-kpage="${k}"`}>${k==="spezial"?`<span>Spezial ${ICON_CHEV}</span><small>${curSpArt(curWeapon())}</small>`:`<span>${t}</span>`}${k==="verteidigen"&&r?`<small class="cb">${r} bereit</small>`:""}${k==="spezial"&&atk.special?`<i class="cdot" aria-label="gewählt"></i>`:""}</button>`).join("")}</div>`;
 }
 function setKpage(pg){if(pg===kpage)return;const ix=k=>KPAGES.findIndex(x=>x[0]===k),dir=ix(pg)>ix(kpage)?1:-1;kpage=pg;try{localStorage.setItem("aborea-kpage",pg)}catch(e){}kSlide=calmMotion()?"":(dir>0?"slidel":"slider");renderAll();kSlide="";}
 
@@ -1651,7 +1630,7 @@ function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.
     <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
 function poolsHtml(){
   const one=k=>poolsCompact[k]
-    ?`<div class="card pcomp ${k}" data-poolcard="${k}"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div><button class="pfold" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen"><svg viewBox="0 0 24 12" width="22" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l7 6 7-6"/></svg></button></div>`
+    ?`<div class="card pcomp ${k}" data-poolcard="${k}"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div><button class="pfold" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${chev(false)}</button></div>`
     :pool(k,k==="lp"?"Lebenspunkte":"Manapunkte");
   return one("lp")+(hasMana()?`<div style="height:${poolsCompact.lp&&poolsCompact.mp?8:12}px"></div>`+one("mp"):"");
 }
@@ -1788,12 +1767,17 @@ function renderRegeln(){
   +sec("Spezialattacken",`
     <p>Kampffertigkeiten werden mit jedem Level der eigenen Waffenfertigkeit (Nahkampf, Fernkampf) bzw. von List (Heimlich) freigeschaltet.</p>
     <dl><dt>Nahkampf</dt><dd>klassische Nahkampfwaffe (Schwert, Axt, Speer, Stab …) + Waffenfertigkeit</dd><dt>Fernkampf</dt><dd>klassische Fernkampfwaffe, keine Wurfwaffen + Waffenfertigkeit</dd><dt>Heimlich</dt><dd>Kurzdistanzwaffe (Dolch, Faust …) + List</dd></dl>
-    <p><b>Kosten:</b> zusätzlich zum normalen Angriff. Der erste Einsatz im Kampf kostet +2 AP, der zweite +4, der dritte +6 usw.</p>`)
+    <p><b>Kosten:</b> zusätzlich zum normalen Angriff. Der erste Einsatz im Kampf kostet +2 AP, der zweite +4, der dritte +6 usw. Fähigkeiten über deinem Level sind ausgegraut, lassen sich aber trotzdem einsetzen.</p>`)
+  +sec("Charakter & Stufen",`
+    <p><b>Erstellung:</b> 35 Entwicklungspunkte für Attribute. Kaufpreis: Wert 1–6 kostet so viel wie der Wert, 7 kostet 8, 8 kostet 10, 9 kostet 12, 10 kostet 16. Danach kommt die Volksanpassung dazu.</p>
+    <p><b>Bonus:</b> 1 → −3, 2 → −2, 3–4 → −1, 5 → 0, 6–7 → +1, 8–9 → +2, 10–11 → +3, 12–13 → +4, 14 → +5.</p>
+    <p><b>Ausbildungspunkte:</b> 8 zu Beginn (Mensch 10), +8 pro Stufenaufstieg. Jede Fertigkeit darf pro Stufe einmal gelernt werden, bei Kosten wie 2/4 zweimal. Rang 1–5 braucht ein Kreuz, 6–10 zwei, ab 11 drei. Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts.</p>
+    <p><b>Werte:</b> LP = (TP des Berufs + KO-Bonus) × Stufe. Mana = (IN- bzw. CH-Bonus + 3) × Rang „Magie entwickeln“. AP = 3 + höchster Attributsbonus + Athletik. Trefferzone = 15 / 40 + Athletik.</p>`)
   +`<p class="note">Fertigkeitsproben: W10 + Wert. Attribute: so viele W6 wie der Bonus, bei 0 oder weniger ein Plus-W6 und (1 + Malus) Minus-W6. Im Kampf gelten die Würfelpools.</p>`;
 }
 
 /* ---------- character sheet list ---------- */
-let confirmDel=false,charSel=null,lvConfirm=false,kwOpen=false;try{kwOpen=localStorage.getItem("aborea-kwopen")==="1";}catch(e){}
+let confirmDel=false,charSel=null,lvConfirm=false;
 const selId=()=>chars.some(c=>c.id===charSel)?charSel:(cur?cur.id:null);
 function addChar(c){migrate(c);chars.unshift(c);setCur(c);persist(c);tab=c.name.includes("Beispiel")?"skills":"bogen";renderAll();}
 
@@ -1905,13 +1889,10 @@ document.addEventListener("click",e=>{
   if(b.dataset.kwman){cur.kwManual=!cur.kwManual;if(!cur.kwManual){recalcChar(cur);syncKrit();}queueSave(cur);renderAll();return;}
   if(b.id==="attrgear"){attrEdit=!attrEdit;renderAll();return;}
   if(b.dataset.bog){bogOpen=bogOpen===b.dataset.bog?"":b.dataset.bog;renderAll();return;}
-  if(b.dataset.maxtog){maxOpen=!maxOpen;renderAll();return;}
-  if(b.dataset.armtog){armOpen=!armOpen;renderAll();return;}
-  if(b.dataset.kwtog){kwOpen=!kwOpen;try{localStorage.setItem("aborea-kwopen",kwOpen?"1":"0")}catch(x){}renderAll();return;}
   if(b.id==="levelup"){lvConfirm=false;askSteps([["Bist du sicher?",`Stufe ${lvlNow()} → ${lvlNow()+1}`],["Wirklich?","Dann steigt "+(cur.name||"dein Charakter")+" jetzt auf."]],doLevelUp);return;}
   if(b.id==="learnopen"){lvConfirm=false;lnOpen();return;}
   if(b.id==="leveldown"){if(!lvConfirm){lvConfirm=true;renderAll();return;}lvConfirm=false;const L=lvlNow();levelDown();renderAll();showMsg(`Zurück auf Stufe ${cur.level} (von ${L}): ${cur.lp.max} LP, ${num(cur.ausbildung)} Ausbildungspunkte.`);return;}
-  if(b.id==="ex1"||b.id==="exc"){addChar(example());return;}
+  if(b.id==="ex1"){addChar(example());return;}
   if(b.id==="delc"){if(!confirmDel){confirmDel=true;renderAll();return;}
     const c=chars.find(x=>x.id===selId())||cur,wasCur=c===cur;removeChar(c);if(wasCur)setCur(chars[0]||null);charSel=null;confirmDel=false;renderAll();return;}
   if(b.dataset.pick&&tab==="bogen"){confirmDel=false;charSel=b.dataset.pick;renderAll();return;}
@@ -2705,15 +2686,12 @@ const COINS=[
   {k:"tt",name:"Trionthaler",short:"TT",ch:"T",r:33,col:["#f4f5f7","#b9bec7","#5d636d"],pitch:1.35},
   {k:"kl",name:"Kupferling",short:"KL",ch:"K",r:30,col:["#f2b98d","#bf6e3a","#6b3414"],pitch:.82},
   {k:"mu",name:"Muena",short:"Mu",ch:"M",r:26,col:["#d9d0b6","#9c8d68","#544a30"],pitch:1.6}];
-const CI={gf:0,tt:1,kl:2,mu:3};
 function purse(){
   if(!cur.money)cur.money={gf:0,tt:0,kl:0,mu:0,rates:[10,10,10]};
   if(!Array.isArray(cur.money.rates)||cur.money.rates.length!==3)cur.money.rates=[10,10,10];
   COINS.forEach(c=>{cur.money[c.k]=Math.max(0,num(cur.money[c.k]));});
   return cur.money;
 }
-function coinVal(i){const r=purse().rates.map(x=>Math.max(1,num(x)));let v=1;for(let j=i;j<3;j++)v*=r[j];return v;}
-function purseValue(){const p=purse();return COINS.reduce((a,c,i)=>a+p[c.k]*coinVal(i),0);}
 const fmtN=n=>n.toLocaleString("de-DE");
 
 let ms=null,mMode="in",mUndo=[];
