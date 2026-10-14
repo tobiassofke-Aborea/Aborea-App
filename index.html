@@ -200,7 +200,6 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 @media (prefers-reduced-motion:reduce){.cdbox{animation:none}}
 .cdt{font-family:var(--display);font-size:1.6rem}.cds{color:var(--muted)}
 .cdb{display:flex;gap:8px;margin-top:8px}.cdb .btn{flex:1;min-height:48px;font-weight:700;color:var(--ink)}.cdb .btn.pri{color:var(--card)}
-.cddots{display:flex;gap:6px;justify-content:center;margin-top:4px}.cddots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.cddots i.on{background:var(--accent)}
 .hero{display:grid;gap:12px}
 .hrow{display:flex;align-items:flex-start;gap:12px}
 .hname{flex:1;min-width:0;display:grid;gap:2px}
@@ -888,7 +887,7 @@ function choiceFld(k,label,opts){const v=String(cur[k]||""),known=opts.includes(
     ${own?`<input id="f-${k}" data-k="${k}" value="${esc(v)}" placeholder="Eigene Bezeichnung" style="margin-top:6px">`:""}</label>`;}
 /* kleines Bestätigungsfenster, mehrere Schritte nacheinander */
 function askSteps(steps,onOk){let i=0;let el=$("#cdlg");if(!el){el=document.createElement("div");el.id="cdlg";el.setAttribute("role","alertdialog");el.setAttribute("aria-modal","true");document.body.appendChild(el);}
-  const show=()=>{const [t,sub]=steps[i];el.innerHTML=`<div class="cdbox"><div class="cdt">${esc(t)}</div>${sub?`<div class="cds">${esc(sub)}</div>`:""}<div class="cdb"><button class="btn" data-cd="no">Abbrechen</button><button class="btn pri" data-cd="yes">Ja</button></div>${steps.length>1?`<div class="cddots">${steps.map((_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>`:""}</div>`;
+  const show=()=>{const [t,sub]=steps[i];el.innerHTML=`<div class="cdbox"><div class="cdt">${esc(t)}</div>${sub?`<div class="cds">${esc(sub)}</div>`:""}<div class="cdb"><button class="btn" data-cd="no">Abbrechen</button><button class="btn pri" data-cd="yes">Ja</button></div></div>`;
     el.hidden=false;buzz(8);const y=el.querySelector('[data-cd="yes"]');if(y)y.focus();};
   el.onclick=e=>{const b=e.target.closest("[data-cd]");if(!b){if(e.target===el){el.hidden=true;}return;}
     if(b.dataset.cd==="no"){el.hidden=true;return;}
