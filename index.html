@@ -188,6 +188,14 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .dots{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .w10s .sh{margin-bottom:8px}
 .w10s .wsl{border:0;padding:0;background:none}
+#learn{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+#learn .tbar,#learn .cwbody>*,#learn .cwmsg{max-width:720px;width:calc(100% - 32px);margin-inline:auto}
+#learn .cwmsg{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto}
+.lnhead{background:color-mix(in srgb,var(--ok) 14%,var(--card));border:1px solid color-mix(in srgb,var(--ok) 40%,var(--line));border-radius:10px;padding:10px 12px;font-weight:600}
+.lnrk{color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lnpips{display:inline-flex;gap:3px}.lnpips i{width:10px;height:10px;border:1.5px solid var(--muted);border-radius:2px}.lnpips i.on{background:var(--accent);border-color:var(--accent)}
+.lvbtns{display:flex;flex-wrap:wrap;gap:8px}
+.btn.ghost{background:transparent;color:var(--muted);border-style:dashed}.btn.ghost.warn{color:var(--bad);border-color:var(--bad);border-style:solid}
 #cw{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 #cw .tbar,#cw .cwsteps,#cw .cwbody>*,#cw .cwfoot,#cw .cwmsg{max-width:720px;width:calc(100% - 32px);margin-inline:auto}
 .cwsteps{display:flex;gap:6px;margin-bottom:6px;font-size:.78rem;color:var(--muted);overflow:hidden}
@@ -817,7 +825,8 @@ function renderBogen(){
     ${fld("lp.max","LP Max",{num:true})}${fld("mp.max","Mana Max",{num:true})}
     ${fld("details","Details",{full:true})}
     ${fld("ausbildung","Ausbildungspunkte übrig",{num:true})}
-    ${BERUF[cur.beruf]?`<div class="fld" style="align-self:end"><button class="btn small pri" id="levelup">Stufe aufsteigen</button></div><p class="note full" style="margin:0">LP, Mana, AP und Trefferzone rechnet die App nach den Regeln für ${esc(cur.beruf)} automatisch mit, sobald sich Stufe, Attribute oder Ränge ändern. „Stufe aufsteigen“ erhöht die Stufe um 1 und gibt 8 neue Ausbildungspunkte.</p>`:""}
+    <div class="lvbtns full"><button class="btn small pri" id="levelup">Stufe aufsteigen</button><button class="btn small" id="learnopen">Ausbildungspunkte ausgeben${num(cur.ausbildung)?` (${num(cur.ausbildung)})`:""}</button>${lvlNow()>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvlNow()-1}?`:"Stufe zurück"}</button>`:""}</div>
+    <p class="note full" style="margin:0">${BERUF[cur.beruf]?`LP, Mana, AP und Trefferzone rechnet die App nach den Regeln für ${esc(cur.beruf)} automatisch mit. `:""}„Stufe aufsteigen“ gibt 8 Ausbildungspunkte und öffnet das Lernen. „Stufe zurück“ nimmt die Stufe und alles in ihr Gelernte wieder zurück.</p>
   </div>
   <h2>Geldsack</h2>
   <div class="card mcard"><div class="mline">${COINS.map(c=>`<span><i style="background:${c.col[1]}"></i><b>${fmtN(purse()[c.k])}</b> ${c.short}</span>`).join("")}</div>
@@ -1649,7 +1658,7 @@ function renderRegeln(){
 }
 
 /* ---------- character sheet list ---------- */
-let confirmDel=false,charSel=null;
+let confirmDel=false,charSel=null,lvConfirm=false;
 const selId=()=>chars.some(c=>c.id===charSel)?charSel:(cur?cur.id:null);
 function addChar(c){migrate(c);chars.unshift(c);setCur(c);persist(c);tab=c.name.includes("Beispiel")?"skills":"bogen";renderAll();}
 
@@ -1665,6 +1674,7 @@ document.addEventListener("input",e=>{
   setPath(cur,k,v);
   {const m=/^attr\.(\w+)\.w$/.exec(k);if(m&&t.value!==""){const bo=attrBonus(t.value);cur.attr[m[1]].b=bo;const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.value=bo;}}
   if(k==="lp.max"||k==="mp.max"){const p=cur[k.slice(0,2)];if(num(p.cur)>num(p.max))p.cur=num(p.max);}
+  {const m=/^skills\.(\d+)\.rang$/.exec(k);if(m)cur.skills[+m[1]].x=crossesForRank(num(v));}
   autoCalc(k);
   refreshComputed();queueSave(cur);
 });
@@ -1721,7 +1731,7 @@ document.addEventListener("click",e=>{
     lastKtTap=now;toggleKMenu(b);return;}
   if(b.dataset.kpick){closeOvMenu();setKmode(b.dataset.kpick);return;}
   if(b.dataset.tab){skillEdit=false;tab=b.dataset.tab;renderAll();window.scrollTo(0,0);return;}
-  if(b.id==="charbtn"){confirmDel=false;tab="bogen";renderAll();window.scrollTo(0,0);return;}
+  if(b.id==="charbtn"){confirmDel=false;lvConfirm=false;tab="bogen";renderAll();window.scrollTo(0,0);return;}
   if(b.id==="opentable3"){const now=performance.now();if(now-hbSwiped<350)return;
     if(now-lastHbTap<320){lastHbTap=0;closeOvMenu();ovOpen(ovLast);return;}
     lastHbTap=now;toggleOvMenu();return;}
@@ -1747,9 +1757,10 @@ document.addEventListener("click",e=>{
     return;}
   if(b.id==="rollx"){$("#roll").innerHTML="";curRoll=null;markAgain();return;}
   if(b.id==="new1"||b.id==="newc"){cwOpen();return;}
-  if(b.id==="levelup"){const lp0=num(cur.lp.max),mp0=num(cur.mp.max);cur.level=(num(cur.level)||1)+1;cur.ausbildung=num(cur.ausbildung)+8;recalcChar(cur);queueSave(cur);renderAll();
-    const dl=num(cur.lp.max)-lp0,dm=num(cur.mp.max)-mp0;
-    showMsg(`Stufe ${cur.level}: ${cur.lp.max} LP${dl?` (+${dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${dm?` (+${dm})`:""}`:""}, ${sum(cur.ap)} AP. ${cur.ausbildung} Ausbildungspunkte zum Lernen.`);buzz(20);return;}
+  if(b.id==="levelup"){lvConfirm=false;const r=levelUp();renderAll();buzz(20);
+    lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);return;}
+  if(b.id==="learnopen"){lvConfirm=false;lnOpen();return;}
+  if(b.id==="leveldown"){if(!lvConfirm){lvConfirm=true;renderAll();return;}lvConfirm=false;const L=lvlNow();levelDown();renderAll();showMsg(`Zurück auf Stufe ${cur.level} (von ${L}): ${cur.lp.max} LP, ${num(cur.ausbildung)} Ausbildungspunkte.`);return;}
   if(b.id==="ex1"||b.id==="exc"){addChar(example());return;}
   if(b.id==="delc"){if(!confirmDel){confirmDel=true;renderAll();return;}
     const c=chars.find(x=>x.id===selId())||cur,wasCur=c===cur;removeChar(c);if(wasCur)setCur(chars[0]||null);charSel=null;confirmDel=false;renderAll();return;}
@@ -1768,7 +1779,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.pool){const key=b.dataset.pool,inp=$("#"+key+"-amt"),a=Math.abs(num(inp.value));if(!a){inp.focus();return;}
     changePool(key,a*(+b.dataset.dir));inp.value="";return;}
   if(b.dataset.step){const k=b.dataset.step;const v=Math.max(0,num(getPath(cur,k))+(+b.dataset.d));setPath(cur,k,v);
-    const i=b.parentElement.querySelector("input");if(i)i.value=v;autoCalc(k);refreshComputed();queueSave(cur);return;}
+    const i=b.parentElement.querySelector("input");if(i)i.value=v;{const m=/^skills\.(\d+)\.rang$/.exec(k);if(m)cur.skills[+m[1]].x=crossesForRank(v);}autoCalc(k);refreshComputed();queueSave(cur);return;}
   if(b.id==="addskill"){cur.skills.push({name:"",placeholder:"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""});queueSave(cur);renderAll();return;}
   if(b.id==="addspell"){cur.skills.push({name:"",placeholder:"Spruchliste",kind:"spell",fixed:false,rang:0,boni:0,kosten:""});queueSave(cur);renderAll();
     const sel=document.getElementById("s-"+(cur.skills.length-1)+"-n");if(sel)sel.focus();return;}
@@ -1968,6 +1979,7 @@ function histOpen(){if(ovHist)return;try{history.pushState({aboreaOv:1},"");ovHi
 function histClose(){if(!ovHist)return;ovHist=false;try{history.back();}catch(e){}}
 window.addEventListener("popstate",()=>{if(!ovHist)return;ovHist=false;
   if(cw)cwClose();
+  {const ln=$("#learn");if(ln&&!ln.hidden)lnClose();}
   if(sbView&&!sbView.hidden)sbClose();if(ms&&!ms.el.hidden)mClose();if(tb&&!tb.el.hidden)tClose();});
 function tOpen(){histOpen();
   if(!tb)tBuild();
@@ -2435,6 +2447,102 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{if(!cw)return;const t=e.target;if(t.dataset&&t.dataset.cwspec!=null&&t.tagName==="SELECT"){cw.rows[+t.dataset.cwspec].spec=t.value;}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cw)cwClose();});
+
+/* ---------- Lernen: Ausbildungspunkte ausgeben, Stufe auf/ab ---------- */
+// Kreuze pro Rang wie auf dem Bogen: Rang 1–5 ein Kästchen, 6–10 zwei, 11–15 drei, danach vier
+const boxesFor=r=>r<=5?1:r<=10?2:r<=15?3:4;
+function crossesForRank(r){let x=0;for(let i=1;i<=r;i++)x+=boxesFor(i);return x;}
+function rankFromCrosses(x){let r=0;while(x>=boxesFor(r+1)){x-=boxesFor(r+1);r++;}return {r,rest:x};}
+const sxOf=s=>s.x==null?crossesForRank(num(s.rang)):num(s.x);
+const uidOf=s=>s.uid||(s.uid="s"+Math.random().toString(36).slice(2,8));
+const lvlNow=()=>Math.max(1,num(cur.level)||1);
+function lvLog(){if(!cur.lvlog||typeof cur.lvlog!=="object")cur.lvlog={};const L=lvlNow();if(!Array.isArray(cur.lvlog[L]))cur.lvlog[L]=[];return cur.lvlog[L];}
+const learnedNow=(t,key)=>lvLog().filter(e=>e.t===t&&e.k===key);
+function skillLearn(s,add){
+  const parts=costParts(skillCost(s));if(!parts.length)return "Für diese Fertigkeit sind keine Kosten hinterlegt.";
+  const key=uidOf(s),done=learnedNow("s",key);
+  if(add){
+    if(done.length>=parts.length)return parts.length>1?"Diese Fertigkeit hast du in dieser Stufe schon zweimal gelernt.":"Diese Fertigkeit hast du in dieser Stufe schon gelernt.";
+    const c=parts[done.length];if(num(cur.ausbildung)<c)return `Dafür fehlen dir ${c-num(cur.ausbildung)} Ausbildungspunkte.`;
+    s.x=sxOf(s)+1;cur.ausbildung=num(cur.ausbildung)-c;lvLog().push({t:"s",k:key,c});
+  }else{
+    if(!done.length)return "";
+    const e=done[done.length-1],L=lvLog();L.splice(L.lastIndexOf(e),1);s.x=Math.max(0,sxOf(s)-1);cur.ausbildung=num(cur.ausbildung)+e.c;
+  }
+  s.rang=rankFromCrosses(sxOf(s)).r;
+  if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);return "";
+}
+function attrLearn(a,add){
+  const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a);
+  if(add){
+    if(w>=10)return "Höher als 10 lässt sich ein Attribut nicht kaufen.";
+    const c=ATTR_PRICE[w+1]-ATTR_PRICE[w];if(num(cur.ausbildung)<c)return `Dafür fehlen dir ${c-num(cur.ausbildung)} Ausbildungspunkte.`;
+    A.w=String(w+1);cur.ausbildung=num(cur.ausbildung)-c;lvLog().push({t:"a",k:a,c});
+  }else{
+    if(!done.length)return "";
+    const e=done[done.length-1],L=lvLog();L.splice(L.lastIndexOf(e),1);A.w=String(Math.max(0,w-1));cur.ausbildung=num(cur.ausbildung)+e.c;
+  }
+  A.b=attrBonus(A.w);if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);return "";
+}
+function levelUp(){
+  const lp0=num(cur.lp.max),mp0=num(cur.mp.max);
+  cur.level=lvlNow()+1;cur.ausbildung=num(cur.ausbildung)+8;lvLog().length=0;lvLog().push({t:"lvl",c:8});
+  if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);
+  return {dl:num(cur.lp.max)-lp0,dm:num(cur.mp.max)-mp0};
+}
+function levelDown(){
+  const L=lvlNow();if(L<=1)return false;
+  const log=lvLog().slice().reverse();
+  log.forEach(e=>{
+    if(e.t==="s"){const s=cur.skills.find(x=>x.uid===e.k);if(s){s.x=Math.max(0,sxOf(s)-1);s.rang=rankFromCrosses(s.x).r;}cur.ausbildung=num(cur.ausbildung)+e.c;}
+    else if(e.t==="a"){const A=cur.attr[e.k];A.w=String(Math.max(0,num(A.w)-1));A.b=attrBonus(A.w);cur.ausbildung=num(cur.ausbildung)+e.c;}
+  });
+  const gained=log.some(e=>e.t==="lvl")?8:8;
+  cur.ausbildung=Math.max(0,num(cur.ausbildung)-gained);
+  delete cur.lvlog[L];cur.level=L-1;
+  if(BERUF[cur.beruf])recalcChar(cur);queueSave(cur);return true;
+}
+
+let lnHead="";
+function lnOpen(head){lnHead=head||"";let el=$("#learn");if(!el){el=document.createElement("div");el.id="learn";el.setAttribute("role","dialog");el.setAttribute("aria-label","Ausbildungspunkte ausgeben");document.body.appendChild(el);}
+  el.hidden=false;document.documentElement.style.overflow="hidden";histOpen();lnRender();}
+function lnClose(){const el=$("#learn");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";lnHead="";renderAll();}
+function lnRender(keep){
+  const el=$("#learn");if(!el||el.hidden||!cur)return;const body=el.querySelector(".cwbody"),st=keep&&body?body.scrollTop:0;
+  const ap=num(cur.ausbildung);
+  const rows=cur.skills.map((s,i)=>{
+    const nm=s.name||(s.kind==="spell"?"":""),parts=costParts(skillCost(s));
+    if(!nm&&!s.fixed)return "";
+    const key=uidOf(s),done=learnedNow("s",key).length,x=sxOf(s),rk=rankFromCrosses(x),need=boxesFor(rk.r+1);
+    const boxes=parts.map((c,k)=>{const on=done>k,can=!on&&k===done&&ap>=c;return `<button class="cwbox${on?" on":""}" data-lnsk="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(nm)}: ${k+1}. Kreuz in dieser Stufe für ${c} Punkte">${c}</button>`;}).join("");
+    const pips=Array.from({length:need},(_,k)=>`<i class="${k<rk.rest?"on":""}"></i>`).join("");
+    return `<div class="cwsr${done?" on":""}"><div class="cwsn"><b>${esc(nm||"Fertigkeit")}</b><small class="lnrk">Rang ${rk.r} · zu Rang ${rk.r+1}: <span class="lnpips">${pips}</span> ${rk.rest}/${need}</small></div><div class="cwboxes">${parts.length?boxes:'<small class="hint">keine Kosten</small>'}</div><span class="cwrk">${done?`+${done}`:""}</span></div>`;
+  }).join("");
+  const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]-ATTR_PRICE[w]:0,bo=attrBonus(w);
+    return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`auf ${w+1}: ${c} Punkte`:"Maximum erreicht"}</small></div>
+      <div class="step"><button data-lnat="${a}" data-d="-1" ${done?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-lnat="${a}" data-d="1" ${w>=10||ap<c?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
+      <div class="cwres"><small>${done?`+${done} in dieser Stufe`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("");
+  el.innerHTML=`<div class="tbar"><h1>Lernen · Stufe ${lvlNow()}</h1><button class="btn small" id="lnclose">Fertig</button></div>
+    <div class="cwbody">${lnHead?`<div class="lnhead">${esc(lnHead)}</div>`:""}
+      <div class="cwpts${ap===0?" done":""}"><b>${ap}</b><span>Ausbildungspunkte übrig${ap?" · Rest wird aufgespart":""}</span></div>
+      <div class="lab cwh">Fertigkeiten</div>
+      <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 drei. Ein Kreuz in dieser Stufe nimmst du durch erneutes Antippen zurück.</p>
+      <div class="cwsk">${rows}</div>
+      <div class="lab cwh">Attribute</div>
+      <p class="note">Ein Attribut steigern kostet den Unterschied laut Kaufpreis-Tabelle, z. B. von 7 auf 8 zwei Punkte.</p>
+      <div class="cwattr">${attrs}</div>
+    </div><div class="cwmsg" hidden></div>`;
+  const nb=el.querySelector(".cwbody");if(nb)nb.scrollTop=st;
+}
+function lnToast(t){const f=document.querySelector("#learn .cwmsg");if(!f||!t)return;f.textContent=t;f.hidden=false;clearTimeout(cwToastT);cwToastT=setTimeout(()=>{f.hidden=true;},3000);thud(.15);}
+document.addEventListener("click",e=>{
+  const el=$("#learn");if(!el||el.hidden)return;const b=e.target.closest("button");if(!b||!el.contains(b))return;
+  if(b.id==="lnclose"){lnClose();return;}
+  if(b.dataset.lnsk!=null){const s=cur.skills[+b.dataset.lnsk],k=+b.dataset.k,done=learnedNow("s",uidOf(s)).length;
+    const msg=skillLearn(s,k>=done);if(msg)lnToast(msg);else{buzz(8);clack(.2,1);}lnRender(true);return;}
+  if(b.dataset.lnat){const msg=attrLearn(b.dataset.lnat,+b.dataset.d>0);if(msg)lnToast(msg);else buzz(8);lnRender(true);return;}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const el=$("#learn");if(el&&!el.hidden)lnClose();}});
 
 /* ---------- Geldsack ---------- */
 const COIN_PL={gf:"Goldfalken",tt:"Trionthaler",kl:"Kupferlinge",mu:"Muena"};
