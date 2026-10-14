@@ -80,8 +80,6 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .prow .minus{color:var(--lp);font-weight:700} .mp .prow .minus{color:var(--mp)}
 .qrow{display:flex;gap:6px;flex-wrap:wrap}
 .qrow .btn{flex:1;min-width:52px;font-variant-numeric:tabular-nums}
-.maxrow{display:flex;align-items:center;gap:6px}
-.maxrow input{width:72px}
 .cright{margin-left:auto;display:flex;gap:8px;align-items:center}
 .cright .armor{margin-left:0}
 /* dice */
@@ -135,7 +133,7 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .kw{display:flex;align-items:center;gap:10px;min-height:42px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--card)}
 .kw b{font-size:1.15rem;font-variant-numeric:tabular-nums}
 .kw span{font-size:.85rem;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kparts{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px;align-items:end}.kparts>*{min-width:0}.kparts .kw input{width:100%;min-width:0}
+.kparts{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px;align-items:end}.kparts>*{min-width:0}.kparts .kw{width:100%;min-width:0;overflow:hidden;box-sizing:border-box}.kparts .kw input{width:100%;min-width:0}
 .comb .head .tot small{font-size:.8rem;color:var(--muted);font-weight:600}
 .initog{background:none;border:0;padding:0;text-align:left;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .initog i{font-style:normal;font-family:var(--body);font-size:.75rem;color:var(--muted)}
@@ -379,7 +377,7 @@ body.kampf .wrap{padding-bottom:250px}
 .pmain{display:grid;gap:10px;min-width:0}
 .valrow{display:flex;align-items:baseline;gap:6px 10px;flex-wrap:wrap}
 .pool .val{white-space:nowrap}
-@media (max-width:390px){.pool{gap:8px;grid-template-columns:minmax(0,1fr) 58px}.maxrow .hint{display:none}.maxrow input{width:56px}.qrow .btn{min-width:0;padding:0 2px}.pool .val{font-size:2.3rem}}
+@media (max-width:390px){.pool{gap:8px;grid-template-columns:minmax(0,1fr) 58px}.qrow .btn{min-width:0;padding:0 2px}.pool .val{font-size:2.3rem}}
 .delta{font-weight:700;font-size:1.2rem;font-variant-numeric:tabular-nums}
 .delta.up{color:var(--ok)} .delta.down{color:var(--bad)}
 .pbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
@@ -389,6 +387,7 @@ body.kampf .wrap{padding-bottom:250px}
 .prow .btn{line-height:1.1;white-space:normal}
 .prow .btn{padding:0 6px;font-size:.9rem}
 .prow input{padding:6px 4px}
+@media (max-width:360px){.prow{gap:4px}.prow .btn{font-size:.82rem;padding:0 2px;white-space:nowrap}.prow .sg{display:none}}
 .qrow .btn{min-width:40px;padding:0 6px}
 .wheel{--off:0px;position:relative;min-height:190px;border-radius:35px;overflow:hidden;touch-action:none;cursor:ns-resize;user-select:none;-webkit-user-select:none;
   background:var(--bg);border:1px solid var(--line);
@@ -808,15 +807,14 @@ function pool(key,label){
   const p=cur[key],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
   const minus=key==="lp"?"Schaden":"Mana",plus=key==="lp"?"Heilung":"Mana";
   return `<div class="card pool ${key}" data-poolcard="${key}"><div class="pmain">
-    <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button>
-      <span class="maxrow"><span class="hint">Max</span><input type="number" inputmode="numeric" id="${key}-max" data-k="${key}.max" data-num value="${esc(p.max)}" ${BERUF[cur.beruf]?'readonly tabindex="-1" class="ro" title="Wird automatisch berechnet, Boni im Bogen"':""}></span></div>
+    <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button></div>
     <div class="valrow"><div class="val" id="${key}-val">${num(p.cur)}<small> / ${num(p.max)}</small></div><span class="delta" id="${key}-delta"></span>${key==="lp"?armorBtnHtml():""}</div>
     ${key==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}
     <div class="pbar"><i id="${key}-bar" style="width:${pct}%"></i></div>
     <div class="prow">
-      <button class="btn minus" data-pool="${key}" data-dir="-1">− ${minus}</button>
+      <button class="btn minus" data-pool="${key}" data-dir="-1"><span class="sg">− </span>${minus}</button>
       <input type="number" inputmode="numeric" id="${key}-amt" placeholder="Wert" aria-label="Betrag">
-      <button class="btn" data-pool="${key}" data-dir="1">+ ${plus}</button>
+      <button class="btn" data-pool="${key}" data-dir="1"><span class="sg">+ </span>${plus}</button>
     </div>
     <div class="qrow">
       <button class="btn small" data-q="${key}" data-v="-5">−5</button><button class="btn small" data-q="${key}" data-v="-1">−1</button>
@@ -2486,7 +2484,7 @@ const skillCost=s=>String(s.kosten||"").trim()||skillCostAuto(s);
 const CALC_KEY=/^(level|beruf|lpBonus|mpBonus|attr\.\w+\.(w|b)|skills\.\d+\.(rang|boni|name))$/;
 function syncCalcFields(){
   const set=(sel,v)=>{const e=document.querySelector(sel);if(e&&e!==document.activeElement)e.value=v;};
-  set('[id="f-lp.max"]',cur.lp.max);set('[id="f-mp.max"]',cur.mp.max);set("#lp-max",cur.lp.max);set("#mp-max",cur.mp.max);
+  set('[id="f-lp.max"]',cur.lp.max);set('[id="f-mp.max"]',cur.mp.max);
   (cur.ap||[]).forEach((v,i)=>set("#ap-"+i,v));set('[id="f-trefferzone"]',cur.trefferzone);
   {const l=document.querySelector(".maxbox .lpc"),m=document.querySelector(".maxbox .mpc");if(l)l.textContent=num(cur.lp.max);if(m)m.textContent=num(cur.mp.max);}
 }
