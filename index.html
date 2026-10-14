@@ -184,21 +184,16 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--card)}
 .dots{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .w10s .lab{margin-bottom:6px}
-.wsplit{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:stretch}
-.wside{border:2px solid var(--line);border-radius:12px;padding:8px 10px;display:grid;gap:4px;align-content:start;min-width:0}
-.wside.t{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}
-.wside.s{border-color:var(--lp);background:color-mix(in srgb,var(--lp) 7%,var(--card));text-align:right;justify-items:end}
-.wside .wt{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.wside b{font-size:1.7rem;line-height:1;font-variant-numeric:tabular-nums}
-.wside b small{font-size:.8rem;color:var(--muted);font-weight:600}
-.wside.t b{color:var(--accent)} .wside.s b{color:var(--lp)}
-.wd{display:flex;flex-wrap:wrap;gap:6px;min-height:22px}
-.wside.s .wd{justify-content:flex-end}
-.wdie{width:22px;height:22px;padding:0;border:0;border-radius:4px;transform:rotate(45deg) scale(.82);cursor:pointer}
-.wdie.t{background:var(--accent)} .wdie.s{background:var(--lp)}
-.wmove{display:grid;gap:6px;align-content:center}
-.wmove button{width:46px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:1.1rem;cursor:pointer;color:var(--ink)}
-.wmove button:disabled{opacity:.35;cursor:default}
+.wsl{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;background:var(--card);touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none;outline:none}
+.wsl:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.wsl-top{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.wsl-top b{font-size:1.6rem;letter-spacing:0;font-variant-numeric:tabular-nums;vertical-align:-2px}
+.wsl-top .t b{color:var(--accent)} .wsl-top .s b{color:var(--lp)}
+.wsl-track{position:relative;display:grid;align-items:center;justify-items:center;min-height:48px;border-radius:10px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 16%,transparent) 0 var(--p),color-mix(in srgb,var(--lp) 13%,transparent) var(--p) 100%)}
+.wsl-track i{width:24px;height:24px;border-radius:4px;transform:rotate(45deg) scale(.8);transition:background .12s}
+.wsl-track i.t{background:var(--accent)} .wsl-track i.s{background:var(--lp)}
+.wsl-knob{position:absolute;top:-4px;bottom:-4px;width:6px;margin-left:-3px;border-radius:3px;background:var(--ink);box-shadow:0 0 0 3px var(--card);transition:left .12s}
+.wsl.drag .wsl-knob{transition:none;width:8px;margin-left:-4px}
 .dots i{width:16px;height:16px;transform:rotate(45deg);border-radius:3px}
 .btn.big{min-height:52px;font-size:1.05rem;font-weight:700;width:100%}
 .btn.go{background:var(--ok);border-color:var(--ok);color:var(--card)}
@@ -1412,7 +1407,7 @@ const PAGERS={
 };
 let pg=null,pgBlockClick=0;
 document.addEventListener("pointerdown",e=>{
-  const hit=e.target.closest&&e.target.closest("#kpages,#zlist,#kpchips");if(!hit||e.target.closest("input,select,textarea,summary"))return;
+  const hit=e.target.closest&&e.target.closest("#kpages,#zlist,#kpchips");if(!hit||e.target.closest("input,select,textarea,summary,[data-wsl]"))return;
   const el=hit.id==="kpchips"?document.getElementById("kpages"):hit;if(!el)return;
   const P=PAGERS[el.id];if(!P||P.n()<2)return;
   pg={el,P,x:e.clientX,y:e.clientY,dx:0,t:performance.now(),lock:null,id:e.pointerId,row:document.querySelector(`.ichips[data-for="${el.id}"]`)};
@@ -1477,14 +1472,12 @@ function renderKampf(){
   else{
     const [k,r]=splitOf(w),n=wSkill(w),hg=hitGroups(w),dg=dmgGroups(w),both=cur.kampf.main!=null&&cur.kampf.off!=null;
     if(both)h+=`<div class="chips"><button class="chip${atk.slot==="main"?" on":""}" data-act="slot" data-v="main">Mit Haupthand</button><button class="chip${atk.slot==="off"?" on":""}" data-act="slot" data-v="off">Mit Nebenhand</button></div>`;
-    const die=(cls,d,lbl)=>`<button class="wdie ${cls}" data-act="split" data-d="${d}" aria-label="${lbl}"></button>`;
     h+=n?`<div class="w10s"><div class="lab">Deine ${n} W10 aus der Waffenfertigkeit aufteilen</div>
-      <div class="wsplit">
-        <div class="wside t"><span class="wt">Treffen</span><b>${k}<small> W10</small></b><span class="wd">${Array.from({length:k},()=>die("t",-1,"Einen W10 zu Schaden schieben")).join("")}</span></div>
-        <div class="wmove"><button data-act="split" data-d="1" ${r?"":"disabled"} aria-label="Einen W10 zu Treffen schieben">◀</button><button data-act="split" data-d="-1" ${k?"":"disabled"} aria-label="Einen W10 zu Schaden schieben">▶</button></div>
-        <div class="wside s"><span class="wt">Schaden</span><b>${r}<small> W10</small></b><span class="wd">${Array.from({length:r},()=>die("s",1,"Einen W10 zu Treffen schieben")).join("")}</span></div>
+      <div class="wsl" data-wsl="${n}" role="slider" tabindex="0" aria-label="W10 zwischen Treffen und Schaden aufteilen" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${k}" aria-valuetext="Treffen ${k}, Schaden ${r}">
+        <div class="wsl-top"><span class="t">Treffen <b class="wk">${k}</b></span><span class="s"><b class="wr">${r}</b> Schaden</span></div>
+        <div class="wsl-track" style="grid-template-columns:repeat(${n},1fr);--p:${k/n*100}%">${Array.from({length:n},(_,i)=>`<i class="${i<k?"t":"s"}"></i>`).join("")}<span class="wsl-knob" style="left:${k/n*100}%"></span></div>
       </div>
-      <p class="hint" style="margin:6px 0 0">Mit ◀ ▶ oder durch Antippen eines Würfels schiebst du ihn rüber. Mehr auf Treffen: du triffst eher. Mehr auf Schaden: es tut mehr weh.</p></div>`
+      <p class="hint" style="margin:6px 0 0">Würfel mit dem Daumen nach links oder rechts schieben. Mehr auf Treffen: du triffst eher. Mehr auf Schaden: es tut mehr weh.</p></div>`
       :`<p class="hint">Diese Waffe hat noch keinen Rang in ihrer Waffenfertigkeit, also gibt es keine W10 zum Aufteilen.</p>`;
     h+=`<div class="stepbox${atk.phase==="ready"||atk.phase==="rolling"?" act":""}">
       <div class="sh"><span class="num">1</span><b>Treffen</b>${isOff()?'<span class="hint">Nebenhand: ohne GE-Würfel</span>':""}</div>
@@ -1749,6 +1742,27 @@ function drawWheel(k,v){
   el.innerHTML=h;
   el.parentElement.style.setProperty("--off",((-v*STEP)%20).toFixed(1)+"px");
 }
+/* W10 aufteilen: Würfel mit dem Daumen schieben */
+let wsd=null;
+function wslSet(el,k){const n=+el.dataset.wsl;k=Math.max(0,Math.min(n,k));
+  el.querySelectorAll(".wsl-track i").forEach((d,i)=>d.className=i<k?"t":"s");
+  el.querySelector(".wk").textContent=k;el.querySelector(".wr").textContent=n-k;el.querySelector(".wsl-knob").style.left=(k/n*100)+"%";el.querySelector(".wsl-track").style.setProperty("--p",(k/n*100)+"%");
+  el.setAttribute("aria-valuenow",k);el.setAttribute("aria-valuetext",`Treffen ${k}, Schaden ${n-k}`);return k;}
+function wslK(el,x){const t=el.querySelector(".wsl-track").getBoundingClientRect(),n=+el.dataset.wsl;return Math.round(Math.max(0,Math.min(1,(x-t.left)/Math.max(1,t.width)))*n);}
+function wslCommit(k){const w=curWeapon();if(!w)return;if(splitOf(w)[0]===k){renderAll();return;}atk.split=k;buzz(8);renderAll();}
+document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest("[data-wsl]");if(!el)return;
+  wsd={el,id:e.pointerId,x0:e.clientX,y0:e.clientY,k:+el.getAttribute("aria-valuenow"),live:false};});
+document.addEventListener("pointermove",e=>{if(!wsd||e.pointerId!==wsd.id)return;
+  const dx=Math.abs(e.clientX-wsd.x0),dy=Math.abs(e.clientY-wsd.y0);
+  if(!wsd.live){if(dy>10&&dy>dx){wsd=null;return;}if(dx<6)return;wsd.live=true;wsd.el.classList.add("drag");try{wsd.el.setPointerCapture(e.pointerId)}catch(x){}}
+  const k=wslK(wsd.el,e.clientX);if(k!==wsd.k){wsd.k=wslSet(wsd.el,k);buzz(5);}});
+function wslEnd(e,cancel){if(!wsd||(e&&e.pointerId!==wsd.id))return;const d=wsd;wsd=null;d.el.classList.remove("drag");
+  if(cancel)return renderAll();
+  if(!d.live){d.k=wslSet(d.el,wslK(d.el,d.x0));}  // antippen: dorthin setzen
+  wslCommit(d.k);}
+document.addEventListener("pointerup",e=>wslEnd(e,false));document.addEventListener("pointercancel",e=>wslEnd(e,true));
+document.addEventListener("keydown",e=>{const el=e.target.closest&&e.target.closest("[data-wsl]");if(!el)return;
+  const d=e.key==="ArrowLeft"?-1:e.key==="ArrowRight"?1:0;if(!d)return;e.preventDefault();const k=+el.getAttribute("aria-valuenow");wslCommit(Math.max(0,Math.min(+el.dataset.wsl,k+d)));});
 /* Kompakt: Balken ziehen */
 let cdrag=null;
 function cbarVal(el,x){const r=el.getBoundingClientRect(),k=el.dataset.cbar,max=num(cur[k].max);return Math.round(Math.max(0,Math.min(1,(x-r.left)/Math.max(1,r.width)))*max);}
