@@ -195,6 +195,11 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .lnrk{color:var(--muted);font-size:.78rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .lnpips{display:inline-flex;gap:3px}.lnpips i{width:10px;height:10px;border:1.5px solid var(--muted);border-radius:2px}.lnpips i.on{background:var(--accent);border-color:var(--accent)}
 .armtot{display:flex;align-items:baseline;gap:8px;min-height:44px}.armtot b{font-size:1.5rem;font-variant-numeric:tabular-nums}.armtot small{color:var(--muted);font-size:.8rem}
+.kwhead{display:flex;align-items:center;gap:8px;margin:22px 0 8px}
+.kwtog{flex:1;display:flex;align-items:baseline;gap:8px;background:none;border:0;padding:4px 0;color:var(--ink);cursor:pointer;text-align:left;font:inherit}
+.kwtog h2{margin:0}.kwtog i{font-style:normal;font-size:.8rem;color:var(--muted)}
+.kwsum{margin-left:auto;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.kw input{width:64px;min-height:34px;padding:4px}
 .gearmini{width:34px;height:34px;padding:0;border-radius:8px;border:1px dashed var(--line);background:transparent;color:var(--muted);opacity:.6;display:grid;place-items:center;cursor:pointer}
 .gearmini.on{opacity:1;border-style:solid;border-color:var(--accent);color:var(--accent)}
 input.ro{background:transparent;border-color:transparent;color:var(--muted);pointer-events:none}
@@ -750,8 +755,8 @@ function pool(key,label){
 function combat(key,title,labels){
   const arr=cur[key];
   return `<div class="comb"><div class="head"><span class="t">${title}</span><span class="tot" id="tot-${key}">${sum(arr)}</span>
-    ${key!=="ap"?`<button class="die" data-roll="${key}" aria-label="${title} würfeln">${DIE}</button>`:`<button class="gearmini${cur.apManual?" on":""}" data-apman="1" aria-pressed="${!!cur.apManual}" title="${cur.apManual?"Wieder automatisch berechnen":"Von Hand ändern"}" aria-label="${cur.apManual?"Aktionspunkte wieder automatisch berechnen":"Aktionspunkte von Hand ändern"}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>`}</div>
-    <div class="parts">${labels.map((l,i)=>`<div><span class="lab" title="${esc(l)}">${esc(l)}</span><input type="number" inputmode="numeric" id="${key}-${i}" data-k="${key}.${i}" data-num value="${esc(arr[i])}" ${key==="ap"&&!cur.apManual?'readonly tabindex="-1" class="ro"':""}></div>`).join("")}</div></div>`;
+    ${key!=="ap"?`<button class="die" data-roll="${key}" aria-label="${title} würfeln">${DIE}</button>`:""}</div>
+    <div class="parts">${labels.map((l,i)=>`<div><span class="lab" title="${esc(l)}">${esc(l)}</span><input type="number" inputmode="numeric" id="${key}-${i}" data-k="${key}.${i}" data-num value="${esc(arr[i])}" ${key==="ap"&&!cur.kwManual?'readonly tabindex="-1" class="ro"':""}></div>`).join("")}</div></div>`;
 }
 function renderAttr(){
   return `<h2>Attribute</h2><div class="card rows">${ATTR.map(a=>{const v=cur.attr[a];return `<div class="row attr">
@@ -815,9 +820,10 @@ function kritWeapon(){
   const i=cur.kampf.main!=null?cur.kampf.main:cur.kampf.off;
   return i!=null&&cur.weapons[i]?{w:cur.weapons[i],off:cur.kampf.main==null}:null;
 }
+function kritVal(w){return cur.kwManual?sum(cur.krit):wSkill(w)+num(w.krit);}
 function syncKrit(){
   if(!cur)return;
-  const k=kritWeapon();cur.krit[0]=k?wSkill(k.w):0;cur.krit[1]=k?num(k.w.krit):0;
+  if(cur.kwManual)return;const k=kritWeapon();cur.krit[0]=k?wSkill(k.w):0;cur.krit[1]=k?num(k.w.krit):0;
 }
 function renderKrit(){
   syncKrit();
@@ -826,8 +832,8 @@ function renderKrit(){
 </div>
     <div class="kparts">
       <div class="fld"><span class="lab">Waffenfertigkeit</span>
-        <div class="kw">${k?`<b id="krit-0">${cur.krit[0]}</b><span>${esc(k.w.name||"Waffe")}${sk?" · "+esc(sk.name||sk.placeholder||""):""}${k.off?" (Nebenhand)":""}</span>`:`<b id="krit-0">0</b><span>Keine Waffe angelegt. Im Kampf eine anlegen.</span>`}</div></div>
-      <div class="fld"><span class="lab">Krit-Wert Waffe</span><div class="kw"><b id="krit-1">${cur.krit[1]}</b>${k&&!String(k.w.krit||"").trim()?"<span>bei der Waffe nicht eingetragen</span>":""}</div></div>
+        <div class="kw">${k?`${cur.kwManual?`<input type="number" inputmode="numeric" id="krit-0" data-k="krit.0" data-num value="${esc(cur.krit[0])}">`:`<b id="krit-0">${cur.krit[0]}</b>`}<span>${esc(k.w.name||"Waffe")}${sk?" · "+esc(sk.name||sk.placeholder||""):""}${k.off?" (Nebenhand)":""}</span>`:`<b id="krit-0">0</b><span>Keine Waffe angelegt. Im Kampf eine anlegen.</span>`}</div></div>
+      <div class="fld"><span class="lab">Krit-Wert Waffe</span><div class="kw">${cur.kwManual?`<input type="number" inputmode="numeric" id="krit-1" data-k="krit.1" data-num value="${esc(cur.krit[1])}">`:`<b id="krit-1">${cur.krit[1]}</b>`}${k&&!String(k.w.krit||"").trim()?"<span>bei der Waffe nicht eingetragen</span>":""}</div></div>
     </div></div>`;
 }
 function renderBogen(){
@@ -846,11 +852,13 @@ function renderBogen(){
   <h2>Geldsack</h2>
   <div class="card mcard"><div class="mline">${COINS.map(c=>`<span><i style="background:${c.col[1]}"></i><b>${fmtN(purse()[c.k])}</b> ${c.short}</span>`).join("")}</div>
     <button class="btn pri big" id="openmoney">Geldsack öffnen</button></div>
-  <h2>Kampfwerte</h2>
-  <div class="card">
+  <div class="kwhead"><button class="kwtog" data-kwtog="1" aria-expanded="${kwOpen}"><h2>Kampfwerte</h2><i>${kwOpen?"▴":"▾"}</i>${kwOpen?"":`<span class="kwsum">AP ${sum(cur.ap)} · Krit ${(syncKrit(),sum(cur.krit))}</span>`}</button>
+    ${kwOpen?`<button class="gearmini${cur.kwManual?" on":""}" data-kwman="1" aria-pressed="${!!cur.kwManual}" title="${cur.kwManual?"Wieder automatisch berechnen":"Werte von Hand ändern"}" aria-label="${cur.kwManual?"Kampfwerte wieder automatisch berechnen":"Kampfwerte von Hand ändern"}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>`:""}</div>
+  ${kwOpen?`<div class="card">
+    ${cur.kwManual?`<p class="note" style="margin:0 0 8px">Von Hand: die Werte werden nicht mehr automatisch berechnet. Zahnrad nochmal antippen für automatisch.</p>`:""}
     ${combat("ap","Aktionspunkte",["Basis","Höchster Attr.-Bonus","Athletik"])}
     ${renderKrit()}
-  </div>
+  </div>`:""}
   <h2>Notizen</h2><div class="card"><textarea id="f-notes" data-k="notes" placeholder="Ausrüstung, Geld, Kontakte …">${esc(cur.notes)}</textarea></div>
   <h2>Charaktere</h2><div class="card">
     <div class="clist">${chars.map(c=>`<button data-pick="${c.id}" class="${c.id===selId()?"on":""}" aria-pressed="${c.id===selId()}"><span><b>${esc(c.name||"Ohne Namen")}</b><br><span class="hint">${esc([c.volk,c.beruf,"Level "+(c.level||1)].filter(Boolean).join(" · "))}</span></span><span class="hint">${c.id===cur.id?"aktiv":num(c.lp.cur)+" LP"}</span></button>`).join("")}</div>
@@ -1035,7 +1043,8 @@ function migrate(c){
   if(c.kampf.shield!=null&&!c.shields[c.kampf.shield])c.kampf.shield=null;
   (c.skills||[]).forEach(sk=>{if(!sk.fixed&&!sk.kind&&sk.placeholder==="Spruchliste"){sk.kind="spell";
     let n=String(sk.name||"").trim();if(n==="Spruchliste")n="";n=n.replace(/^Spruchliste:\s*/,"");sk.name=n;}});
-  if(!c.apManual&&c.attr&&c.skills){const b=a=>num(c.attr[a]&&c.attr[a].b),at=c.skills.find(x=>x.name==="Athletik");c.ap=[3,Math.max(...ATTR.map(b)),at?num(at.rang)+num(at.boni):0];}
+  if(c.apManual){c.kwManual=true;delete c.apManual;}
+  if(!c.kwManual&&c.attr&&c.skills){const b=a=>num(c.attr[a]&&c.attr[a].b),at=c.skills.find(x=>x.name==="Athletik");c.ap=[3,Math.max(...ATTR.map(b)),at?num(at.rang)+num(at.boni):0];}
   if(c.kampf.att==null)c.kampf.att=0;
   if(c.kampf.defc==null)c.kampf.defc=0;
   if(c.kampf.defRes==null)c.kampf.defRes=0;
@@ -1208,7 +1217,7 @@ function kampfDo(b){
       });return;}
     case "krit":{
       if(!w||atk.dmg==null||atk.kritRoll!=null)return;
-      const kv=wSkill(w)+num(w.krit);
+      const kv=kritVal(w);
       rollPool(`Krit (Wert ${kv})`,{groups:[{label:"Zehner",n:1,s:10,tens:true},{label:"Einer",n:1,s:10,ones:true}],flat:0,d100:true},total=>{
         atk.kritRoll=total;atk.kritVal=kv;atk.krit=total<=kv;
         return {tag:atk.krit?`Krit! ${total} ≤ ${kv}: doppelter Schaden`:`Kein Krit: ${total} > ${kv}`};
@@ -1583,7 +1592,7 @@ function renderKampf(){
       ${poolChips(dg)}
       ${atk.dmg==null?`<button class="btn big${atk.phase==="hit"?" go":""}" data-act="damage" ${atk.phase==="hit"?"":"disabled"}>${atk.phase==="hit"?"Schaden würfeln":"Erst treffen"}</button>`:
       (()=>{const fin=atk.dmg*atk.mult*(atk.krit?2:1),spm=(spById(atk.spUsed)||{}).fx||{};return `<div class="result kopf"><div class="rl">Schaden: ${atk.dmg}${atk.zone==="kopf"?" ×2 Kopf":""}${spm.mult?" ×"+spm.mult+" "+esc(spById(atk.spUsed).n):""}${atk.krit?" ×2 Krit":""} = <b class="big">${fin}</b></div>
-        ${atk.kritRoll==null?`<button class="btn big go" data-act="krit">Krit würfeln: W100 ≤ ${wSkill(w)+num(w.krit)}</button>`:
+        ${atk.kritRoll==null?`<button class="btn big go" data-act="krit">Krit würfeln: W100 ≤ ${kritVal(w)}</button>`:
           `<div class="rz">${atk.krit?`Krit! W100 ${atk.kritRoll} ≤ ${atk.kritVal}`:`Kein Krit: W100 ${atk.kritRoll} > ${atk.kritVal}`}</div>`}</div>`})()}
     </div>
     ${atk.hit!=null?`<button class="btn small" data-act="reset">Neuer Angriff</button>`:""}`;
@@ -1684,7 +1693,7 @@ function renderRegeln(){
 }
 
 /* ---------- character sheet list ---------- */
-let confirmDel=false,charSel=null,lvConfirm=false;
+let confirmDel=false,charSel=null,lvConfirm=false,kwOpen=false;try{kwOpen=localStorage.getItem("aborea-kwopen")==="1";}catch(e){}
 const selId=()=>chars.some(c=>c.id===charSel)?charSel:(cur?cur.id:null);
 function addChar(c){migrate(c);chars.unshift(c);setCur(c);persist(c);tab=c.name.includes("Beispiel")?"skills":"bogen";renderAll();}
 
@@ -1786,7 +1795,8 @@ document.addEventListener("click",e=>{
     return;}
   if(b.id==="rollx"){$("#roll").innerHTML="";curRoll=null;markAgain();return;}
   if(b.id==="new1"||b.id==="newc"){cwOpen();return;}
-  if(b.dataset.apman){cur.apManual=!cur.apManual;if(!cur.apManual)recalcChar(cur);queueSave(cur);renderAll();return;}
+  if(b.dataset.kwman){cur.kwManual=!cur.kwManual;if(!cur.kwManual){recalcChar(cur);syncKrit();}queueSave(cur);renderAll();return;}
+  if(b.dataset.kwtog){kwOpen=!kwOpen;try{localStorage.setItem("aborea-kwopen",kwOpen?"1":"0")}catch(x){}renderAll();return;}
   if(b.id==="levelup"){lvConfirm=false;const r=levelUp();renderAll();buzz(20);
     lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);return;}
   if(b.id==="learnopen"){lvConfirm=false;lnOpen();return;}
@@ -2353,7 +2363,7 @@ function recalcChar(c){
   if(B){const max=Math.max(1,(B.tp+b("Ko"))*lvl),d=max-num(c.lp.max);c.lp.max=max;c.lp.cur=Math.min(max,num(c.lp.cur)+Math.max(0,d));out.push(`LP ${max}`);
     const r=rank("Magie entwickeln"),mmax=r>0?Math.max(0,(b(B.mp)+3)*r):0,md=mmax-num(c.mp.max);c.mp.max=mmax;c.mp.cur=Math.max(0,Math.min(mmax,num(c.mp.cur)+Math.max(0,md)));out.push(`Mana ${mmax}`);}
   const hb=Math.max(...ATTR.map(b)),athS=(c.skills||[]).find(x=>x.name==="Athletik"),ath=athS?num(athS.rang)+num(athS.boni):0;
-  if(!c.apManual)c.ap=[3,hb,ath];out.push(`AP ${sum(c.ap)}`);
+  if(!c.kwManual)c.ap=[3,hb,ath];out.push(`AP ${sum(c.ap)}`);
   c.trefferzone=`${15+ath} / ${40+ath}`;
   return out;
 }
