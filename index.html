@@ -528,7 +528,9 @@ nav .navinfo{flex:0 0 44px;display:grid;place-items:center;padding:0}
 .pbadges .armor{margin-left:0}
 .tzb{display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px 7px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .tzb b{color:var(--ink);font-size:1.05rem}
-.ctop .tzb{padding:3px 8px 3px 6px}
+.ctop .tzb{padding:3px 7px 3px 5px}
+.ctop{flex-wrap:wrap;row-gap:6px}
+.pbadges{flex-wrap:wrap;justify-content:flex-end}
 .armor{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:4px;padding:4px 10px 4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-variant-numeric:tabular-nums;cursor:pointer;transition:background .2s,border-color .2s,color .2s,box-shadow .2s}
 .armor b{color:var(--ink);font-size:1.05rem}
 .armor.on{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 22%,transparent),0 0 14px color-mix(in srgb,var(--ok) 45%,transparent)}
@@ -906,7 +908,7 @@ function refreshComputed(){
     const wl=$("#"+k+"-wheel");if(wl){wl.setAttribute("aria-valuenow",num(p.cur));wl.setAttribute("aria-valuemax",num(p.max));}
     if(!wh||wh.key!==k)drawWheel(k,num(p.cur));});
   {const ib=$("#inibox");if(ib)ib.innerHTML=iniHtml();}
-  {const tn=$("#tz-n");if(tn&&cur)tn.textContent=tzText();}
+  {const tn=$("#tz-n");if(tn&&cur)tn.textContent=tzText();const kn=$("#krit-n");if(kn&&cur)kn.textContent=kritNow();}
   ["ap","krit"].forEach(k=>{const t=$("#tot-"+k);if(t)t.textContent=sum(cur[k]);});
   cur.skills.forEach((s,i)=>{const t=$("#s-"+i+"-t");if(t)t.textContent=skillTotal(s);});
 }
@@ -1544,8 +1546,11 @@ function hasMana(){return num(cur.mp.max)>0;}
 const ICON_TZ='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
 function tzText(){const sh=shieldBonus().tz,t=String(cur.trefferzone||"").trim(),m=/^(\d+)\s*\/\s*(\d+)$/.exec(t);
   if(m)return `${+m[1]+sh}/${+m[2]+sh}`;if(/^-?\d+$/.test(t))return String(+t+sh);return t||"–";}
+const ICON_KRIT='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';
+function kritNow(){syncKrit();return sum(cur.krit);}
+function kritBadgeHtml(){const k=kritWeapon();return `<span class="tzb kritb" title="Krit${k?` mit ${esc(k.w.name||"Waffe")}`:""}: W100 ≤ Wert" aria-label="Krit ${kritNow()}">${ICON_KRIT}<b id="krit-n">${kritNow()}</b></span>`;}
 function tzBadgeHtml(){return `<span class="tzb" title="Trefferzone Körper / Kopf${shieldBonus().tz?` (inkl. Schild +${shieldBonus().tz})`:""}" aria-label="Trefferzone ${tzText()}">${ICON_TZ}<b id="tz-n">${esc(tzText())}</b></span>`;}
-function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<span class="pbadges">${tzBadgeHtml()}<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b></button></span>`;}
+function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<span class="pbadges">${kritBadgeHtml()}${tzBadgeHtml()}<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b></button></span>`;}
 function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
   return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}</button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small></span><span class="delta" id="${k}-delta"></span><span class="cright">${k==="lp"?armorBtnHtml():""}</span></div>
     <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
