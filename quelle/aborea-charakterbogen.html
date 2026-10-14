@@ -299,7 +299,9 @@ body.kampf #roll{bottom:calc(118px + env(safe-area-inset-bottom,0px))}
 body.kampf .wrap{padding-bottom:250px}
 .pool{grid-template-columns:minmax(0,1fr) 70px;gap:12px;align-items:stretch}
 .pmain{display:grid;gap:10px;min-width:0}
-.valrow{display:flex;align-items:baseline;gap:10px}
+.valrow{display:flex;align-items:baseline;gap:6px 10px;flex-wrap:wrap}
+.pool .val{white-space:nowrap}
+@media (max-width:390px){.pool{gap:8px;grid-template-columns:minmax(0,1fr) 58px}.maxrow .hint{display:none}.maxrow input{width:56px}.qrow .btn{min-width:0;padding:0 2px}.pool .val{font-size:2.3rem}}
 .delta{font-weight:700;font-size:1.2rem;font-variant-numeric:tabular-nums}
 .delta.up{color:var(--ok)} .delta.down{color:var(--bad)}
 .pbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
@@ -498,6 +500,12 @@ nav .navinfo{flex:0 0 44px;display:grid;place-items:center;padding:0}
 .wchev{color:var(--accent);transition:transform .15s;display:inline-block}
 .wchev.open{transform:rotate(90deg)}
 .weapon{gap:8px 10px;padding:10px 0}
+.pbadges{margin-left:auto;display:inline-flex;gap:6px;align-items:center;align-self:center}
+.cright .pbadges{margin-left:0}
+.pbadges .armor{margin-left:0}
+.tzb{display:inline-flex;align-items:center;gap:4px;padding:4px 9px 4px 7px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tzb b{color:var(--ink);font-size:1.05rem}
+.ctop .tzb{padding:3px 8px 3px 6px}
 .armor{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:4px;padding:4px 10px 4px 8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-variant-numeric:tabular-nums;cursor:pointer;transition:background .2s,border-color .2s,color .2s,box-shadow .2s}
 .armor b{color:var(--ink);font-size:1.05rem}
 .armor.on{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 22%,transparent),0 0 14px color-mix(in srgb,var(--ok) 45%,transparent)}
@@ -872,6 +880,7 @@ function refreshComputed(){
     const wl=$("#"+k+"-wheel");if(wl){wl.setAttribute("aria-valuenow",num(p.cur));wl.setAttribute("aria-valuemax",num(p.max));}
     if(!wh||wh.key!==k)drawWheel(k,num(p.cur));});
   {const ib=$("#inibox");if(ib)ib.innerHTML=iniHtml();}
+  {const tn=$("#tz-n");if(tn&&cur)tn.textContent=tzText();}
   ["ap","krit"].forEach(k=>{const t=$("#tot-"+k);if(t)t.textContent=sum(cur[k]);});
   cur.skills.forEach((s,i)=>{const t=$("#s-"+i+"-t");if(t)t.textContent=skillTotal(s);});
 }
@@ -1504,7 +1513,11 @@ document.addEventListener("pointerup",pgEnd);document.addEventListener("pointerc
 document.addEventListener("click",e=>{if(performance.now()-pgBlockClick<250&&e.target.closest&&e.target.closest("#kpages,#zlist,#kpchips")){e.stopPropagation();e.preventDefault();}},true);
 let poolsCompact={lp:false,mp:false};try{const v=localStorage.getItem("aborea-compact");if(v==="1")poolsCompact={lp:true,mp:true};else if(v&&v[0]==="{")poolsCompact=Object.assign(poolsCompact,JSON.parse(v));}catch(e){}
 function hasMana(){return num(cur.mp.max)>0;}
-function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b></button>`;}
+const ICON_TZ='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+function tzText(){const sh=shieldBonus().tz,t=String(cur.trefferzone||"").trim(),m=/^(\d+)\s*\/\s*(\d+)$/.exec(t);
+  if(m)return `${+m[1]+sh}/${+m[2]+sh}`;if(/^-?\d+$/.test(t))return String(+t+sh);return t||"–";}
+function tzBadgeHtml(){return `<span class="tzb" title="Trefferzone Körper / Kopf${shieldBonus().tz?` (inkl. Schild +${shieldBonus().tz})`:""}" aria-label="Trefferzone ${tzText()}">${ICON_TZ}<b id="tz-n">${esc(tzText())}</b></span>`;}
+function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<span class="pbadges">${tzBadgeHtml()}<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b></button></span>`;}
 function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
   return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}</button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small></span><span class="delta" id="${k}-delta"></span><span class="cright">${k==="lp"?armorBtnHtml():""}</span></div>
     <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
