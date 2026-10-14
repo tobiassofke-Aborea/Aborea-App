@@ -2488,7 +2488,7 @@ function attrLearn(a,add){
   const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a);
   if(add){
     if(w>=10)return "Höher als 10 lässt sich ein Attribut nicht kaufen.";
-    const c=ATTR_PRICE[w+1]-ATTR_PRICE[w];if(num(cur.ausbildung)<c)return `Dafür fehlen dir ${c-num(cur.ausbildung)} Ausbildungspunkte.`;
+    const c=ATTR_PRICE[w+1];if(num(cur.ausbildung)<c)return `Dafür fehlen dir ${c-num(cur.ausbildung)} Ausbildungspunkte.`;
     A.w=String(w+1);cur.ausbildung=num(cur.ausbildung)-c;lvLog().push({t:"a",k:a,c});
   }else{
     if(!done.length)return "";
@@ -2530,7 +2530,7 @@ function lnRender(keep){
     const pips=Array.from({length:need},(_,k)=>`<i class="${k<rk.rest?"on":""}"></i>`).join("");
     return `<div class="cwsr${done?" on":""}"><div class="cwsn"><b>${esc(nm||"Fertigkeit")}</b><small class="lnrk">Rang ${rk.r} · zu Rang ${rk.r+1}: <span class="lnpips">${pips}</span> ${rk.rest}/${need}</small></div><div class="cwboxes">${parts.length?boxes:'<small class="hint">keine Kosten</small>'}</div><span class="cwrk">${done?`+${done}`:""}</span></div>`;
   }).join("");
-  const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]-ATTR_PRICE[w]:0,bo=attrBonus(w);
+  const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
     return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`auf ${w+1}: ${c} Punkte`:"Maximum erreicht"}</small></div>
       <div class="step"><button data-lnat="${a}" data-d="-1" ${done?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-lnat="${a}" data-d="1" ${w>=10||ap<c?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
       <div class="cwres"><small>${done?`+${done} in dieser Stufe`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("");
@@ -2541,7 +2541,7 @@ function lnRender(keep){
       <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 drei. Ein Kreuz in dieser Stufe nimmst du durch erneutes Antippen zurück.</p>
       <div class="cwsk">${rows}</div>
       <div class="lab cwh">Attribute</div>
-      <p class="note">Ein Attribut steigern kostet den Unterschied laut Kaufpreis-Tabelle, z. B. von 7 auf 8 zwei Punkte.</p>
+      <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts, z. B. von 7 auf 8 zehn Punkte.</p>
       <div class="cwattr">${attrs}</div>
     </div><div class="cwmsg" hidden></div>`;
   const nb=el.querySelector(".cwbody");if(nb)nb.scrollTop=st;
