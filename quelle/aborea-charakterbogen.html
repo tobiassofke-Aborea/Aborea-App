@@ -740,6 +740,8 @@ async function removeChar(c){
 }
 
 async function init(){
+  // Browser bitten, die gespeicherten Charaktere nicht von selbst aufzuräumen
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});}catch(e){}
   // first frame: local data so the page is usable immediately
   chars=lsLoad();
   pickCurrent();renderAll();
