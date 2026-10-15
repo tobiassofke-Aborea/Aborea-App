@@ -209,6 +209,7 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 #pbview .pbbody>.btn{display:flex;align-items:center;justify-content:center;margin-top:10px}
 #pbview .pbimg{display:block;width:calc(100% - 32px);height:auto;margin:14px auto 0;border:1px solid var(--line);border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.12);background:#fff}
 #pbview .pbmsg{margin-top:8px}
+#pbview .pbseg{display:flex;gap:0;margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}#pbview .pbseg button{flex:1;min-height:42px;border:0;background:var(--card);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}#pbview .pbseg button+button{border-left:1px solid var(--line)}#pbview .pbseg button.on{background:color-mix(in srgb,var(--accent) 16%,var(--card));color:var(--accent)}
 #learn{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 #learn .tbar,#learn .cwbody>*,#learn .cwmsg{max-width:720px;width:calc(100% - 32px);margin-inline:auto}
 #learn .cwmsg{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto}
@@ -2631,13 +2632,21 @@ document.addEventListener("change",e=>{if(!cw)return;const t=e.target;if(t.datas
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cw)cwClose();});
 
 /* ---------- Papierbogen: Charakter als druckbares PDF im Stil des Aborea-Bogens ---------- */
-const PB={k:10,W:210,H:297,ink:"#33281d",line:"#7d6a52",soft:"#efe8db",softer:"#f7f3ec",mute:"#8a7a64"};
+const PB={k:10,W:210,H:297,ink:"#33281d",line:"#7d6a52",soft:"#efe6d4",softer:"#f7f1e6",mute:"#86735a",parch:true};
+try{PB.parch=localStorage.getItem("aborea-pbparch")!=="0";}catch(e){}
+const PB_A="data:image/png;base64,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";
+let pbAImg=null;
 const pbFont=(pt,fam,w)=>`${w||""} ${(pt*0.3528*PB.k).toFixed(1)}px ${fam==="d"?'"IM Fell English SC","Palatino Linotype",Georgia,serif':'"Alegreya Sans","Segoe UI",system-ui,sans-serif'}`;
+// fester Zufall, damit der Bogen bei jedem Erstellen gleich aussieht
+const pbRand=seed=>()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
 function pbCtx(c){const x=c.getContext("2d"),k=PB.k;
-  const P={x,
+  const fillP=()=>PB.parch?"rgba(255,251,242,.55)":PB.softer, fillBox=()=>PB.parch?"rgba(255,253,248,.9)":"#fff", fillLab=()=>PB.parch?"rgba(250,244,232,.85)":"#fbf8f2";
+  const P={x,fillP,fillBox,fillLab,
     rect(a,b,w,h,o={}){x.beginPath();const r=(o.r||0)*k;if(x.roundRect)x.roundRect(a*k,b*k,w*k,h*k,r);else x.rect(a*k,b*k,w*k,h*k);
       if(o.fill){x.fillStyle=o.fill;x.fill();}if(o.stroke!==false){x.strokeStyle=o.stroke||PB.line;x.lineWidth=(o.lw||0.3)*k;x.stroke();}},
     line(a,b,c2,d,o={}){x.beginPath();x.moveTo(a*k,b*k);x.lineTo(c2*k,d*k);x.strokeStyle=o.stroke||PB.line;x.lineWidth=(o.lw||0.3)*k;x.stroke();},
+    poly(pts,o={}){x.beginPath();pts.forEach(([a,b],i)=>i?x.lineTo(a*k,b*k):x.moveTo(a*k,b*k));x.closePath();
+      if(o.fill){x.fillStyle=o.fill;x.fill();}if(o.stroke!==false){x.strokeStyle=o.stroke||PB.line;x.lineWidth=(o.lw||0.3)*k;x.lineJoin="round";x.stroke();}},
     text(s,a,b,o={}){s=String(s==null?"":s);if(!s)return 0;let pt=o.pt||10;const fam=o.fam||"b",w=o.w||"";x.font=pbFont(pt,fam,w);
       if(o.max){while(pt>4&&x.measureText(s).width>o.max*k){pt-=0.5;x.font=pbFont(pt,fam,w);}}
       x.fillStyle=o.color||PB.ink;x.textAlign=o.align||"left";x.textBaseline=o.base||"alphabetic";x.fillText(s,a*k,b*k);return x.measureText(s).width/k;},
@@ -2645,76 +2654,103 @@ function pbCtx(c){const x=c.getContext("2d"),k=PB.k;
     wrap(s,a,b,maxW,lh,o={}){x.font=pbFont(o.pt||9,o.fam||"b",o.w||"");const lines=[];
       String(s||"").split("\n").forEach(par=>{let ln="";par.split(/\s+/).forEach(wd=>{const t=ln?ln+" "+wd:wd;if(x.measureText(t).width>maxW*k&&ln){lines.push(ln);ln=wd;}else ln=t;});lines.push(ln);});
       const max=o.maxLines||99;lines.slice(0,max).forEach((l,i)=>P.text(l,a,b+i*lh,o));return Math.min(lines.length,max);},
-    // Überschrift-Band wie auf dem Bogen: Rahmen mit Titel in der Mitte
-    panel(a,b,w,h,title){P.rect(a,b,w,h,{fill:PB.softer,stroke:PB.line,lw:0.5,r:1.2});P.rect(a+0.9,b+0.9,w-1.8,h-1.8,{stroke:PB.line,lw:0.15,r:0.8});
-      if(title){x.font=pbFont(13,"d");const tw=x.measureText(title).width/k+12,tx=a+w/2-tw/2;
-        x.beginPath();x.moveTo(tx*k,(b-0.2)*k);x.lineTo((tx+tw)*k,(b-0.2)*k);x.lineTo((tx+tw+3)*k,(b+3.6)*k);x.lineTo((tx+tw)*k,(b+7.4)*k);x.lineTo(tx*k,(b+7.4)*k);x.lineTo((tx-3)*k,(b+3.6)*k);x.closePath();
-        x.fillStyle=PB.soft;x.fill();x.strokeStyle=PB.line;x.lineWidth=0.5*k;x.stroke();P.text(title,a+w/2,b+5.4,{pt:13,fam:"d",align:"center"});}},
-    box(a,b,w,h,val,o={}){P.rect(a,b,w,h,{fill:"#fff",stroke:PB.line,lw:0.35,r:0.8});if(val!==""&&val!=null)P.text(val,a+w/2,b+h/2+(o.pt||12)*0.12,{pt:o.pt||12,w:"700",align:"center",max:w-1.5});},
+    // Eckbeschlag: Winkel mit Raute, wie Metallecken an einem alten Buch
+    corner(a,b,sx,sy){const L=5.5;x.beginPath();x.moveTo(a*k,(b+L*sy)*k);x.lineTo(a*k,b*k);x.lineTo((a+L*sx)*k,b*k);x.strokeStyle=PB.ink;x.lineWidth=0.75*k;x.lineCap="square";x.stroke();
+      const c1=a+1.9*sx,c2=b+1.9*sy;P.poly([[c1,c2-1.1],[c1+1.1,c2],[c1,c2+1.1],[c1-1.1,c2]],{fill:PB.line,stroke:false});
+      x.beginPath();x.moveTo((a+L*sx)*k,b*k);x.quadraticCurveTo((a+(L+1.6)*sx)*k,b*k,(a+(L+1.6)*sx)*k,(b+1.1*sy)*k);x.moveTo(a*k,(b+L*sy)*k);x.quadraticCurveTo(a*k,(b+(L+1.6)*sy)*k,(a+1.1*sx)*k,(b+(L+1.6)*sy)*k);x.lineWidth=0.45*k;x.stroke();},
+    frame(a,b,w,h){P.corner(a-0.6,b-0.6,1,1);P.corner(a+w+0.6,b-0.6,-1,1);P.corner(a-0.6,b+h+0.6,1,-1);P.corner(a+w+0.6,b+h+0.6,-1,-1);},
+    // Schriftrolle als Überschrift: Band mit eingerollten Enden
+    ribbon(cx,cy,w,title,pt){const h=7.6,a=cx-w/2,e=a+w,t=4.5;
+      P.poly([[a-t-3,cy-h/2+1.6],[a+1,cy-h/2+1.6],[a+1,cy+h/2+1.6],[a-t-3,cy+h/2+1.6],[a-t,cy+1.6]],{fill:PB.parch?"#e3d5bb":"#e9e0cf",lw:0.4});
+      P.poly([[e+t+3,cy-h/2+1.6],[e-1,cy-h/2+1.6],[e-1,cy+h/2+1.6],[e+t+3,cy+h/2+1.6],[e+t,cy+1.6]],{fill:PB.parch?"#e3d5bb":"#e9e0cf",lw:0.4});
+      P.poly([[a,cy+h/2],[a+1,cy+h/2+1.6],[a+1,cy+h/2]],{fill:PB.line,lw:0.2});P.poly([[e,cy+h/2],[e-1,cy+h/2+1.6],[e-1,cy+h/2]],{fill:PB.line,lw:0.2});
+      P.rect(a,cy-h/2,w,h,{fill:PB.parch?"#f6eedd":PB.soft,lw:0.5,r:0.4});P.line(a+1,cy-h/2+0.8,e-1,cy-h/2+0.8,{lw:0.12});P.line(a+1,cy+h/2-0.8,e-1,cy+h/2-0.8,{lw:0.12});
+      P.text(title,cx,cy+(pt||13)*0.125,{pt:pt||13,fam:"d",align:"center",max:w-3});},
+    panel(a,b,w,h,title){P.rect(a,b,w,h,{fill:fillP(),stroke:PB.line,lw:0.55,r:1});P.rect(a+1,b+1,w-2,h-2,{stroke:PB.line,lw:0.15,r:0.6});P.frame(a,b,w,h);
+      if(title){x.font=pbFont(13,"d");P.ribbon(a+w/2,b+0.6,x.measureText(title).width/k+12,title);}},
+    box(a,b,w,h,val,o={}){P.rect(a,b,w,h,{fill:fillBox(),stroke:PB.line,lw:0.35,r:0.8});if(val!==""&&val!=null)P.text(val,a+w/2,b+h/2+(o.pt||12)*0.12,{pt:o.pt||12,w:"700",align:"center",max:w-1.5});},
     cross(a,b,s){x.beginPath();const p=0.7;x.moveTo((a+p)*k,(b+p)*k);x.lineTo((a+s-p)*k,(b+s-p)*k);x.moveTo((a+s-p)*k,(b+p)*k);x.lineTo((a+p)*k,(b+s-p)*k);x.strokeStyle=PB.ink;x.lineWidth=0.4*k;x.lineCap="round";x.stroke();},
-    arrow(a,b,s){x.beginPath();x.moveTo(a*k,(b-s)*k);x.lineTo((a+s*1.3)*k,b*k);x.lineTo(a*k,(b+s)*k);x.closePath();x.fillStyle=PB.line;x.fill();}};
+    arrow(a,b,s){x.beginPath();x.moveTo(a*k,(b-s)*k);x.lineTo((a+s*1.3)*k,b*k);x.lineTo(a*k,(b+s)*k);x.closePath();x.fillStyle=PB.line;x.fill();},
+    // kleiner W10 wie auf dem Original neben jeder Fertigkeit
+    d10(cx,cy,s){P.poly([[cx,cy-s],[cx+s*0.9,cy-s*0.15],[cx,cy+s],[cx-s*0.9,cy-s*0.15]],{fill:fillBox(),lw:0.22});x.beginPath();x.moveTo((cx-s*0.9)*k,(cy-s*0.15)*k);x.lineTo(cx*k,(cy+s*0.2)*k);x.lineTo((cx+s*0.9)*k,(cy-s*0.15)*k);x.moveTo(cx*k,(cy+s*0.2)*k);x.lineTo(cx*k,(cy+s)*k);x.lineWidth=0.15*k;x.stroke();},
+    rule(a,b,w){P.line(a,b,a+w/2-2,b,{lw:0.25});P.line(a+w/2+2,b,a+w,b,{lw:0.25});P.poly([[a+w/2,b-1],[a+w/2+1.2,b],[a+w/2,b+1],[a+w/2-1.2,b]],{fill:PB.line,stroke:false});},
+    icon(kind,cx,cy,s){x.save();x.translate(cx*k,cy*k);x.scale(s*k/12,s*k/12);x.strokeStyle=PB.ink;x.fillStyle=PB.ink;x.lineWidth=1.3;x.lineJoin="round";x.lineCap="round";x.beginPath();
+      if(kind==="ini"){x.moveTo(-5,-7);x.lineTo(5,-7);x.moveTo(-5,7);x.lineTo(5,7);x.moveTo(-4,-7);x.quadraticCurveTo(-4,-1,0,0);x.quadraticCurveTo(4,-1,4,-7);x.moveTo(-4,7);x.quadraticCurveTo(-4,1,0,0);x.quadraticCurveTo(4,1,4,7);x.stroke();}
+      else if(kind==="ap"){[-5.5,0,5.5].forEach(d=>{x.moveTo(d+2.2,0);x.arc(d,0,2.2,0,7);});x.fill();}
+      else{x.moveTo(0,-8);x.lineTo(2.2,-2.2);x.lineTo(8,0);x.lineTo(2.2,2.2);x.lineTo(0,8);x.lineTo(-2.2,2.2);x.lineTo(-8,0);x.lineTo(-2.2,-2.2);x.closePath();x.stroke();}
+      x.restore();},
+    watermark(cx,cy,h,alpha){if(!pbAImg)return;const w=h*pbAImg.width/pbAImg.height;x.save();x.globalAlpha=alpha;x.drawImage(pbAImg,(cx-w/2)*k,(cy-h/2)*k,w*k,h*k);x.restore();}};
   return P;}
+// Pergament: warmer Grund, feine Fasern, Flecken und dunklere Ränder
+function pbBg(P,c,seed){const x=P.x,W=c.width,H=c.height;
+  if(!PB.parch){x.fillStyle="#fff";x.fillRect(0,0,W,H);return;}
+  x.fillStyle="#f7eedb";x.fillRect(0,0,W,H);const R=pbRand(seed||7);
+  for(let i=0;i<26;i++){const r=(40+R()*160)*PB.k/10*10,gx=R()*W,gy=R()*H,g=x.createRadialGradient(gx,gy,0,gx,gy,r);g.addColorStop(0,`rgba(${R()<.5?"214,180,120":"240,226,196"},${.08+R()*.1})`);g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(gx-r,gy-r,2*r,2*r);}
+  x.lineCap="round";for(let i=0;i<900;i++){const a=R()*W,b=R()*H,l=(4+R()*22)*PB.k/10*3,ang=(R()-.5)*0.7;x.strokeStyle=`rgba(120,90,50,${.025+R()*.04})`;x.lineWidth=0.6+R()*1.2;x.beginPath();x.moveTo(a,b);x.quadraticCurveTo(a+l/2,b+(R()-.5)*8,a+l*Math.cos(ang),b+l*Math.sin(ang));x.stroke();}
+  for(let i=0;i<5000;i++){x.fillStyle=`rgba(110,80,40,${R()*.07})`;x.fillRect(R()*W,R()*H,1+R()*2.5,1+R()*2.5);}
+  const v=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.42,W/2,H/2,Math.max(W,H)*0.72);v.addColorStop(0,"rgba(150,110,60,0)");v.addColorStop(1,"rgba(160,115,55,.2)");x.fillStyle=v;x.fillRect(0,0,W,H);}
+function pbTitle(P){P.watermark(14.8,9.6,10.5,1);P.text("borea",19.3,12.6,{pt:20,fam:"d"});}
 const pbSign=n=>n>0?"+"+n:n<0?"−"+Math.abs(n):"0";
 function pbPage1(c){const P=pbCtx(c),x=P.x,k=PB.k;
-  x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
-  P.text("Aborea",10,12.5,{pt:20,fam:"d"});
+  pbBg(P,c,11);pbTitle(P);
   // Kopf links: Volk, Beruf, Details
-  P.rect(10,16,64,52,{fill:PB.softer,lw:0.5,r:1.2});
+  P.rect(10,16,64,52,{fill:P.fillP(),lw:0.55,r:1});P.frame(10,16,64,52);
   [["Volk",cur.volk],["Beruf",cur.beruf],["Details",String(cur.details||"").split("\n")[0]]].forEach(([l,v],i)=>{const y=17+i*17;
-    P.lab(l,13,y+4.2);P.rect(13,y+5.6,58,8.6,{fill:"#fff",lw:0.3,r:0.8});P.text(v||"",15,y+11.6,{pt:10.5,max:54});});
-  // Mitte: Wappen mit Stufe, Name und GS
-  {const cx=105;x.beginPath();x.moveTo((cx-27)*k,18*k);x.lineTo((cx+27)*k,18*k);x.lineTo((cx+27)*k,46*k);x.quadraticCurveTo((cx+27)*k,64*k,cx*k,71*k);x.quadraticCurveTo((cx-27)*k,64*k,(cx-27)*k,46*k);x.closePath();
-    x.fillStyle=PB.soft;x.fill();x.strokeStyle=PB.line;x.lineWidth=0.6*k;x.stroke();
-    P.box(cx-10,20,20,11,String(lvlNow()),{pt:15});P.lab("Stufe",cx,34.2,{align:"center"});
-    // Band mit Namen
-    x.beginPath();x.moveTo((cx-32)*k,37*k);x.lineTo((cx+32)*k,37*k);x.lineTo((cx+29)*k,43*k);x.lineTo((cx+32)*k,49*k);x.lineTo((cx-32)*k,49*k);x.lineTo((cx-29)*k,43*k);x.closePath();
-    x.fillStyle="#fbf8f2";x.fill();x.strokeStyle=PB.line;x.lineWidth=0.5*k;x.stroke();
-    P.text(cur.name||"",cx,45.6,{pt:17,fam:"d",align:"center",max:54});
-    P.box(cx-10,52,20,10,String(cur.gs||"").trim(),{pt:13});P.lab("Geistige Stabilität",cx,65.4,{align:"center",pt:5.5});}
+    P.lab(l,13,y+4.2);P.rect(13,y+5.6,58,8.6,{fill:P.fillBox(),lw:0.3,r:0.8});P.text(v||"",15,y+11.6,{pt:10.5,max:54});});
+  // Mitte: Wappenschild mit Stufe, Namensband und GS
+  {const cx=105,shield=(d)=>{x.beginPath();x.moveTo((cx-27+d)*k,(18+d)*k);x.lineTo((cx+27-d)*k,(18+d)*k);x.lineTo((cx+27-d)*k,46*k);x.quadraticCurveTo((cx+27-d)*k,(64-d*.5)*k,cx*k,(71-d*1.2)*k);x.quadraticCurveTo((cx-27+d)*k,(64-d*.5)*k,(cx-27+d)*k,46*k);x.closePath();};
+    shield(0);x.fillStyle=PB.parch?"#d9c6a2":"#e6dccb";x.fill();x.strokeStyle=PB.ink;x.lineWidth=0.7*k;x.stroke();
+    shield(2.2);x.fillStyle=PB.parch?"#efe3cb":PB.soft;x.fill();x.strokeStyle=PB.line;x.lineWidth=0.3*k;x.stroke();
+    [[cx-25,20],[cx+25,20],[cx-25,44],[cx+25,44],[cx,68.4]].forEach(([a,b])=>{x.beginPath();x.arc(a*k,b*k,0.75*k,0,7);x.fillStyle=PB.line;x.fill();});
+    P.watermark(cx,44,24,PB.parch?.12:.08);
+    P.box(cx-10,21,20,11,String(lvlNow()),{pt:15});P.lab("Stufe",cx,35,{align:"center"});
+    P.ribbon(cx,43,46,cur.name||"",17);
+    P.box(cx-10,51.5,20,10,String(cur.gs||"").trim(),{pt:13});P.lab("Geistige Stabilität",cx,64.6,{align:"center",pt:5.5});}
   // Kopf rechts: LP, Mana, Rüstung, Trefferzone
   const tz=tzText(),aT=armorOf();
   [["Lebenspunkte",num(cur.lp.max),"(TP + KO-Bonus) × Stufe"],["Manapunkte",hasMana()?num(cur.mp.max):"","(Bonus + 3) × Magie entw."],
    ["Rüstung",armorTotal(),aT?aT[0]:""],["Trefferzone",tz==="–"?"":tz,"15/40 + Athletik"]].forEach(([l,v,f],i)=>{
-    const a=140+(i%2)*31,b=16+Math.floor(i/2)*27;P.rect(a,b,29,25,{fill:PB.softer,lw:0.5,r:1.2});P.lab(l,a+14.5,b+4.2,{align:"center",pt:5.6});
+    const a=140+(i%2)*31,b=16+Math.floor(i/2)*27;P.rect(a,b,29,25,{fill:P.fillP(),lw:0.55,r:1});P.rect(a+0.8,b+0.8,27.4,23.4,{lw:0.12,r:0.6});P.lab(l,a+14.5,b+4.2,{align:"center",pt:5.6});
     P.box(a+2.5,b+6,24,12,String(v),{pt:15});P.text(f,a+14.5,b+22.6,{pt:5.2,align:"center",color:PB.mute,max:27});});
   // Attribute
-  P.panel(10,76,94,72,"Attribute");
-  P.lab("Wert",61,87.5,{align:"center"});P.lab("Bonus",87,87.5,{align:"center"});
+  P.panel(10,77,92.5,71,"Attribute");
+  P.lab("Wert",61,88,{align:"center"});P.lab("Bonus",87,88,{align:"center"});
   ATTR.forEach((a,i)=>{const y=90+i*11.2,A=cur.attr[a]||{w:"",b:0},bo=num(A.b);
-    P.rect(14,y,38,9,{fill:"#fbf8f2",lw:0.35,r:0.8});P.text(a+":",16,y+6.6,{pt:13,fam:"d"});P.text(ATTR_LONG[a],50,y+6,{pt:6.5,color:PB.mute,align:"right"});
+    P.rect(14,y,38,9,{fill:P.fillLab(),lw:0.35,r:0.8});P.text(a+":",16,y+6.6,{pt:13,fam:"d"});P.text(ATTR_LONG[a],50,y+6,{pt:6.5,color:PB.mute,align:"right"});
     P.box(54,y,14,9,String(A.w===""?"":num(A.w)),{pt:13});P.arrow(71.5,y+4.5,2);P.box(78,y,18,9,String(A.w===""&&!bo?"":pbSign(bo)),{pt:13});});
   // Kampfwerte
-  P.panel(106,76,94,72,"Kampfwerte");
+  P.panel(107.5,77,92.5,71,"Kampfwerte");
   const ip=iniParts(),ini=iniBase(),ap=cur.ap||[3,0,0],kr=cur.krit||[0,0];
-  const kw=(y,title,sub,base,parts,total,extra)=>{P.rect(110,y,20,17,{fill:"#fbf8f2",lw:0.35,r:0.8});P.text(title,120,y+9,{pt:15,fam:"d",align:"center"});P.text(sub,120,y+14.3,{pt:5,align:"center",color:PB.mute,max:19});
+  const kw=(y,title,icon,sub,base,parts,total,extra)=>{P.rect(110,y,20,17,{fill:P.fillLab(),lw:0.35,r:0.8});P.icon(icon,113.6,y+3.6,2.6);P.text(title,121.5,y+9.2,{pt:14,fam:"d",align:"center"});P.text(sub,120,y+14.3,{pt:5,align:"center",color:PB.mute,max:19});
     if(base!=null){P.box(132,y+4,8,9,String(base),{pt:10});}
     const px=base!=null?142:132;parts.forEach(([l,v],j)=>{const yy=y+j*(17/parts.length);P.text(l,px,yy+17/parts.length/2+1.2,{pt:6,max:base!=null?28:38});P.text(String(v),px+(base!=null?37:46),yy+17/parts.length/2+1.3,{pt:8,w:"700",align:"right"});
       if(j)P.line(px,yy,px+(base!=null?38:47),yy,{lw:0.12});});
     P.box(182,y+3,15,11,String(total),{pt:14});if(extra)P.text(extra,189.5,y+16.8,{pt:6,align:"center",color:PB.mute});};
-  kw(86,"Ini","Initiative",50,[["KO-Bonus, Wahrnehmung, Athletik",pbSign(ip.slice(1,4).reduce((s,p)=>s+p[1],0))],["Rüstungsmalus",pbSign(ip[4][1])],["Waffenmalus",pbSign(ip[5][1])]],ini,"− 1W6");
-  kw(107,"AP","Aktionspunkte",null,[["Grundwert",num(ap[0])],["Höchster Attributsbonus",num(ap[1])],["Athletik",num(ap[2])]],sum(ap));
-  kw(128,"Krit","Kritische Treffer",null,[["Waffenfertigkeit",num(kr[0])],["Krit-Wert Waffe",num(kr[1])]],kritNow(),"W100 ≤ Wert");
+  kw(87,"Ini","ini","Initiative",50,[["KO-Bonus, Wahrnehmung, Athletik",pbSign(ip.slice(1,4).reduce((s,p)=>s+p[1],0))],["Rüstungsmalus",pbSign(ip[4][1])],["Waffenmalus",pbSign(ip[5][1])]],ini,"− 1W6");
+  kw(107.5,"AP","ap","Aktionspunkte",null,[["Grundwert",num(ap[0])],["Höchster Attributsbonus",num(ap[1])],["Athletik",num(ap[2])]],sum(ap));
+  kw(128,"Krit","krit","Kritische Treffer",null,[["Waffenfertigkeit",num(kr[0])],["Krit-Wert Waffe",num(kr[1])]],kritNow(),"W100 ≤ Wert");
   // Fertigkeiten
   const rows=cur.skills.filter(s=>s.fixed||s.name||s.placeholder);
-  P.panel(10,154,190,134,"Fertigkeiten");
-  const top=166,avail=288-3-top,rh=Math.min(6.4,avail/Math.max(rows.length,1)),bs=Math.min(3.9,rh-1.3),gx=0.5,gg=1.1,x0=71;
+  P.panel(10,155,190,133,"Fertigkeiten");
+  const top=167,avail=288-3-top,rh=Math.min(6.4,avail/Math.max(rows.length,1)),bs=Math.min(3.9,rh-1.3),gx=0.5,gg=1.1,x0=72;
+  P.watermark(105,top+avail/2,Math.min(avail*0.9,100),PB.parch?.07:.05);
   const groups=[];let gxp=x0;for(let r=1;r<=12;r++){const n=boxesFor(r);groups.push({r,x:gxp,n});gxp+=n*bs+(n-1)*gx+gg;}
   P.lab("Fertigkeit",14,top-1.5);groups.forEach(g=>P.text(String(g.r),g.x+(g.n*bs+(g.n-1)*gx)/2,top-1.4,{pt:9,fam:"d",align:"center"}));
-  const bx=gxp+1.5;P.lab("Boni",bx+6,top-1.5,{align:"center"});P.lab("Kosten",bx+19.5,top-1.5,{align:"center"});
+  const bx=gxp+1.2;P.lab("Boni",bx+6,top-1.5,{align:"center"});P.lab("Kosten",bx+19.5,top-1.5,{align:"center"});
   rows.forEach((s,i)=>{const y=top+i*rh,cy=y+rh/2;
-    P.rect(13,y+0.5,55,rh-1,{fill:"#fbf8f2",lw:0.3,r:0.6});
-    if(s.name)P.text(s.name,15,cy+1.4,{pt:Math.min(9.5,rh*1.55),fam:"d",max:42});else P.text(s.placeholder||"",15,cy+1.1,{pt:6,color:PB.mute});
-    const tot=skillTotal(s);if(s.name||s.fixed)P.text(String(tot),66.5,cy+1.4,{pt:8,w:"700",align:"right",color:PB.mute});
-    let left=sxOf(s);groups.forEach(g=>{for(let j=0;j<g.n;j++){const a=g.x+j*(bs+gx),b=cy-bs/2;P.rect(a,b,bs,bs,{fill:"#fff",lw:0.25,r:0.3});if(left>0){P.cross(a,b,bs);left--;}}});
+    P.rect(13,y+0.5,56,rh-1,{fill:P.fillLab(),lw:0.3,r:0.6});
+    if(s.name)P.text(s.name,15,cy+1.4,{pt:Math.min(9.5,rh*1.55),fam:"d",max:40});else P.text(s.placeholder||"",15,cy+1.1,{pt:6,color:PB.mute});
+    const tot=skillTotal(s);P.d10(60.5,cy,Math.min(1.9,rh*0.32));P.text("+",63.2,cy+1.1,{pt:7,color:PB.mute});
+    if(s.name||s.fixed)P.text(String(tot),68.2,cy+1.4,{pt:8,w:"700",align:"right"});
+    let left=sxOf(s);groups.forEach(g=>{for(let j=0;j<g.n;j++){const a=g.x+j*(bs+gx),b=cy-bs/2;P.rect(a,b,bs,bs,{fill:P.fillBox(),lw:0.25,r:0.3});if(left>0){P.cross(a,b,bs);left--;}}});
     P.box(bx,y+0.5,12,rh-1,num(s.boni)?pbSign(num(s.boni)):"",{pt:8});P.box(bx+13.5,y+0.5,12,rh-1,(s.name||s.fixed)?skillCost(s):"",{pt:7.5});});
   P.text("Aborea-App · Stand "+new Date().toLocaleDateString("de-DE"),200,293.5,{pt:6,color:PB.mute,align:"right"});
 }
 function pbPage2(c){const P=pbCtx(c),x=P.x;
-  x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
-  P.text("Aborea",10,12.5,{pt:20,fam:"d"});P.text(cur.name||"",200,12.5,{pt:14,fam:"d",align:"right",max:120});
+  pbBg(P,c,23);pbTitle(P);P.text(cur.name||"",200,12.5,{pt:14,fam:"d",align:"right",max:120});
   // Waffen
   const ws=(cur.weapons||[]).filter(w=>w&&(w.name||w.hit||w.dmg));
-  P.panel(10,20,190,70,"Waffen");
+  P.panel(10,21,190,69,"Waffen");
   const cols=[["Waffe",14,52],["Fertigkeit",68,40],["Treffen",110,20],["Schaden",132,22],["Krit",156,14],["Malus",172,14]];
   cols.forEach(([l,a])=>P.lab(l,a,32));
   for(let i=0;i<6;i++){const y=34+i*9,w=ws[i];P.line(14,y+8,196,y+8,{lw:0.2});
@@ -2722,22 +2758,27 @@ function pbPage2(c){const P=pbCtx(c),x=P.x;
     P.text(w.name||"Waffe",14,y+6,{pt:10,fam:"d",max:52});P.text(sk?(sk.name||sk.placeholder||""):"",68,y+6,{pt:8,max:40});
     P.text(w.hit||"",110,y+6,{pt:9,max:20});P.text(w.dmg||"",132,y+6,{pt:9,max:22});P.text(w.krit||"",156,y+6,{pt:9,max:14});P.text(num(w.malus)?String(num(w.malus)):"",172,y+6,{pt:9,max:14});}
   // Rüstung & Schild
-  P.panel(10,98,92,40,"Rüstung & Schild");
+  P.panel(10,99,92,39,"Rüstung & Schild");
   const aT=armorOf(),sh=curShield();
-  P.lab("Rüstung",14,110);P.text(aT?aT[0]:"Eigene",14,116,{pt:10,max:60});P.box(80,108,18,10,String(num(cur.ruestung)),{pt:12});
+  P.lab("Rüstung",14,110);P.text(aT?aT[0]:"Eigene",14,116,{pt:10,fam:"d",max:60});P.box(80,108,18,10,String(num(cur.ruestung)),{pt:12});
   P.lab("Malus (Ini)",14,123);P.text(String(num(cur.ruestungMalus)||0),14,129,{pt:10});
-  P.lab("Schild",50,123);P.text(sh?(sh.name||"Schild"):"–",50,129,{pt:10,max:46});
-  // Geldsack
-  P.panel(108,98,92,40,"Geldsack");
-  const m=purse();COINS.forEach((co,i)=>{const a=112+i*21.5;P.lab(co.name,a+9.5,110,{align:"center",pt:5.2});P.box(a,112,19,11,String(m[co.k]||0),{pt:11});P.text(co.short,a+9.5,127.5,{pt:6.5,align:"center",color:PB.mute});});
+  P.lab("Schild",50,123);P.text(sh?(sh.name||"Schild"):"–",50,129,{pt:10,fam:"d",max:46});
+  // Geldsack: Münzen als kleine geprägte Scheiben
+  P.panel(108,99,92,39,"Geldsack");
+  const m=purse();COINS.forEach((co,i)=>{const a=112+i*21.5,cx=a+9.5;
+    x.beginPath();x.arc(cx*PB.k,113*PB.k,3*PB.k,0,7);x.fillStyle=co.col[0];x.fill();x.strokeStyle=co.col[2];x.lineWidth=0.35*PB.k;x.stroke();x.beginPath();x.arc(cx*PB.k,113*PB.k,2.3*PB.k,0,7);x.lineWidth=0.15*PB.k;x.stroke();
+    P.text(co.ch,cx,114.1,{pt:7,fam:"d",align:"center",color:co.col[2]});
+    P.box(a,118,19,9,String(m[co.k]||0),{pt:11});P.text(co.name,cx,131.3,{pt:6,align:"center",color:PB.mute});});
   // Notizen
-  P.panel(10,146,190,142,"Ausrüstung & Notizen");
-  for(let y=166;y<284;y+=7.5)P.line(14,y,196,y,{lw:0.15,stroke:"#cdbfa8"});
+  P.panel(10,147,190,141,"Ausrüstung & Notizen");
+  P.watermark(105,220,90,PB.parch?.06:.04);
+  for(let y=166;y<284;y+=7.5)P.line(14,y,196,y,{lw:0.15,stroke:"#c9b89a"});
   const notes=String(cur.notes||"");P.wrap(notes,15,164.8,180,7.5,{pt:10,maxLines:16});
   P.text("Aborea-App · Stand "+new Date().toLocaleDateString("de-DE"),200,293.5,{pt:6,color:PB.mute,align:"right"});
 }
 async function pbRender(){
   try{await Promise.all(['20px "IM Fell English SC"','20px "Alegreya Sans"','700 20px "Alegreya Sans"'].map(f=>document.fonts.load(f)));}catch(e){}
+  if(!pbAImg){pbAImg=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=PB_A;});}
   return [pbPage1,pbPage2].map(fn=>{const c=document.createElement("canvas");c.width=PB.W*PB.k;c.height=PB.H*PB.k;fn(c);return c;});}
 // Kleiner PDF-Schreiber: je Seite ein JPEG im A4-Format
 async function pbPdf(canvases){
@@ -2771,12 +2812,14 @@ async function pbOpen(){let el=$("#pbview");if(!el){el=document.createElement("d
   el.innerHTML=`<div class="tbar"><h1>Papierbogen</h1><button class="btn small" id="pbclose">Fertig</button></div><div class="pbbody"><p class="note">Wird erstellt …</p></div>`;
   pbPages=await pbRender();
   el.querySelector(".pbbody").innerHTML=`<p class="note">Der Charakter im Stil des Aborea-Bogens, als PDF in A4 zum Ausdrucken. Seite 1: Werte und Fertigkeiten mit angekreuzten Rängen. Seite 2: Waffen, Rüstung, Geld und Notizen.</p>
+    <div class="seg pbseg" role="group" aria-label="Stil"><button class="${PB.parch?"on":""}" data-pbstyle="1" aria-pressed="${PB.parch}">Pergament</button><button class="${PB.parch?"":"on"}" data-pbstyle="0" aria-pressed="${!PB.parch}">Tintensparend</button></div>
     <button class="btn big go" id="pbsave">Als PDF speichern</button><div class="pbmsg note" hidden></div>
     ${pbPages.map((c,i)=>`<img class="pbimg" alt="Seite ${i+1}" src="${c.toDataURL("image/jpeg",0.8)}">`).join("")}`;}
 function pbClose(){const el=$("#pbview");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";pbPages=null;}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("button");if(!b)return;
   if(b.id==="openprint"){pbOpen();return;}
   if(b.id==="pbclose"){pbClose();return;}
+  if(b.dataset.pbstyle!=null){PB.parch=b.dataset.pbstyle==="1";try{localStorage.setItem("aborea-pbparch",PB.parch?"1":"0");}catch(x){}pbOpen();return;}
   if(b.id==="pbsave"&&pbPages){b.disabled=true;b.textContent="Wird gespeichert …";const m=$("#pbview .pbmsg");
     try{const r=await pbSave(await pbPdf(pbPages));m.textContent=r==="shared"?"Wähle eine App zum Speichern oder Drucken.":r==="saved"?"PDF gespeichert. Zum Drucken die Datei öffnen.":r==="declined"?"Abgebrochen.":"Speichern hat nicht geklappt.";}
     catch(err){m.textContent="Speichern hat nicht geklappt: "+(err&&err.message||err);}
