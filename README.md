@@ -6,7 +6,11 @@ Charakterbogen fürs Pen-and-Paper Aborea: Lebens- und Manapunkte, Würfeln, Kam
 
 **Als Android-App (APK):** [Aborea.apk herunterladen](https://github.com/tobiassofke-Aborea/Aborea-App/releases/latest/download/Aborea.apk), die Datei auf dem Handy öffnen und installieren. Beim ersten Mal fragt Android, ob Apps aus dieser Quelle installiert werden dürfen.
 
-**Als Web-App:** https://tobiassofke-aborea.github.io/Aborea-App/ in Chrome öffnen und im Menü „App installieren“ wählen.
+**Aufs iPhone/iPad:** https://tobiassofke-aborea.github.io/Aborea-App/ in Safari öffnen, unten auf Teilen tippen und „Zum Home-Bildschirm“ wählen. Die App startet dann ohne Browserleiste und läuft auch offline.
+
+**Als Web-App auf Android/PC:** dieselbe Adresse in Chrome öffnen und im Menü „App installieren“ wählen.
+
+Die Web-Adresse wird von `.github/workflows/pages.yml` gebaut. Einmalig nötig: im Repository unter Settings → Pages bei „Source“ den Punkt „GitHub Actions“ wählen.
 
 Die Daten liegen nur auf dem Handy. Charaktere zieht man mit „Charakter als Text kopieren“ und „Charakter einfügen“ im Bogen um.
 

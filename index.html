@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#e9e5dc" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1c1814" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Aborea">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-180.png">
@@ -2804,6 +2807,10 @@ async function pbSave(bytes){
     let bin="";for(let i=0;i<bytes.length;i+=32768)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+32768));
     const r=await C.Plugins.Filesystem.writeFile({path:fn,data:btoa(bin),directory:"CACHE"});
     await C.Plugins.Share.share({title:fn,url:r.uri,dialogTitle:"Papierbogen teilen oder drucken"});return "shared";}
+  // iPhone/iPad und Android-Browser: Teilen-Menü mit „Drucken“ und „In Dateien sichern“
+  try{const f=new File([bytes],fn,{type:"application/pdf"});
+    if(!(window.claude&&claude.use)&&/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]})){
+      await navigator.share({files:[f],title:fn});return "shared";}}catch(e){if(e&&e.name==="AbortError")return "declined";}
   if(window.claude&&claude.use){const dl=await claude.use("downloads");if(dl){try{await dl.save({filename:fn,data:new Blob([bytes],{type:"application/pdf"})});return "saved";}catch(e){return e&&e.code==="declined"?"declined":"error";}}}
   const u=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"})),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),8000);return "saved";}
 let pbPages=null;
