@@ -35,7 +35,7 @@ jobs:
           cp -r index.html manifest.webmanifest sw.js fonts icons build/www/
           cd build
           npm init -y >/dev/null
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/app@6
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/app@6 @capacitor/filesystem@6 @capacitor/share@6
           cat > capacitor.config.json <<'EOF'
           {
             "appId": "de.aborea.charakterbogen",

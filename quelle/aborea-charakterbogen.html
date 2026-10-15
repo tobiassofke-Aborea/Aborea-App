@@ -188,6 +188,12 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .dots{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .w10s .sh{margin-bottom:8px}
 .w10s .wsl{border:0;padding:0;background:none}
+#pbview{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+#pbview .tbar,#pbview .pbbody>*{max-width:720px;width:calc(100% - 32px);margin-inline:auto}
+#pbview .pbbody{flex:1;overflow-y:auto;padding-bottom:24px;-webkit-overflow-scrolling:touch}
+#pbview .pbbody>.btn{display:flex;align-items:center;justify-content:center;margin-top:10px}
+#pbview .pbimg{display:block;width:calc(100% - 32px);height:auto;margin:14px auto 0;border:1px solid var(--line);border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.12);background:#fff}
+#pbview .pbmsg{margin-top:8px}
 #learn{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 #learn .tbar,#learn .cwbody>*,#learn .cwmsg{max-width:720px;width:calc(100% - 32px);margin-inline:auto}
 #learn .cwmsg{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto}
@@ -964,9 +970,10 @@ function renderBogen(){
     ${bogRow("werte","Kampfwerte & Boni",`AP ${sum(cur.ap)} · Krit ${sum(cur.krit)}`,werte)}
     <div class="accrow"><button class="acchead" id="openmoney"><span class="acct">Geldsack</span><span class="accs">${COINS.map(c=>`${fmtN(p[c.k])} ${c.short}`).join(" · ")}</span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i></button></div>
     ${bogRow("notizen","Details & Notizen",esc(String(cur.details||cur.notes||"").split("\n")[0].slice(0,32)||"–"),notizen)}
+    <div class="accrow"><button class="acchead" id="openprint"><span class="acct">Papierbogen</span><span class="accs">PDF zum Ausdrucken</span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i></button></div>
   </div>
   <h2>Charaktere</h2><div class="card">
-    <div class="clist">${chars.map(c=>`<button data-pick="${c.id}" class="${c.id===selId()?"on":""}" aria-pressed="${c.id===selId()}"><span><b>${esc(c.name||"Ohne Namen")}</b><br><span class="hint">${esc([c.volk,c.beruf,"Level "+(c.level||1)].filter(Boolean).join(" · "))}</span></span><span class="hint">${c.id===cur.id?"aktiv":num(c.lp.cur)+" LP"}</span></button>`).join("")}</div>
+    <div class="clist">${chars.map(c=>`<button data-pick="${c.id}" class="${c.id===selId()?"on":""}" aria-pressed="${c.id===selId()}"><span><b>${esc(c.name||"Ohne Namen")}</b><br><span class="hint">${esc([c.volk,c.beruf,"Stufe "+(c.level||1)].filter(Boolean).join(" · "))}</span></span><span class="hint">${c.id===cur.id?"aktiv":num(c.lp.cur)+" LP"}</span></button>`).join("")}</div>
     <div class="row-actions"><button class="btn small pri" id="loadc" ${selId()===cur.id?"disabled":""}>Charakter laden</button>
       <button class="btn small danger" id="delc">${confirmDel?"Wirklich „"+esc((chars.find(c=>c.id===selId())||cur).name)+"“ löschen?":"Auswahl löschen"}</button>
       <button class="btn small" id="newc">Neuer Charakter</button></div>
@@ -2607,6 +2614,160 @@ document.addEventListener("input",e=>{
 });
 document.addEventListener("change",e=>{if(!cw)return;const t=e.target;if(t.dataset&&t.dataset.cwspec!=null&&t.tagName==="SELECT"){cw.rows[+t.dataset.cwspec].spec=t.value;}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cw)cwClose();});
+
+/* ---------- Papierbogen: Charakter als druckbares PDF im Stil des Aborea-Bogens ---------- */
+const PB={k:10,W:210,H:297,ink:"#33281d",line:"#7d6a52",soft:"#efe8db",softer:"#f7f3ec",mute:"#8a7a64"};
+const pbFont=(pt,fam,w)=>`${w||""} ${(pt*0.3528*PB.k).toFixed(1)}px ${fam==="d"?'"IM Fell English SC","Palatino Linotype",Georgia,serif':'"Alegreya Sans","Segoe UI",system-ui,sans-serif'}`;
+function pbCtx(c){const x=c.getContext("2d"),k=PB.k;
+  const P={x,
+    rect(a,b,w,h,o={}){x.beginPath();const r=(o.r||0)*k;if(x.roundRect)x.roundRect(a*k,b*k,w*k,h*k,r);else x.rect(a*k,b*k,w*k,h*k);
+      if(o.fill){x.fillStyle=o.fill;x.fill();}if(o.stroke!==false){x.strokeStyle=o.stroke||PB.line;x.lineWidth=(o.lw||0.3)*k;x.stroke();}},
+    line(a,b,c2,d,o={}){x.beginPath();x.moveTo(a*k,b*k);x.lineTo(c2*k,d*k);x.strokeStyle=o.stroke||PB.line;x.lineWidth=(o.lw||0.3)*k;x.stroke();},
+    text(s,a,b,o={}){s=String(s==null?"":s);if(!s)return 0;let pt=o.pt||10;const fam=o.fam||"b",w=o.w||"";x.font=pbFont(pt,fam,w);
+      if(o.max){while(pt>4&&x.measureText(s).width>o.max*k){pt-=0.5;x.font=pbFont(pt,fam,w);}}
+      x.fillStyle=o.color||PB.ink;x.textAlign=o.align||"left";x.textBaseline=o.base||"alphabetic";x.fillText(s,a*k,b*k);return x.measureText(s).width/k;},
+    lab(s,a,b,o={}){return P.text(String(s).toUpperCase(),a,b,Object.assign({pt:6,w:"700",color:PB.mute},o));},
+    wrap(s,a,b,maxW,lh,o={}){x.font=pbFont(o.pt||9,o.fam||"b",o.w||"");const lines=[];
+      String(s||"").split("\n").forEach(par=>{let ln="";par.split(/\s+/).forEach(wd=>{const t=ln?ln+" "+wd:wd;if(x.measureText(t).width>maxW*k&&ln){lines.push(ln);ln=wd;}else ln=t;});lines.push(ln);});
+      const max=o.maxLines||99;lines.slice(0,max).forEach((l,i)=>P.text(l,a,b+i*lh,o));return Math.min(lines.length,max);},
+    // Überschrift-Band wie auf dem Bogen: Rahmen mit Titel in der Mitte
+    panel(a,b,w,h,title){P.rect(a,b,w,h,{fill:PB.softer,stroke:PB.line,lw:0.5,r:1.2});P.rect(a+0.9,b+0.9,w-1.8,h-1.8,{stroke:PB.line,lw:0.15,r:0.8});
+      if(title){x.font=pbFont(13,"d");const tw=x.measureText(title).width/k+12,tx=a+w/2-tw/2;
+        x.beginPath();x.moveTo(tx*k,(b-0.2)*k);x.lineTo((tx+tw)*k,(b-0.2)*k);x.lineTo((tx+tw+3)*k,(b+3.6)*k);x.lineTo((tx+tw)*k,(b+7.4)*k);x.lineTo(tx*k,(b+7.4)*k);x.lineTo((tx-3)*k,(b+3.6)*k);x.closePath();
+        x.fillStyle=PB.soft;x.fill();x.strokeStyle=PB.line;x.lineWidth=0.5*k;x.stroke();P.text(title,a+w/2,b+5.4,{pt:13,fam:"d",align:"center"});}},
+    box(a,b,w,h,val,o={}){P.rect(a,b,w,h,{fill:"#fff",stroke:PB.line,lw:0.35,r:0.8});if(val!==""&&val!=null)P.text(val,a+w/2,b+h/2+(o.pt||12)*0.12,{pt:o.pt||12,w:"700",align:"center",max:w-1.5});},
+    cross(a,b,s){x.beginPath();const p=0.7;x.moveTo((a+p)*k,(b+p)*k);x.lineTo((a+s-p)*k,(b+s-p)*k);x.moveTo((a+s-p)*k,(b+p)*k);x.lineTo((a+p)*k,(b+s-p)*k);x.strokeStyle=PB.ink;x.lineWidth=0.4*k;x.lineCap="round";x.stroke();},
+    arrow(a,b,s){x.beginPath();x.moveTo(a*k,(b-s)*k);x.lineTo((a+s*1.3)*k,b*k);x.lineTo(a*k,(b+s)*k);x.closePath();x.fillStyle=PB.line;x.fill();}};
+  return P;}
+const pbSign=n=>n>0?"+"+n:n<0?"−"+Math.abs(n):"0";
+function pbPage1(c){const P=pbCtx(c),x=P.x,k=PB.k;
+  x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
+  P.text("Aborea",10,12.5,{pt:20,fam:"d"});
+  // Kopf links: Volk, Beruf, Details
+  P.rect(10,16,64,52,{fill:PB.softer,lw:0.5,r:1.2});
+  [["Volk",cur.volk],["Beruf",cur.beruf],["Details",String(cur.details||"").split("\n")[0]]].forEach(([l,v],i)=>{const y=17+i*17;
+    P.lab(l,13,y+4.2);P.rect(13,y+5.6,58,8.6,{fill:"#fff",lw:0.3,r:0.8});P.text(v||"",15,y+11.6,{pt:10.5,max:54});});
+  // Mitte: Wappen mit Stufe, Name und GS
+  {const cx=105;x.beginPath();x.moveTo((cx-27)*k,18*k);x.lineTo((cx+27)*k,18*k);x.lineTo((cx+27)*k,46*k);x.quadraticCurveTo((cx+27)*k,64*k,cx*k,71*k);x.quadraticCurveTo((cx-27)*k,64*k,(cx-27)*k,46*k);x.closePath();
+    x.fillStyle=PB.soft;x.fill();x.strokeStyle=PB.line;x.lineWidth=0.6*k;x.stroke();
+    P.box(cx-10,20,20,11,String(lvlNow()),{pt:15});P.lab("Stufe",cx,34.2,{align:"center"});
+    // Band mit Namen
+    x.beginPath();x.moveTo((cx-32)*k,37*k);x.lineTo((cx+32)*k,37*k);x.lineTo((cx+29)*k,43*k);x.lineTo((cx+32)*k,49*k);x.lineTo((cx-32)*k,49*k);x.lineTo((cx-29)*k,43*k);x.closePath();
+    x.fillStyle="#fbf8f2";x.fill();x.strokeStyle=PB.line;x.lineWidth=0.5*k;x.stroke();
+    P.text(cur.name||"",cx,45.6,{pt:17,fam:"d",align:"center",max:54});
+    P.box(cx-10,52,20,10,String(cur.gs||"").trim(),{pt:13});P.lab("Geistige Stabilität",cx,65.4,{align:"center",pt:5.5});}
+  // Kopf rechts: LP, Mana, Rüstung, Trefferzone
+  const tz=tzText(),aT=armorOf();
+  [["Lebenspunkte",num(cur.lp.max),"(TP + KO-Bonus) × Stufe"],["Manapunkte",hasMana()?num(cur.mp.max):"","(Bonus + 3) × Magie entw."],
+   ["Rüstung",armorTotal(),aT?aT[0]:""],["Trefferzone",tz==="–"?"":tz,"15/40 + Athletik"]].forEach(([l,v,f],i)=>{
+    const a=140+(i%2)*31,b=16+Math.floor(i/2)*27;P.rect(a,b,29,25,{fill:PB.softer,lw:0.5,r:1.2});P.lab(l,a+14.5,b+4.2,{align:"center",pt:5.6});
+    P.box(a+2.5,b+6,24,12,String(v),{pt:15});P.text(f,a+14.5,b+22.6,{pt:5.2,align:"center",color:PB.mute,max:27});});
+  // Attribute
+  P.panel(10,76,94,72,"Attribute");
+  P.lab("Wert",61,87.5,{align:"center"});P.lab("Bonus",87,87.5,{align:"center"});
+  ATTR.forEach((a,i)=>{const y=90+i*11.2,A=cur.attr[a]||{w:"",b:0},bo=num(A.b);
+    P.rect(14,y,38,9,{fill:"#fbf8f2",lw:0.35,r:0.8});P.text(a+":",16,y+6.6,{pt:13,fam:"d"});P.text(ATTR_LONG[a],50,y+6,{pt:6.5,color:PB.mute,align:"right"});
+    P.box(54,y,14,9,String(A.w===""?"":num(A.w)),{pt:13});P.arrow(71.5,y+4.5,2);P.box(78,y,18,9,String(A.w===""&&!bo?"":pbSign(bo)),{pt:13});});
+  // Kampfwerte
+  P.panel(106,76,94,72,"Kampfwerte");
+  const ip=iniParts(),ini=iniBase(),ap=cur.ap||[3,0,0],kr=cur.krit||[0,0];
+  const kw=(y,title,sub,base,parts,total,extra)=>{P.rect(110,y,20,17,{fill:"#fbf8f2",lw:0.35,r:0.8});P.text(title,120,y+9,{pt:15,fam:"d",align:"center"});P.text(sub,120,y+14.3,{pt:5,align:"center",color:PB.mute,max:19});
+    if(base!=null){P.box(132,y+4,8,9,String(base),{pt:10});}
+    const px=base!=null?142:132;parts.forEach(([l,v],j)=>{const yy=y+j*(17/parts.length);P.text(l,px,yy+17/parts.length/2+1.2,{pt:6,max:base!=null?28:38});P.text(String(v),px+(base!=null?37:46),yy+17/parts.length/2+1.3,{pt:8,w:"700",align:"right"});
+      if(j)P.line(px,yy,px+(base!=null?38:47),yy,{lw:0.12});});
+    P.box(182,y+3,15,11,String(total),{pt:14});if(extra)P.text(extra,189.5,y+16.8,{pt:6,align:"center",color:PB.mute});};
+  kw(86,"Ini","Initiative",50,[["KO-Bonus, Wahrnehmung, Athletik",pbSign(ip.slice(1,4).reduce((s,p)=>s+p[1],0))],["Rüstungsmalus",pbSign(ip[4][1])],["Waffenmalus",pbSign(ip[5][1])]],ini,"− 1W6");
+  kw(107,"AP","Aktionspunkte",null,[["Grundwert",num(ap[0])],["Höchster Attributsbonus",num(ap[1])],["Athletik",num(ap[2])]],sum(ap));
+  kw(128,"Krit","Kritische Treffer",null,[["Waffenfertigkeit",num(kr[0])],["Krit-Wert Waffe",num(kr[1])]],kritNow(),"W100 ≤ Wert");
+  // Fertigkeiten
+  const rows=cur.skills.filter(s=>s.fixed||s.name||s.placeholder);
+  P.panel(10,154,190,134,"Fertigkeiten");
+  const top=166,avail=288-3-top,rh=Math.min(6.4,avail/Math.max(rows.length,1)),bs=Math.min(3.9,rh-1.3),gx=0.5,gg=1.1,x0=71;
+  const groups=[];let gxp=x0;for(let r=1;r<=12;r++){const n=boxesFor(r);groups.push({r,x:gxp,n});gxp+=n*bs+(n-1)*gx+gg;}
+  P.lab("Fertigkeit",14,top-1.5);groups.forEach(g=>P.text(String(g.r),g.x+(g.n*bs+(g.n-1)*gx)/2,top-1.4,{pt:9,fam:"d",align:"center"}));
+  const bx=gxp+1.5;P.lab("Boni",bx+6,top-1.5,{align:"center"});P.lab("Kosten",bx+19.5,top-1.5,{align:"center"});
+  rows.forEach((s,i)=>{const y=top+i*rh,cy=y+rh/2;
+    P.rect(13,y+0.5,55,rh-1,{fill:"#fbf8f2",lw:0.3,r:0.6});
+    if(s.name)P.text(s.name,15,cy+1.4,{pt:Math.min(9.5,rh*1.55),fam:"d",max:42});else P.text(s.placeholder||"",15,cy+1.1,{pt:6,color:PB.mute});
+    const tot=skillTotal(s);if(s.name||s.fixed)P.text(String(tot),66.5,cy+1.4,{pt:8,w:"700",align:"right",color:PB.mute});
+    let left=sxOf(s);groups.forEach(g=>{for(let j=0;j<g.n;j++){const a=g.x+j*(bs+gx),b=cy-bs/2;P.rect(a,b,bs,bs,{fill:"#fff",lw:0.25,r:0.3});if(left>0){P.cross(a,b,bs);left--;}}});
+    P.box(bx,y+0.5,12,rh-1,num(s.boni)?pbSign(num(s.boni)):"",{pt:8});P.box(bx+13.5,y+0.5,12,rh-1,(s.name||s.fixed)?skillCost(s):"",{pt:7.5});});
+  P.text("Aborea-App · Stand "+new Date().toLocaleDateString("de-DE"),200,293.5,{pt:6,color:PB.mute,align:"right"});
+}
+function pbPage2(c){const P=pbCtx(c),x=P.x;
+  x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
+  P.text("Aborea",10,12.5,{pt:20,fam:"d"});P.text(cur.name||"",200,12.5,{pt:14,fam:"d",align:"right",max:120});
+  // Waffen
+  const ws=(cur.weapons||[]).filter(w=>w&&(w.name||w.hit||w.dmg));
+  P.panel(10,20,190,70,"Waffen");
+  const cols=[["Waffe",14,52],["Fertigkeit",68,40],["Treffen",110,20],["Schaden",132,22],["Krit",156,14],["Malus",172,14]];
+  cols.forEach(([l,a])=>P.lab(l,a,32));
+  for(let i=0;i<6;i++){const y=34+i*9,w=ws[i];P.line(14,y+8,196,y+8,{lw:0.2});
+    if(!w)continue;const sk=cur.skills[w.skill];
+    P.text(w.name||"Waffe",14,y+6,{pt:10,fam:"d",max:52});P.text(sk?(sk.name||sk.placeholder||""):"",68,y+6,{pt:8,max:40});
+    P.text(w.hit||"",110,y+6,{pt:9,max:20});P.text(w.dmg||"",132,y+6,{pt:9,max:22});P.text(w.krit||"",156,y+6,{pt:9,max:14});P.text(num(w.malus)?String(num(w.malus)):"",172,y+6,{pt:9,max:14});}
+  // Rüstung & Schild
+  P.panel(10,98,92,40,"Rüstung & Schild");
+  const aT=armorOf(),sh=curShield();
+  P.lab("Rüstung",14,110);P.text(aT?aT[0]:"Eigene",14,116,{pt:10,max:60});P.box(80,108,18,10,String(num(cur.ruestung)),{pt:12});
+  P.lab("Malus (Ini)",14,123);P.text(String(num(cur.ruestungMalus)||0),14,129,{pt:10});
+  P.lab("Schild",50,123);P.text(sh?(sh.name||"Schild"):"–",50,129,{pt:10,max:46});
+  // Geldsack
+  P.panel(108,98,92,40,"Geldsack");
+  const m=purse();COINS.forEach((co,i)=>{const a=112+i*21.5;P.lab(co.name,a+9.5,110,{align:"center",pt:5.2});P.box(a,112,19,11,String(m[co.k]||0),{pt:11});P.text(co.short,a+9.5,127.5,{pt:6.5,align:"center",color:PB.mute});});
+  // Notizen
+  P.panel(10,146,190,142,"Ausrüstung & Notizen");
+  for(let y=166;y<284;y+=7.5)P.line(14,y,196,y,{lw:0.15,stroke:"#cdbfa8"});
+  const notes=String(cur.notes||"");P.wrap(notes,15,164.8,180,7.5,{pt:10,maxLines:16});
+  P.text("Aborea-App · Stand "+new Date().toLocaleDateString("de-DE"),200,293.5,{pt:6,color:PB.mute,align:"right"});
+}
+async function pbRender(){
+  try{await Promise.all(['20px "IM Fell English SC"','20px "Alegreya Sans"','700 20px "Alegreya Sans"'].map(f=>document.fonts.load(f)));}catch(e){}
+  return [pbPage1,pbPage2].map(fn=>{const c=document.createElement("canvas");c.width=PB.W*PB.k;c.height=PB.H*PB.k;fn(c);return c;});}
+// Kleiner PDF-Schreiber: je Seite ein JPEG im A4-Format
+async function pbPdf(canvases){
+  const enc=new TextEncoder(),parts=[],offs=[];let len=0;
+  const push=b=>{if(typeof b==="string")b=enc.encode(b);parts.push(b);len+=b.length;};
+  const obj=(n,body,stream)=>{offs[n]=len;push(`${n} 0 obj\n${body}\n`);if(stream){push("stream\n");push(stream);push("\nendstream\n");}push("endobj\n");};
+  push("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+  const W=595.28,H=841.89,n=canvases.length,kids=[];
+  const imgs=await Promise.all(canvases.map(c=>new Promise(r=>c.toBlob(b=>b.arrayBuffer().then(a=>r(new Uint8Array(a))),"image/jpeg",0.9))));
+  canvases.forEach((c,i)=>{const p=3+i*3;kids.push(`${p} 0 R`);
+    const content=`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+    obj(p,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${p+2} 0 R >> >> /Contents ${p+1} 0 R >>`);
+    obj(p+1,`<< /Length ${content.length} >>`,enc.encode(content));
+    obj(p+2,`<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgs[i].length} >>`,imgs[i]);});
+  obj(1,"<< /Type /Catalog /Pages 2 0 R >>");obj(2,`<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${n} >>`);
+  const xref=len,total=3+n*3;let t=`xref\n0 ${total}\n0000000000 65535 f \n`;for(let i=1;i<total;i++)t+=String(offs[i]).padStart(10,"0")+" 00000 n \n";
+  push(t+`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+  const out=new Uint8Array(len);let o=0;parts.forEach(b=>{out.set(b,o);o+=b.length;});return out;}
+const pbFileName=()=>"Aborea-"+(String(cur.name||"Charakter").replace(/[^\wäöüÄÖÜß-]+/g,"-").replace(/^-+|-+$/g,"")||"Charakter")+".pdf";
+async function pbSave(bytes){
+  const fn=pbFileName(),C=window.Capacitor;
+  if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Filesystem&&C.Plugins.Share){
+    let bin="";for(let i=0;i<bytes.length;i+=32768)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+32768));
+    const r=await C.Plugins.Filesystem.writeFile({path:fn,data:btoa(bin),directory:"CACHE"});
+    await C.Plugins.Share.share({title:fn,url:r.uri,dialogTitle:"Papierbogen teilen oder drucken"});return "shared";}
+  if(window.claude&&claude.use){const dl=await claude.use("downloads");if(dl){try{await dl.save({filename:fn,data:new Blob([bytes],{type:"application/pdf"})});return "saved";}catch(e){return e&&e.code==="declined"?"declined":"error";}}}
+  const u=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"})),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),8000);return "saved";}
+let pbPages=null;
+async function pbOpen(){let el=$("#pbview");if(!el){el=document.createElement("div");el.id="pbview";el.setAttribute("role","dialog");el.setAttribute("aria-label","Papierbogen");document.body.appendChild(el);}
+  el.hidden=false;document.documentElement.style.overflow="hidden";histOpen();
+  el.innerHTML=`<div class="tbar"><h1>Papierbogen</h1><button class="btn small" id="pbclose">Fertig</button></div><div class="pbbody"><p class="note">Wird erstellt …</p></div>`;
+  pbPages=await pbRender();
+  el.querySelector(".pbbody").innerHTML=`<p class="note">Der Charakter im Stil des Aborea-Bogens, als PDF in A4 zum Ausdrucken. Seite 1: Werte und Fertigkeiten mit angekreuzten Rängen. Seite 2: Waffen, Rüstung, Geld und Notizen.</p>
+    <button class="btn big go" id="pbsave">Als PDF speichern</button><div class="pbmsg note" hidden></div>
+    ${pbPages.map((c,i)=>`<img class="pbimg" alt="Seite ${i+1}" src="${c.toDataURL("image/jpeg",0.8)}">`).join("")}`;}
+function pbClose(){const el=$("#pbview");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";pbPages=null;}
+document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("button");if(!b)return;
+  if(b.id==="openprint"){pbOpen();return;}
+  if(b.id==="pbclose"){pbClose();return;}
+  if(b.id==="pbsave"&&pbPages){b.disabled=true;b.textContent="Wird gespeichert …";const m=$("#pbview .pbmsg");
+    try{const r=await pbSave(await pbPdf(pbPages));m.textContent=r==="shared"?"Wähle eine App zum Speichern oder Drucken.":r==="saved"?"PDF gespeichert. Zum Drucken die Datei öffnen.":r==="declined"?"Abgebrochen.":"Speichern hat nicht geklappt.";}
+    catch(err){m.textContent="Speichern hat nicht geklappt: "+(err&&err.message||err);}
+    m.hidden=false;b.disabled=false;b.textContent="Als PDF speichern";}
+});
+window.addEventListener("popstate",()=>{const el=$("#pbview");if(el&&!el.hidden){el.hidden=true;document.documentElement.style.overflow="";pbPages=null;}});
 
 /* ---------- Lernen: Ausbildungspunkte ausgeben, Stufe auf/ab ---------- */
 // Kreuze pro Rang wie auf dem Bogen: Rang 1–5 ein Kästchen, 6–10 zwei, 11–15 drei, danach vier
