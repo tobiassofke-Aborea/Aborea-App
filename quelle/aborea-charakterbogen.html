@@ -274,6 +274,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .cwattr{display:grid;gap:8px}
 .cwar{display:grid;grid-template-columns:minmax(0,1fr) auto 96px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .cwan{display:grid;min-width:0}.cwan small{color:var(--muted);font-size:.78rem}
+.cwsr.multi{grid-template-columns:minmax(0,1fr) auto}.cwsr.multi .cwrk{display:none}.cwnx{display:block;font-size:.78rem;color:var(--muted);font-weight:400}.cwsr.multi .step output{min-width:30px;text-align:center;font-weight:700}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -2150,7 +2151,7 @@ function histOpen(){if(ovHist)return;try{history.pushState({aboreaOv:1},"");ovHi
 function histClose(){if(!ovHist)return;ovHist=false;try{history.back();}catch(e){}}
 window.addEventListener("popstate",()=>{if(!ovHist)return;ovHist=false;
   if(cw)cwClose();
-  {const ln=$("#learn");if(ln&&!ln.hidden){lvChain=null;lnClose();}}
+  {const ln=$("#learn");if(ln&&!ln.hidden)lnClose();}
   if(sbView&&!sbView.hidden)sbClose();if(ms&&!ms.el.hidden)mClose();if(tb&&!tb.el.hidden)tClose();});
 function tOpen(){histOpen();
   if(!tb)tBuild();
@@ -2513,16 +2514,23 @@ function cwNew(){
     else if(n==="Waffen")rows.push({type:"weapon",label:"Waffengruppe",skill:n,spec:"",n:0});
     else rows.push({type:(n==="Kunst"||n==="Wissen")?"spec":"plain",label:n,skill:n,spec:"",n:0});
   });
-  return {step:0,name:"",volk:"",beruf:"",details:"",startLevel:1,buy:Object.fromEntries(ATTR.map(a=>[a,5])),rows,dice:null,rolling:false};
+  return {step:0,name:"",volk:"",beruf:"",details:"",startLevel:1,raise:Object.fromEntries(ATTR.map(a=>[a,0])),buy:Object.fromEntries(ATTR.map(a=>[a,5])),rows,dice:null,rolling:false};
 }
 const cwEP=()=>35-ATTR.reduce((s,a)=>s+ATTR_PRICE[cw.buy[a]],0);
-const cwAPtotal=()=>cw.volk==="Mensch"?10:8;
-const cwRowCost=r=>{const p=costParts(costOf(cw.beruf,r.skill));return p.slice(0,r.n).reduce((s,x)=>s+x,0);};
-const cwAPleft=()=>cwAPtotal()-cw.rows.reduce((s,r)=>s+cwRowCost(r),0);
+const cwAPtotal=()=>(cw.volk==="Mensch"?10:8)+8*((cw.startLevel||1)-1);
+const cwParts=r=>costParts(costOf(cw.beruf,r.skill));
+// Kosten des k-ten Kreuzes: die Kosten wiederholen sich jede Stufe (z. B. 2/4 → 2, 4, 2, 4 …)
+const cwCross=(r,k)=>{const p=cwParts(r);return p.length?p[k%p.length]:0;};
+const cwRowMax=r=>cwParts(r).length*(cw.startLevel||1);
+const cwRowCost=r=>{let t=0;for(let k=0;k<r.n;k++)t+=cwCross(r,k);return t;};
+const cwRank=r=>rankFromCrosses(r.n).r;
+// Attribute aus Ausbildungspunkten steigern (nur bei Startstufe über 1), voller Kaufpreis je Schritt
+const cwRaiseCost=a=>{let t=0;const f=cwFinal(a);for(let i=1;i<=cw.raise[a];i++)t+=ATTR_PRICE[Math.min(10,f+i)];return t;};
+const cwAPleft=()=>cwAPtotal()-cw.rows.reduce((s,r)=>s+cwRowCost(r),0)-ATTR.reduce((s,a)=>s+cwRaiseCost(a),0);
 const cwFinal=a=>Math.max(0,cw.buy[a]+(VOLK[cw.volk]||[0,0,0,0,0])[ATTR.indexOf(a)]);
 function cwPreview(){
-  const c={beruf:cw.beruf,level:cw.startLevel||1,lp:{cur:0,max:0},mp:{cur:0,max:0},attr:Object.fromEntries(ATTR.map(a=>[a,{w:cwFinal(a),b:attrBonus(cwFinal(a))}])),
-    skills:cw.rows.filter(r=>r.type==="plain").map(r=>({name:r.skill,rang:r.n}))};
+  const c={beruf:cw.beruf,level:cw.startLevel||1,lp:{cur:0,max:0},mp:{cur:0,max:0},attr:Object.fromEntries(ATTR.map(a=>[a,{w:cwFinal(a)+cw.raise[a],b:attrBonus(cwFinal(a)+cw.raise[a])}])),
+    skills:cw.rows.filter(r=>r.type==="plain").map(r=>({name:r.skill,rang:cwRank(r)}))};
   recalcChar(c);return c;
 }
 const CW_STEPS=["Volk & Beruf","Attribute","Fertigkeiten","Abschluss"];
@@ -2538,7 +2546,7 @@ function cwRender(keepScroll){
       <div class="lab cwh">Beruf</div><div class="cwopts">${Object.keys(BERUF).map(k=>`<button class="cwopt${cw.beruf===k?" on":""}" data-cwberuf="${k}"><b>${k}</b><small>${BERUF[k].tp} TP pro Stufe · Magie über ${BERUF[k].mp==="Int"?"Intelligenz":"Charisma"}</small></button>`).join("")}</div>
       <div class="lab cwh">Startstufe</div>
       <div class="cwlvl"><div class="step"><button data-cwlvl="-1" ${cw.startLevel<=1?"disabled":""} aria-label="Startstufe senken">−</button><output>${cw.startLevel}</output><button data-cwlvl="1" ${cw.startLevel>=20?"disabled":""} aria-label="Startstufe erhöhen">+</button></div>
-        <small>${cw.startLevel>1?`Nach dem Anlegen verteilst du Stufe für Stufe je 8 Ausbildungspunkte, insgesamt ${(cw.startLevel-1)*8}.`:"Die meisten fangen auf Stufe 1 an."}</small></div>
+        <small>${cw.startLevel>1?`Pro Stufe über 1 gibt es 8 Ausbildungspunkte mehr, hier ${(cw.startLevel-1)*8}. Du verteilst sie gleich bei den Fertigkeiten.`:"Die meisten fangen auf Stufe 1 an."}</small></div>
       <p class="note">Lieber alles selbst eintragen? <button class="linkbtn" data-cwblank="1">Leeren Bogen anlegen</button></p>`;
   }else if(s===1){
     const ep=cwEP(),adj=VOLK[cw.volk]||[0,0,0,0,0];
@@ -2551,18 +2559,27 @@ function cwRender(keepScroll){
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
     h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span></div>
-      <div class="cwsk">${cw.rows.map((r,i)=>{const p=costParts(costOf(cw.beruf,r.skill));
+      <div class="cwsk">${cw.rows.map((r,i)=>{const p=cwParts(r),N=cw.startLevel||1;
         const box=(k)=>{const on=r.n>k,can=!on&&(cwAPleft()-(p.slice(r.n,k+1).reduce((s,x)=>s+x,0)))>=0;return `<button class="cwbox${on?" on":""}" data-cwrow="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(r.label)} ${k+1}. Rang für ${p[k]} Punkte">${p[k]}</button>`;};
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
           :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:"";
-        return `<div class="cwsr${r.n?" on":""}"><div class="cwsn"><b>${esc(r.label)}</b>${spec}</div><div class="cwboxes">${p.map((_,k)=>box(k)).join("")}</div><span class="cwrk">${r.n?`Rang ${r.n}`:""}</span></div>`;}).join("")}</div>
+        // Startstufe über 1: Plus/Minus statt Kästchen, je Stufe darf die Fertigkeit so oft wie sonst gelernt werden
+        const nx=r.n<cwRowMax(r)?cwCross(r,r.n):0,canUp=nx&&cwAPleft()>=nx;
+        const ctl=!p.length?'<small class="hint">keine Kosten</small>':N===1?p.map((_,k)=>box(k)).join(""):
+          `<div class="step"><button data-cwstep="${i}" data-d="-1" ${r.n?"":"disabled"} aria-label="${esc(r.label)} senken">−</button><output>${r.n}</output><button data-cwstep="${i}" data-d="1" ${canUp?"":"disabled"} aria-label="${esc(r.label)} steigern">+</button></div>`;
+        const info=N===1?(r.n?`Rang ${r.n}`:""):"",sub=N>1&&p.length?`<small class="cwnx">Rang ${cwRank(r)} · ${nx?`nächstes Kreuz ${nx} P.`:"Maximum erreicht"}</small>`:"";
+        return `<div class="cwsr${r.n?" on":""}${N>1?" multi":""}"><div class="cwsn"><b>${esc(r.label)}</b>${sub}${spec}</div><div class="cwboxes">${ctl}</div><span class="cwrk">${info}</span></div>`;}).join("")}</div>
       <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
-      <p class="note">Ein Kästchen ist ein Rang, die Zahl darin die Kosten. Fertigkeiten mit zwei Kästchen darfst du pro Stufe zweimal lernen.</p>`;
+      ${(cw.startLevel||1)>1?`<div class="lab cwh">Attribute steigern</div><div class="cwattr">${ATTR.map(a=>{const f=cwFinal(a),w=f+cw.raise[a],c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
+        return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`auf ${w+1}: ${c} Punkte`:"Maximum"}</small></div>
+          <div class="step"><button data-cwraise="${a}" data-d="-1" ${cw.raise[a]?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-cwraise="${a}" data-d="1" ${w>=10||cwAPleft()<c?"disabled":""} aria-label="${ATTR_LONG[a]} steigern">+</button></div>
+          <div class="cwres"><small>${cw.raise[a]?`+${cw.raise[a]}`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>`:""}
+      <p class="note">${(cw.startLevel||1)>1?`Startstufe ${cw.startLevel}: Du hast die Punkte aller Stufen auf einmal. Jedes Plus ist ein Kreuz, ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 vier. Pro Stufe darf jede Fertigkeit einmal gelernt werden (bei zwei Kosten zweimal), deshalb ist irgendwann Schluss.`:"Ein Kästchen ist ein Rang, die Zahl darin die Kosten. Fertigkeiten mit zwei Kästchen darfst du pro Stufe zweimal lernen."}</p>`;
   }else{
     const c=cwPreview(),hb=c.ap[1];
     h=`<div class="cwsum">
-        <div><span class="lab">Lebenspunkte</span><b class="lpc">${c.lp.max}</b><small>(${BERUF[cw.beruf].tp} ${attrBonus(cwFinal("Ko"))<0?"−":"+"} ${Math.abs(attrBonus(cwFinal("Ko")))} KO-Bonus) × Stufe ${cw.startLevel}</small></div>
+        <div><span class="lab">Lebenspunkte</span><b class="lpc">${c.lp.max}</b><small>(${BERUF[cw.beruf].tp} ${attrBonus(cwFinal("Ko")+cw.raise.Ko)<0?"−":"+"} ${Math.abs(attrBonus(cwFinal("Ko")+cw.raise.Ko))} KO-Bonus) × Stufe ${cw.startLevel}</small></div>
         <div><span class="lab">Mana</span><b class="mpc">${c.mp.max}</b><small>${c.mp.max?`(${BERUF[cw.beruf].mp==="Int"?"IN":"CH"}-Bonus + 3) × Rang Magie entwickeln`:"kein Rang in Magie entwickeln"}</small></div>
         <div><span class="lab">Aktionspunkte</span><b>${3+hb+c.ap[2]}</b><small>3 + höchster Bonus ${hb} + Athletik ${c.ap[2]}</small></div>
         <div><span class="lab">Trefferzone</span><b>${esc(c.trefferzone)}</b><small>Körper / Kopf, je 15 bzw. 40 + Athletik</small></div>
@@ -2570,7 +2587,7 @@ function cwRender(keepScroll){
       <div class="cwmoney"><div><span class="lab">Startgeld</span><b>${cw.dice?`${cw.dice*5} Trionthaler`:"—"}</b><small>${cw.dice?`gewürfelt: ${cw.dice} × 5`:"W6 × 5 Trionthaler"}</small></div>
         <button class="cwdie${cw.rolling?" roll":""}" data-cwroll="1" aria-label="Startgeld würfeln">${cw.dice||"W6"}</button></div>
       <label class="fld full"><span class="lab">Details (optional)</span><input id="cw-det" value="${esc(cw.details)}" placeholder="Geschlecht, Aussehen …"></label>
-      <p class="note">${cw.startLevel>1?`Stufe ${cw.startLevel}. Nach dem Anlegen verteilst du die Ausbildungspunkte für Stufe 2 bis ${cw.startLevel}, eine Stufe nach der anderen, wie beim normalen Aufstieg. Mana richtet sich danach, wie weit du Magie entwickeln steigerst.`:"Stufe 1."} Initiative und Krit rechnet die App im Kampf selbst aus, sobald Waffen eingetragen sind.</p>`;
+      <p class="note">Stufe ${cw.startLevel}. Initiative und Krit rechnet die App im Kampf selbst aus, sobald Waffen eingetragen sind.</p>`;
   }
   const canNext=s===0?(cw.volk&&cw.beruf):true;
   el.innerHTML=`<div class="tbar"><h1>Neuer Charakter</h1><button class="btn small" id="cwclose">Abbrechen</button></div>
@@ -2581,23 +2598,19 @@ function cwRender(keepScroll){
 }
 function cwFinish(){
   const c=blank(cw.name.trim()||"Neuer Charakter");
-  Object.assign(c,{volk:cw.volk,beruf:cw.beruf,details:cw.details,level:1});
-  ATTR.forEach(a=>{const f=cwFinal(a);c.attr[a]={w:String(f),b:attrBonus(f)};});
+  Object.assign(c,{volk:cw.volk,beruf:cw.beruf,details:cw.details,level:cw.startLevel||1});
+  ATTR.forEach(a=>{const f=cwFinal(a)+cw.raise[a];c.attr[a]={w:String(f),b:attrBonus(f)};});
   const row=n=>cw.rows.find(r=>r.skill===n);
-  const fixed=FIXED.map(n=>{const r=row(n);return {name:n,fixed:true,rang:r?r.n:0,boni:0,kosten:""};});
+  const fixed=FIXED.map(n=>{const r=row(n);return {name:n,fixed:true,rang:r?cwRank(r):0,x:r?r.n:0,boni:0,kosten:""};});
   const extra=[];
-  cw.rows.filter(r=>r.type==="spell").forEach(r=>extra.push({name:r.spec,placeholder:"Spruchliste",kind:"spell",fixed:false,rang:r.n,boni:0,kosten:""}));
-  cw.rows.filter(r=>r.type==="weapon").forEach(r=>extra.push({name:r.spec?`Waffen: ${r.spec}`:"",placeholder:"Waffen",fixed:false,rang:r.n,boni:0,kosten:""}));
-  ["Kunst","Wissen"].forEach(n=>{const r=row(n);extra.push({name:r.spec?`${n}: ${r.spec}`:n,placeholder:n,fixed:false,rang:r.n,boni:0,kosten:""});});
+  cw.rows.filter(r=>r.type==="spell").forEach(r=>extra.push({name:r.spec,placeholder:"Spruchliste",kind:"spell",fixed:false,rang:cwRank(r),x:r.n,boni:0,kosten:""}));
+  cw.rows.filter(r=>r.type==="weapon").forEach(r=>extra.push({name:r.spec?`Waffen: ${r.spec}`:"",placeholder:"Waffen",fixed:false,rang:cwRank(r),x:r.n,boni:0,kosten:""}));
+  ["Kunst","Wissen"].forEach(n=>{const r=row(n);extra.push({name:r.spec?`${n}: ${r.spec}`:n,placeholder:n,fixed:false,rang:cwRank(r),x:r.n,boni:0,kosten:""});});
   c.skills=fixed.concat(extra,[{name:"",placeholder:"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""}]);
   c.lp={cur:0,max:0};c.mp={cur:0,max:0};recalcChar(c);c.lp.cur=c.lp.max;c.mp.cur=c.mp.max;
   c.ausbildung=Math.max(0,cwAPleft());
   c.money={gf:0,tt:cw.dice?cw.dice*5:0,kl:0,mu:0,rates:[10,10,10]};
-  const target=cw.startLevel||1;
-  // bei höherer Startstufe den Verlaufseintrag des Assistenten fürs Lernfenster weiterverwenden
-  if(target>1){const el=$("#cw");if(el)el.hidden=true;document.documentElement.style.overflow="";cw=null;}else cwClose();
-  addChar(c);
-  if(target>1){lvChain={target};const lu=levelUp();renderAll();lnOpen(lvChainHead(lu));return;}
+  cwClose();addChar(c);
   showMsg(`${c.name} ist angelegt: ${c.lp.max} LP${c.mp.max?`, ${c.mp.max} Mana`:""}, ${sum(c.ap)} AP${c.ausbildung?`, ${c.ausbildung} Ausbildungspunkte aufgespart`:""}.`);
 }
 let cwToastT;function cwToast(t){const f=document.querySelector("#cw .cwmsg");if(!f)return;f.textContent=t;f.hidden=false;clearTimeout(cwToastT);cwToastT=setTimeout(()=>{f.hidden=true;},3000);thud(.15);}
@@ -2610,10 +2623,12 @@ document.addEventListener("click",e=>{
   const el=$("#cw");if(!el||el.hidden||!cw)return;const b=e.target.closest("button");if(!b||!el.contains(b))return;
   if(b.id==="cwclose"){cwClose();return;}
   if(b.dataset.cwblank){cwClose();addChar(blank());return;}
-  if(b.dataset.cwlvl){cw.startLevel=Math.max(1,Math.min(20,cw.startLevel+ +b.dataset.cwlvl));cwRender(true);return;}
+  if(b.dataset.cwlvl){cw.startLevel=Math.max(1,Math.min(20,cw.startLevel+ +b.dataset.cwlvl));cw.rows.forEach(r=>{r.n=Math.min(r.n,cwRowMax(r));});if(cw.startLevel===1)ATTR.forEach(a=>cw.raise[a]=0);if(cwAPleft()<0){cw.rows.forEach(r=>r.n=0);ATTR.forEach(a=>cw.raise[a]=0);}cwRender(true);return;}
   if(b.dataset.cwvolk){cw.volk=b.dataset.cwvolk;if(cwAPleft()<0)cw.rows.forEach(r=>r.n=0);cwRender(true);return;}
   if(b.dataset.cwberuf){const nb=b.dataset.cwberuf;if(nb!==cw.beruf)cw.rows.forEach(r=>r.n=0);cw.beruf=nb;cwRender(true);return;}
   if(b.dataset.cwattr){const a=b.dataset.cwattr,v=cw.buy[a]+(+b.dataset.d);if(v<1||v>10)return;const ep=cwEP()-(ATTR_PRICE[v]-ATTR_PRICE[cw.buy[a]]);if(ep<0)return;cw.buy[a]=v;cwRender(true);return;}
+  if(b.dataset.cwstep!=null){const r=cw.rows[+b.dataset.cwstep],d=+b.dataset.d;if(d>0){if(r.n<cwRowMax(r)&&cwAPleft()>=cwCross(r,r.n))r.n++;}else r.n=Math.max(0,r.n-1);cwRender(true);return;}
+  if(b.dataset.cwraise){const a=b.dataset.cwraise,d=+b.dataset.d,w=cwFinal(a)+cw.raise[a];if(d>0){if(w<10&&cwAPleft()>=ATTR_PRICE[w+1])cw.raise[a]++;}else cw.raise[a]=Math.max(0,cw.raise[a]-1);cwRender(true);return;}
   if(b.dataset.cwrow!=null){const r=cw.rows[+b.dataset.cwrow],k=+b.dataset.k;r.n=r.n>k?k:k+1;if(cwAPleft()<0)r.n=Math.max(0,r.n-1);cwRender(true);return;}
   if(b.dataset.cwadd){const t=b.dataset.cwadd;let i=-1;cw.rows.forEach((r,j)=>{if(r.type===t)i=j;});
     cw.rows.splice(i+1,0,t==="spell"?{type:"spell",label:"Spruchliste",skill:"Spruchlisten",spec:"",n:0}:{type:"weapon",label:"Waffengruppe",skill:"Waffen",spec:"",n:0});cwRender(true);return;}
@@ -2889,14 +2904,9 @@ function levelDown(){
 }
 
 let lnHead="";
-// Startstufe über 1: nacheinander durch die Stufen, je 8 Ausbildungspunkte verteilen
-let lvChain=null;
-const lvChainHead=lu=>`Startstufe ${lvChain.target}: jetzt Stufe ${lvlNow()} von ${lvChain.target}. ${cur.lp.max} LP${lu&&lu.dl?` (+${lu.dl})`:""}, +8 Ausbildungspunkte zum Verteilen.`;
 function lnOpen(head){lnHead=head||"";let el=$("#learn");if(!el){el=document.createElement("div");el.id="learn";el.setAttribute("role","dialog");el.setAttribute("aria-label","Ausbildungspunkte ausgeben");document.body.appendChild(el);}
   el.hidden=false;document.documentElement.style.overflow="hidden";histOpen();lnRender();}
-function lnClose(){const el=$("#learn");if(!el||el.hidden)return;
-  if(lvChain&&lvlNow()<lvChain.target){const lu=levelUp();lnHead=lvChainHead(lu);lnRender();const b=el.querySelector(".cwbody");if(b)b.scrollTop=0;return;}
-  if(lvChain){lvChain=null;setTimeout(()=>showMsg(`${cur.name} ist fertig auf Stufe ${lvlNow()}: ${cur.lp.max} LP${cur.mp.max?`, ${cur.mp.max} Mana`:""}, ${sum(cur.ap)} AP${num(cur.ausbildung)?`, ${num(cur.ausbildung)} Ausbildungspunkte aufgespart`:""}.`),50);}histClose();el.hidden=true;document.documentElement.style.overflow="";lnHead="";renderAll();}
+function lnClose(){const el=$("#learn");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";lnHead="";renderAll();}
 function lnRender(keep){
   const el=$("#learn");if(!el||el.hidden||!cur)return;const body=el.querySelector(".cwbody"),st=keep&&body?body.scrollTop:0;
   const ap=num(cur.ausbildung);
@@ -2912,7 +2922,7 @@ function lnRender(keep){
     return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`auf ${w+1}: ${c} Punkte`:"Maximum erreicht"}</small></div>
       <div class="step"><button data-lnat="${a}" data-d="-1" ${done?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-lnat="${a}" data-d="1" ${w>=10||ap<c?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
       <div class="cwres"><small>${done?`+${done} in dieser Stufe`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("");
-  el.innerHTML=`<div class="tbar"><h1>Lernen · Stufe ${lvlNow()}</h1><button class="btn small${lvChain&&lvlNow()<lvChain.target?" pri":""}" id="lnclose">${lvChain&&lvlNow()<lvChain.target?`Weiter zu Stufe ${lvlNow()+1}`:"Fertig"}</button></div>
+  el.innerHTML=`<div class="tbar"><h1>Lernen · Stufe ${lvlNow()}</h1><button class="btn small" id="lnclose">Fertig</button></div>
     <div class="cwbody">${lnHead?`<div class="lnhead">${esc(lnHead)}</div>`:""}
       <div class="cwpts${ap===0?" done":""}"><b>${ap}</b><span>Ausbildungspunkte übrig${ap?" · Rest wird aufgespart":""}</span></div>
       <div class="lab cwh">Attribute</div>
