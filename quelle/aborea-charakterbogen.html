@@ -82,6 +82,8 @@ input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px soli
 .attr .name{display:none}
 .attr .key{font-family:var(--display);font-size:1.35rem;min-width:0}
 .attr .f{min-width:0;max-width:90px}
+.row.attr.edit{grid-template-columns:minmax(30px,44px) repeat(3,minmax(0,1fr)) auto}
+.attr .xb{display:block;font-size:.68rem;color:var(--muted);line-height:1.1;white-space:nowrap}
 .attr .fro b{display:block;font-size:1.4rem;line-height:1.3;font-variant-numeric:tabular-nums}.attr .fro b.up{color:var(--ok)}.attr .fro b.down{color:var(--bad)}
 .afoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}.afoot .gearmini{flex:0 0 34px}.attr .f input{width:100%} .attr .f .lab{font-size:.65rem}
 .step{display:flex;align-items:center;border:1px solid var(--line);border-radius:7px;overflow:hidden}
@@ -827,15 +829,16 @@ function combat(key,title,labels){
 }
 let attrEdit=false;
 function renderAttr(){
-  return `<h2>Attribute</h2><div class="card rows">${ATTR.map(a=>{const v=cur.attr[a];return `<div class="row attr">
+  return `<h2>Attribute</h2><div class="card rows">${ATTR.map(a=>{const v=cur.attr[a],xb=num(v.x);return `<div class="row attr${attrEdit?" edit":""}">
     <span class="key" title="${ATTR_LONG[a]}">${a}</span>
     ${attrEdit?`<div class="f"><span class="lab">Wert</span><input type="number" inputmode="numeric" id="a-${a}-w" data-k="attr.${a}.w" value="${esc(v.w)}"></div>
-    <div class="f"><span class="lab">Bonus</span><input type="number" inputmode="numeric" id="a-${a}-b" data-k="attr.${a}.b" data-num value="${esc(v.b)}"></div>`
+    <div class="f"><span class="lab">Extra</span><input type="number" inputmode="numeric" id="a-${a}-x" data-k="attr.${a}.x" data-num value="${xb?esc(v.x):""}" placeholder="0" aria-label="${ATTR_LONG[a]}: Extra-Bonus"></div>
+    <div class="f fro"><span class="lab">Bonus</span><b id="a-${a}-b">${pbSign(num(v.b))}</b></div>`
     :`<div class="f fro"><span class="lab">Wert</span><b>${esc(v.w===""?"–":v.w)}</b></div>
-    <div class="f fro"><span class="lab">Bonus</span><b class="${num(v.b)>0?"up":num(v.b)<0?"down":""}">${num(v.b)>0?"+":num(v.b)<0?"−":"±"}${Math.abs(num(v.b))}</b></div>`}
+    <div class="f fro"><span class="lab">Bonus</span><b class="${num(v.b)>0?"up":num(v.b)<0?"down":""}">${num(v.b)>0?"+":num(v.b)<0?"−":"±"}${Math.abs(num(v.b))}</b>${xb?`<small class="xb">inkl. ${pbSign(xb)} extra</small>`:""}</div>`}
     <span class="name"></span>
     <button class="die" data-roll="attr:${a}" aria-label="${ATTR_LONG[a]} würfeln">${DIE6}</button></div>`}).join("")}
-    <div class="afoot"><span class="hint">${attrEdit?"Von Hand: Werte direkt eintragen, der Bonus folgt automatisch.":"Steigern über Stufenaufstieg und Lernen."}</span><button class="gearmini${attrEdit?" on":""}" id="attrgear" aria-pressed="${attrEdit}" aria-label="${attrEdit?"Fertig":"Attribute von Hand ändern"}">${ICON_GEAR}</button></div></div>
+    <div class="afoot"><span class="hint">${attrEdit?"Von Hand: Wert eintragen, der Bonus folgt aus der Tabelle. „Extra“ kommt obendrauf, z. B. durch einen Ring, und zählt nicht in den Kaufpreis.":"Steigern über Stufenaufstieg und Lernen."}</span><button class="gearmini${attrEdit?" on":""}" id="attrgear" aria-pressed="${attrEdit}" aria-label="${attrEdit?"Fertig":"Attribute von Hand ändern"}">${ICON_GEAR}</button></div></div>
     <p class="note">Würfeln auf ein Attribut: so viele W6 wie der Bonus. Bei Bonus 0 ein Plus- und ein Minus-W6, bei −1 ein Plus- und zwei Minus-W6 usw. Minus-Würfel sind rot.</p>`;
 }
 const SB_DEFAULT_LISTS=["Elementare Magie","Zeichen & Wunder","Wilde Magie","Blutmagie","Weiße Magie","Freie Magie"];
@@ -1822,7 +1825,8 @@ document.addEventListener("input",e=>{
   const k=t.dataset.k;if(!k||!cur)return;
   let v=t.value;if(t.hasAttribute("data-num"))v=t.value===""?"":num(t.value);
   setPath(cur,k,v);
-  {const m=/^attr\.(\w+)\.w$/.exec(k);if(m&&t.value!==""){const bo=attrBonus(t.value);cur.attr[m[1]].b=bo;const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.value=bo;}}
+  {const m=/^attr\.(\w+)\.w$/.exec(k);if(m&&t.value!==""){cur.attr[m[1]].b=attrB(cur.attr[m[1]]);const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.textContent=pbSign(cur.attr[m[1]].b);}}
+  {const m=/^attr\.(\w+)\.x$/.exec(k);if(m){const A=cur.attr[m[1]];A.b=attrB(A);const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.textContent=pbSign(A.b);}}
   if(k==="lp.max"||k==="mp.max"){const p=cur[k.slice(0,2)];if(num(p.cur)>num(p.max))p.cur=num(p.max);}
   {const m=/^skills\.(\d+)\.rang$/.exec(k);if(m)cur.skills[+m[1]].x=crossesForRank(num(v));}
   if(k==="armorType"||k==="armorAdj"){const a0=armorOf();if(k==="armorType"){cur.ruestungMalus=a0?Math.abs(a0[2]):0;if(!t.dataset.prev){cur.armorAdj=0;const ai=$("#f-armoradj");if(ai)ai.value=0;}t.dataset.prev=cur.armorType;}armorSync();
@@ -2476,7 +2480,7 @@ function skillCostAuto(s){
   return "";
 }
 const skillCost=s=>String(s.kosten||"").trim()||skillCostAuto(s);
-const CALC_KEY=/^(level|beruf|lpBonus|mpBonus|attr\.\w+\.(w|b)|skills\.\d+\.(rang|boni|name))$/;
+const CALC_KEY=/^(level|beruf|lpBonus|mpBonus|attr\.\w+\.(w|b|x)|skills\.\d+\.(rang|boni|name))$/;
 function syncCalcFields(){
   const set=(sel,v)=>{const e=document.querySelector(sel);if(e&&e!==document.activeElement)e.value=v;};
   set('[id="f-lp.max"]',cur.lp.max);set('[id="f-mp.max"]',cur.mp.max);
@@ -2485,8 +2489,10 @@ function syncCalcFields(){
 }
 function autoCalc(k){if(!cur||!CALC_KEY.test(k))return;recalcChar(cur);syncCalcFields();}
 function shiftVolk(from,to){const A=VOLK[from]||[0,0,0,0,0],B=VOLK[to]||[0,0,0,0,0],ch=[];
-  ATTR.forEach((a,i)=>{const d=B[i]-A[i];if(!d)return;const at=cur.attr[a];at.w=String(Math.max(0,num(at.w)+d));at.b=attrBonus(at.w);ch.push(`${a} ${d>0?"+":"−"}${Math.abs(d)}`);});
+  ATTR.forEach((a,i)=>{const d=B[i]-A[i];if(!d)return;const at=cur.attr[a];at.w=String(Math.max(0,num(at.w)+d));at.b=attrB(at);ch.push(`${a} ${d>0?"+":"−"}${Math.abs(d)}`);});
   if(ch.length)showMsg(`Attribute angepasst: ${ch.join(", ")}`);}
+// Bonus = Wert aus der Tabelle + Extra-Bonus (z. B. Ring). Der Extra-Bonus zählt nie in Kaufpreise.
+const attrB=A=>attrBonus(A.w)+num(A.x);
 function recalcChar(c){
   const B=BERUF[c.beruf],lvl=Math.max(1,num(c.level)||1),b=a=>num(c.attr[a]&&c.attr[a].b),out=[];
   const rank=n=>{const s=(c.skills||[]).find(x=>x.name===n);return s?num(s.rang):0;};
@@ -2704,7 +2710,7 @@ function pbPage1(c){const P=pbCtx(c),x=P.x,k=PB.k;
   P.lab("Wert",61,88,{align:"center"});P.lab("Bonus",87,88,{align:"center"});
   ATTR.forEach((a,i)=>{const y=90+i*11.2,A=cur.attr[a]||{w:"",b:0},bo=num(A.b);
     P.rect(14,y,38,9,{fill:P.fillLab(),lw:0.35,r:0.8});P.text(a+":",16,y+6.6,{pt:13,fam:"d"});P.text(ATTR_LONG[a],50,y+6,{pt:6.5,color:PB.mute,align:"right"});
-    P.box(54,y,14,9,String(A.w===""?"":num(A.w)),{pt:13});P.arrow(71.5,y+4.5,2);P.box(78,y,18,9,String(A.w===""&&!bo?"":pbSign(bo)),{pt:13});});
+    P.box(54,y,14,9,String(A.w===""?"":num(A.w)),{pt:13});P.arrow(71.5,y+4.5,2);P.box(78,y,18,9,String(A.w===""&&!bo?"":pbSign(bo)),{pt:13});if(num(A.x))P.text("inkl. "+pbSign(num(A.x))+" extra",87,y+10.75,{pt:4.6,color:PB.mute,align:"center"});});
   // Kampfwerte
   P.panel(107.5,77,92.5,71,"Kampfwerte");
   const ip=iniParts(),ini=iniBase(),ap=cur.ap||[3,0,0],kr=cur.krit||[0,0];
@@ -2852,7 +2858,7 @@ function attrLearn(a,add){
     if(!done.length)return "";
     const e=done[done.length-1],L=lvLog();L.splice(L.lastIndexOf(e),1);A.w=String(Math.max(0,w-1));cur.ausbildung=num(cur.ausbildung)+e.c;
   }
-  A.b=attrBonus(A.w);recalcChar(cur);queueSave(cur);return "";
+  A.b=attrB(A);recalcChar(cur);queueSave(cur);return "";
 }
 function levelUp(){
   const lp0=num(cur.lp.max),mp0=num(cur.mp.max);
@@ -2865,7 +2871,7 @@ function levelDown(){
   const log=lvLog().slice().reverse();
   log.forEach(e=>{
     if(e.t==="s"){const s=cur.skills.find(x=>x.uid===e.k);if(s){s.x=Math.max(0,sxOf(s)-1);s.rang=rankFromCrosses(s.x).r;}cur.ausbildung=num(cur.ausbildung)+e.c;}
-    else if(e.t==="a"){const A=cur.attr[e.k];A.w=String(Math.max(0,num(A.w)-1));A.b=attrBonus(A.w);cur.ausbildung=num(cur.ausbildung)+e.c;}
+    else if(e.t==="a"){const A=cur.attr[e.k];A.w=String(Math.max(0,num(A.w)-1));A.b=attrB(A);cur.ausbildung=num(cur.ausbildung)+e.c;}
   });
   const gained=log.some(e=>e.t==="lvl")?8:8;
   cur.ausbildung=Math.max(0,num(cur.ausbildung)-gained);
@@ -2888,7 +2894,7 @@ function lnRender(keep){
     const pips=Array.from({length:need},(_,k)=>`<i class="${k<rk.rest?"on":""}"></i>`).join("");
     return `<div class="cwsr${done?" on":""}"><div class="cwsn"><b>${esc(nm||"Fertigkeit")}</b><small class="lnrk">Rang ${rk.r} · zu Rang ${rk.r+1}: <span class="lnpips">${pips}</span> ${rk.rest}/${need}</small></div><div class="cwboxes">${parts.length?boxes:'<small class="hint">keine Kosten</small>'}</div><span class="cwrk">${done?`+${done}`:""}</span></div>`;
   }).join("");
-  const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
+  const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]:0,bo=attrB(A);
     return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`auf ${w+1}: ${c} Punkte`:"Maximum erreicht"}</small></div>
       <div class="step"><button data-lnat="${a}" data-d="-1" ${done?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-lnat="${a}" data-d="1" ${w>=10||ap<c?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
       <div class="cwres"><small>${done?`+${done} in dieser Stufe`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("");
