@@ -1013,11 +1013,32 @@ function renderBogen(){
       <button class="btn small" id="newc">Neuer Charakter</button></div>
   </div>
   <h2>Sichern</h2><div class="card">
-    <div class="row-actions"><button class="btn small" id="exp">Charakter als Text kopieren</button><button class="btn small" id="imp">Charakter einfügen</button></div>
-    <div id="impbox" hidden style="margin-top:10px"><textarea id="imptext" placeholder="Kopierten Charakter hier einfügen"></textarea><div class="row-actions" style="margin-top:8px"><button class="btn small pri" id="impgo">Als neuen Charakter anlegen</button></div></div>
+    <div class="row-actions"><button class="btn small" id="expfile">Als Datei senden, z. B. per E-Mail</button><button class="btn small" id="exp">Charakter als Text kopieren</button><button class="btn small" id="imp">Charakter einfügen</button></div>
+    <div id="impbox" hidden style="margin-top:10px"><label class="btn small" style="display:inline-flex;align-items:center;margin-bottom:8px;cursor:pointer">Sicherungsdatei öffnen<input type="file" id="impfile" accept=".txt,.json,text/plain,application/json" hidden></label><textarea id="imptext" placeholder="… oder kopierten Charakter hier einfügen"></textarea><div class="row-actions" style="margin-top:8px"><button class="btn small pri" id="impgo">Als neuen Charakter anlegen</button></div></div>
     <p class="note">${mode==="db"?"Gespeichert in deinem Claude-Konto, auf jedem Gerät verfügbar, nur für dich sichtbar.":"Wird nur in diesem Browser gespeichert. Mit „als Text kopieren“ kannst du eine Sicherung machen."}</p>
   </div>`;
 }
+// Charakter als Textdatei teilen: am Handy über das Teilen-Menü (z. B. Gmail/Mail mit Anhang), sonst als Download
+async function charFileSend(){
+  const d=new Date(),day=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const fn=`Aborea-${(String(cur.name||"Charakter").replace(/[^\wäöüÄÖÜß-]+/g,"-").replace(/^-+|-+$/g,"")||"Charakter")}-${day}.txt`;
+  const txt=JSON.stringify(cur),title=`Aborea: ${cur.name||"Charakter"} (Sicherung ${d.toLocaleDateString("de-DE")})`;
+  const body="Sicherung meines Aborea-Charakters. Zum Wiederherstellen in der App: Bogen → Charakter einfügen → Sicherungsdatei öffnen.";
+  const C=window.Capacitor;
+  try{
+    if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.Filesystem&&C.Plugins.Share){
+      const w=await C.Plugins.Filesystem.writeFile({path:fn,data:txt,directory:"CACHE",encoding:"utf8"});
+      await C.Plugins.Share.share({title,text:body,url:w.uri,dialogTitle:"Sicherung senden"});return;}
+    const f=new File([txt],fn,{type:"text/plain"});
+    if(!(window.claude&&claude.use)&&/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[f]})){
+      await navigator.share({files:[f],title,text:body});return;}
+    if(window.claude&&claude.use){const dl=await claude.use("downloads");if(dl){await dl.save({filename:fn,data:txt});showMsg("Datei gespeichert. Hänge sie an eine E-Mail an, um sie dir zu schicken.");return;}}
+    const u=URL.createObjectURL(new Blob([txt],{type:"text/plain"})),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),8000);
+    showMsg("Datei gespeichert. Hänge sie an eine E-Mail an, um sie dir zu schicken.");
+  }catch(e){if(e&&(e.name==="AbortError"||/cancel/i.test(e.message||"")||e.code==="declined"))return;showMsg("Senden hat nicht geklappt. Nimm stattdessen „als Text kopieren“.");}
+}
+document.addEventListener("change",e=>{const t=e.target;if(!t||t.id!=="impfile"||!t.files||!t.files[0])return;
+  const rd=new FileReader();rd.onload=()=>{const ta=$("#imptext");if(ta)ta.value=String(rd.result||"");const g=$("#impgo");if(g)g.click();t.value="";};rd.readAsText(t.files[0]);});
 function renderEmpty(){
   return `<div class="empty"><h1>Noch kein Charakter</h1><p class="hint">Leg einen neuen Charakter an oder schau dir zuerst den Beispielcharakter an.</p>
     <div class="row-actions" style="justify-content:center;margin-top:16px"><button class="btn pri" id="new1">Neuer Charakter</button><button class="btn" id="ex1">Beispiel laden</button></div></div>`;
@@ -1987,6 +2008,7 @@ document.addEventListener("click",e=>{
   if(b.id==="exp"){const txt=JSON.stringify(cur);
     const ok=()=>showMsg("Charakter kopiert. Füge ihn irgendwo zur Sicherung ein.");
     try{navigator.clipboard.writeText(txt).then(ok,()=>fallbackCopy(txt))}catch(x){fallbackCopy(txt)}return;}
+  if(b.id==="expfile"){charFileSend();return;}
   if(b.id==="imp"){$("#impbox").hidden=!$("#impbox").hidden;return;}
   if(b.id==="impgo"){try{const c=JSON.parse($("#imptext").value);if(!c||!c.attr||!c.skills)throw 0;
       c.id=blank().id;migrate(c);addChar(c);showMsg("Charakter eingefügt.");}
