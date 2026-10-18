@@ -274,10 +274,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .cwattr{display:grid;gap:8px}
 .cwar{display:grid;grid-template-columns:minmax(0,1fr) auto 96px;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .cwan{display:grid;min-width:0}.cwan small{color:var(--muted);font-size:.78rem}
-.cwsr.multi{grid-template-columns:minmax(0,1fr) auto}.cwsr.multi .cwrk{display:none}.cwnx{display:block;font-size:.78rem;color:var(--muted);font-weight:400}.cwsr.multi .step output{min-width:30px;text-align:center;font-weight:700}
-.cwpills{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 2px}.cwlv{display:inline-flex;gap:2px;padding:2px;border-radius:6px;background:var(--bg)}
-.cwpills i{font-style:normal;min-width:20px;height:20px;padding:0 4px;display:grid;place-items:center;border-radius:4px;font-size:.74rem;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--muted)}
-.cwpills i.on{background:var(--accent);border-color:var(--accent);color:var(--card)}.cwpills i.nx{border-color:var(--accent);color:var(--accent)}
+.cwsr.multi{display:block}.cwsh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.cwsh span{font-size:.85rem;font-weight:700;color:var(--accent);white-space:nowrap}.cwgrid{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:8px}.cwlvg small{display:block;font-size:.66rem;color:var(--muted);margin-bottom:2px;white-space:nowrap}.cwlvg>div{display:flex;gap:4px}.cwbox.sm{width:36px;height:36px;font-size:.92rem}.cwsr.multi .cwsn input,.cwsr.multi select,.cwsr.multi>input{margin-top:6px}.cwsr.multi .step output{min-width:30px;text-align:center;font-weight:700}
 .cwc{color:var(--accent)}
 .pricetab{display:flex;gap:3px;margin:4px 0 12px}.pricetab span{flex:1;display:grid;justify-items:center;padding:4px 0;border-radius:6px;background:var(--card);border:1px solid var(--line);font-variant-numeric:tabular-nums}.pricetab small{font-size:.66rem;color:var(--muted);line-height:1}.pricetab b{font-size:.9rem;line-height:1.2}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
@@ -2571,21 +2568,22 @@ function cwRender(keepScroll){
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
           :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:"";
-        // Startstufe über 1: Plus/Minus statt Kästchen, je Stufe darf die Fertigkeit so oft wie sonst gelernt werden
-        const nx=r.n<cwRowMax(r)?cwCross(r,r.n):0,canUp=nx&&cwAPleft()>=nx;
-        const ctl=!p.length?'<small class="hint">keine Kosten</small>':N===1?p.map((_,k)=>box(k)).join(""):
-          `<div class="step"><button data-cwstep="${i}" data-d="-1" ${r.n?"":"disabled"} aria-label="${esc(r.label)} senken">−</button><output>${r.n}</output><button data-cwstep="${i}" data-d="1" ${canUp?"":"disabled"} aria-label="${esc(r.label)} steigern">+</button></div>`;
-        const info=N===1?(r.n?`Rang ${r.n}`:""):"";
-        const pills=N>1&&p.length?`<div class="cwpills" aria-hidden="true">${Array.from({length:N},(_,lv)=>`<span class="cwlv">${p.map((c,j)=>{const k=lv*p.length+j;return `<i class="${k<r.n?"on":k===r.n?"nx":""}">${c}</i>`;}).join("")}</span>`).join("")}</div>`:"";
-        const sub=N>1&&p.length?`${pills}<small class="cwnx">Rang ${cwRank(r)}${r.n?` · ${cwRowCost(r)} P. ausgegeben`:""}${nx?` · nächstes Kreuz ${nx} P.`:" · Maximum erreicht"}</small>`:"";
-        return `<div class="cwsr${r.n?" on":""}${N>1?" multi":""}"><div class="cwsn"><b>${esc(r.label)}</b>${sub}${spec}</div><div class="cwboxes">${ctl}</div><span class="cwrk">${info}</span></div>`;}).join("")}</div>
+        // Startstufe über 1: je Stufe eine Spalte mit den Kästchen dieser Stufe, so wie beim normalen Aufstieg
+        if(N>1&&p.length){
+          const cost=(a,b)=>{let t=0;for(let k=a;k<=b;k++)t+=cwCross(r,k);return t;};
+          const grid=Array.from({length:N},(_,lv)=>`<div class="cwlvg"><small>Stufe ${lv+1}</small><div>${p.map((c,j)=>{const k=lv*p.length+j,on=k<r.n,can=!on&&cwAPleft()>=cost(r.n,k);
+            return `<button class="cwbox sm${on?" on":""}" data-cwrow="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(r.label)}, Stufe ${lv+1}: ${c} Punkte">${c}</button>`;}).join("")}</div></div>`).join("");
+          return `<div class="cwsr multi${r.n?" on":""}"><div class="cwsh"><b>${esc(r.label)}</b><span>${r.n?`Rang ${cwRank(r)} · ${cwRowCost(r)} P.`:""}</span></div>${spec}<div class="cwgrid">${grid}</div></div>`;}
+        const ctl=!p.length?'<small class="hint">keine Kosten</small>':p.map((_,k)=>box(k)).join("");
+        const info=r.n?`Rang ${r.n}`:"",sub="";
+        return `<div class="cwsr${r.n?" on":""}"><div class="cwsn"><b>${esc(r.label)}</b>${spec}</div><div class="cwboxes">${ctl}</div><span class="cwrk">${info}</span></div>`;}).join("")}</div>
       <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
       ${(cw.startLevel||1)>1?`<div class="lab cwh">Attribute steigern</div>
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts:</p>${pricetab()}<div class="cwattr">${ATTR.map(a=>{const f=cwFinal(a),w=f+cw.raise[a],c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`${w} → ${w+1} kostet <b class="cwc">${c} P.</b>`:"Maximum erreicht"}${cw.raise[a]?`<br>schon ${cwRaiseCost(a)} P. ausgegeben`:""}</small></div>
           <div class="step"><button data-cwraise="${a}" data-d="-1" ${cw.raise[a]?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-cwraise="${a}" data-d="1" ${w>=10||cwAPleft()<c?"disabled":""} aria-label="${ATTR_LONG[a]} steigern">+</button></div>
           <div class="cwres"><small>${cw.raise[a]?`+${cw.raise[a]}`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>`:""}
-      <p class="note">${(cw.startLevel||1)>1?`Startstufe ${cw.startLevel}: Du hast die Punkte aller Stufen auf einmal. Jedes Plus ist ein Kreuz, ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 vier. Pro Stufe darf jede Fertigkeit einmal gelernt werden (bei zwei Kosten zweimal), deshalb ist irgendwann Schluss.`:"Ein Kästchen ist ein Rang, die Zahl darin die Kosten. Fertigkeiten mit zwei Kästchen darfst du pro Stufe zweimal lernen."}</p>`;
+      <p class="note">${(cw.startLevel||1)>1?`Jede Spalte ist eine Stufe, wie beim normalen Aufstieg: In jeder Stufe lernst du eine Fertigkeit einmal, bei zwei Kästchen zweimal. Die Zahl im Kästchen ist der Preis. Jedes Kästchen ist ein Kreuz; bis Rang 5 ist ein Kreuz ein Rang, ab Rang 6 braucht ein Rang zwei Kreuze.`:"Ein Kästchen ist ein Rang, die Zahl darin die Kosten. Fertigkeiten mit zwei Kästchen darfst du pro Stufe zweimal lernen."}</p>`;
   }else{
     const c=cwPreview(),hb=c.ap[1];
     h=`<div class="cwsum">
@@ -2637,7 +2635,6 @@ document.addEventListener("click",e=>{
   if(b.dataset.cwvolk){cw.volk=b.dataset.cwvolk;if(cwAPleft()<0)cw.rows.forEach(r=>r.n=0);cwRender(true);return;}
   if(b.dataset.cwberuf){const nb=b.dataset.cwberuf;if(nb!==cw.beruf)cw.rows.forEach(r=>r.n=0);cw.beruf=nb;cwRender(true);return;}
   if(b.dataset.cwattr){const a=b.dataset.cwattr,v=cw.buy[a]+(+b.dataset.d);if(v<1||v>10)return;const ep=cwEP()-(ATTR_PRICE[v]-ATTR_PRICE[cw.buy[a]]);if(ep<0)return;cw.buy[a]=v;cwRender(true);return;}
-  if(b.dataset.cwstep!=null){const r=cw.rows[+b.dataset.cwstep],d=+b.dataset.d;if(d>0){if(r.n<cwRowMax(r)&&cwAPleft()>=cwCross(r,r.n))r.n++;}else r.n=Math.max(0,r.n-1);cwRender(true);return;}
   if(b.dataset.cwraise){const a=b.dataset.cwraise,d=+b.dataset.d,w=cwFinal(a)+cw.raise[a];if(d>0){if(w<10&&cwAPleft()>=ATTR_PRICE[w+1])cw.raise[a]++;}else cw.raise[a]=Math.max(0,cw.raise[a]-1);cwRender(true);return;}
   if(b.dataset.cwrow!=null){const r=cw.rows[+b.dataset.cwrow],k=+b.dataset.k;r.n=r.n>k?k:k+1;if(cwAPleft()<0)r.n=Math.max(0,r.n-1);cwRender(true);return;}
   if(b.dataset.cwadd){const t=b.dataset.cwadd;let i=-1;cw.rows.forEach((r,j)=>{if(r.type===t)i=j;});
