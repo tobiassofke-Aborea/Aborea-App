@@ -2576,7 +2576,8 @@ function cwRender(keepScroll){
       <div class="lab cwh">Startstufe</div>
       <div class="cwlvl"><div class="step"><button data-cwlvl="-1" ${cw.startLevel<=1?"disabled":""} aria-label="Startstufe senken">−</button><output>${cw.startLevel}</output><button data-cwlvl="1" ${cw.startLevel>=20?"disabled":""} aria-label="Startstufe erhöhen">+</button></div>
         <small>${cw.startLevel>1?`Pro Stufe über 1 gibt es 8 Ausbildungspunkte mehr, hier ${(cw.startLevel-1)*8}. Du verteilst sie gleich bei den Fertigkeiten.`:"Die meisten fangen auf Stufe 1 an."}</small></div>
-      <p class="note">Lieber alles selbst eintragen? <button class="linkbtn" data-cwblank="1">Leeren Bogen anlegen</button></p>`;
+      <p class="note">Lieber alles selbst eintragen? <button class="linkbtn" data-cwblank="1">Leeren Bogen anlegen</button></p>
+      <p class="note">Nur mal reinschauen? <button class="linkbtn" data-cwexample="1">Beispielcharakter laden</button></p>`;
   }else if(s===1){
     const ep=cwEP(),adj=VOLK[cw.volk]||[0,0,0,0,0];
     h=`<div class="cwpts${ep<0?" bad":ep===0?" done":""}"><b>${ep}</b><span>von 35 Entwicklungspunkten übrig</span></div>
@@ -2657,6 +2658,7 @@ document.addEventListener("click",e=>{
   const el=$("#cw");if(!el||el.hidden||!cw)return;const b=e.target.closest("button");if(!b||!el.contains(b))return;
   if(b.id==="cwclose"){cwClose();return;}
   if(b.dataset.cwblank){cwClose();addChar(blank());return;}
+  if(b.dataset.cwexample){cwClose();addChar(example());return;}
   if(b.dataset.cwlvl){cw.startLevel=Math.max(1,Math.min(20,cw.startLevel+ +b.dataset.cwlvl));cw.rows.forEach(r=>{r.n=Math.min(r.n,cwRowMax(r));});if(cw.startLevel===1)ATTR.forEach(a=>cw.raise[a]=0);if(cwAPleft()<0){cw.rows.forEach(r=>r.n=0);ATTR.forEach(a=>cw.raise[a]=0);}cwRender(true);return;}
   if(b.dataset.cwvolk){cw.volk=b.dataset.cwvolk;if(cwAPleft()<0)cw.rows.forEach(r=>r.n=0);cwRender(true);return;}
   if(b.dataset.cwberuf){const nb=b.dataset.cwberuf;if(nb!==cw.beruf)cw.rows.forEach(r=>r.n=0);cw.beruf=nb;cwRender(true);return;}
