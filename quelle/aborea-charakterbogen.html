@@ -282,6 +282,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .rtrack b{display:flex;gap:1px;height:14px;padding:1px;border-radius:3px;border:1px solid var(--line);background:var(--bg)}.rtrack i{flex:1;border-radius:2px;background:var(--card)}.rtrack i.on{background:var(--accent)}
 .rtrack span.done b{border-color:var(--accent)}
 .detrt{grid-column:1/-1}.detrt .rtrack{margin-top:2px}.detrt .hint{display:block;margin-top:4px;font-size:.78rem}
+.savehelp{margin-top:12px;font-size:.9rem;color:var(--muted)}.savehelp b{display:block;color:var(--ink);font-size:.9rem;margin-top:10px}.savehelp ol{margin:4px 0 0;padding-left:20px}.savehelp li{margin:2px 0}.savehelp .note{margin:0}.savehelp .note+b{margin-top:10px}.savehelp ol+.note{margin-top:10px}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -997,7 +998,14 @@ function renderBogen(){
   <h2>Sichern</h2><div class="card">
     <div class="row-actions"><button class="btn small" id="expfile">Als Datei senden, z. B. per E-Mail</button><button class="btn small" id="exp">Charakter als Text kopieren</button><button class="btn small" id="imp">Charakter einfügen</button></div>
     <div id="impbox" hidden style="margin-top:10px"><label class="btn small" style="display:inline-flex;align-items:center;margin-bottom:8px;cursor:pointer">Sicherungsdatei öffnen<input type="file" id="impfile" accept=".txt,.json,text/plain,application/json" hidden></label><textarea id="imptext" placeholder="… oder kopierten Charakter hier einfügen"></textarea><div class="row-actions" style="margin-top:8px"><button class="btn small pri" id="impgo">Als neuen Charakter anlegen</button></div></div>
-    <p class="note">${mode==="db"?"Gespeichert in deinem Claude-Konto, auf jedem Gerät verfügbar, nur für dich sichtbar.":"Wird nur in diesem Browser gespeichert. Mit „als Text kopieren“ kannst du eine Sicherung machen."}</p>
+    <div class="savehelp">
+      <p class="note">${mode==="db"?"Deine Charaktere sind in deinem Claude-Konto gespeichert und auf jedem Gerät da, auf dem du angemeldet bist.":"Deine Charaktere sind nur auf diesem Gerät gespeichert. Löschst du die App, sind sie weg. Mach deshalb ab und zu eine Sicherung."}</p>
+      <b>Sichern</b>
+      <ol><li>Tippe auf „Als Datei senden“.</li><li>Wähle im Menü deine E-Mail-App (oder Drive, „In Dateien sichern“ …).</li><li>Schick die Mail an dich selbst. Die Datei hängt schon dran.</li></ol>
+      <b>Wiederherstellen</b>
+      <ol><li>Speichere die Datei aus der Mail auf dem Gerät.</li><li>Tippe auf „Charakter einfügen“ und dann auf „Sicherungsdatei öffnen“.</li><li>Wähle die Datei. Der Charakter erscheint als neuer Charakter.</li></ol>
+      <p class="note">Auf ein anderes Gerät umziehen geht genauso: auf dem alten sichern, auf dem neuen wiederherstellen. Ohne Datei geht es auch mit „als Text kopieren“ und „Charakter einfügen“.</p>
+    </div>
   </div>`;
 }
 // Charakter als Textdatei teilen: am Handy über das Teilen-Menü (z. B. Gmail/Mail mit Anhang), sonst als Download
