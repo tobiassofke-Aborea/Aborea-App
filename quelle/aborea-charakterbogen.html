@@ -305,6 +305,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .lvcosts{display:flex;gap:6px;margin-top:8px}.lvc{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:6px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 .lvc small{grid-column:1/-1;font-size:.66rem;color:var(--muted);line-height:1.15}.lvc b{font-size:.95rem}.lvc i{font-style:normal;font-size:.75rem;color:var(--muted);justify-self:end}
 .lvc.nx{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}.lvc.nx b{color:var(--accent)}.lvc.done{opacity:.55}
+.linkbtn.cwrm{display:block;margin-top:6px;font-size:.8rem;font-weight:400}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -2668,11 +2669,11 @@ const skLvRow=o=>{const q=rankFromCrosses(o.x),nd=boxesFor(q.r+1);
     ${o.spec||""}${o.costs||""}${rankTrack(o.x)}
     <div class="lvf"><small class="lvsub">${sub}</small><div class="step lvst"><button ${o.minus} ${o.canMinus?"":"disabled"} aria-label="Ein Kreuz weniger">−</button><output>${o.x}</output><button ${o.plus} ${o.canPlus?"":"disabled"} aria-label="Ein Kreuz mehr">+</button></div></div></div>`;};
 // Preis-Chips: zeigt, was das 1. und 2. Kreuz in einer Stufe kostet und wie viele davon schon genommen sind
-const costChips=(parts,used,totals,next,lock)=>parts.length<2&&!totals?"":`<div class="lvcosts">${parts.map((c,j)=>{const t=totals?totals[j]:1,u=used[j]||0,full=u>=t,isN=next===j&&!lock;
+const costChips=(parts,used,totals,next,lock)=>parts.length<2&&(!totals||totals[0]<=1)?"":`<div class="lvcosts">${parts.map((c,j)=>{const t=totals?totals[j]:1,u=used[j]||0,full=u>=t,isN=next===j&&!lock;
   return `<span class="lvc${full?" done":isN?" nx":""}"><small>${j===0?(parts.length>1?"1. Kreuz pro Stufe":"pro Stufe"):"2. Kreuz in derselben Stufe"}</small><b>${c} P.</b>${totals?`<i>${u}/${t}</i>`:full?"<i>✓</i>":""}</span>`;}).join("")}</div>`;
 const pricetab=()=>`<div class="pricetab" aria-label="Kaufpreis je Wert">${ATTR_PRICE.slice(1).map((p,i)=>`<span><small>${i+1}</small><b>${p}</b></span>`).join("")}</div>`;
 const cwAPtotal=()=>(cw.volk==="Mensch"?10:8)+8*((cw.startLevel||1)-1);
-const cwParts=r=>costParts(costOf(cw.beruf,r.skill));
+const cwParts=r=>costParts(r.type==="own"?r.cost:costOf(cw.beruf,r.skill));
 // Kosten des k-ten Kreuzes bei Startstufe N: erst in jeder Stufe das günstige erste Kreuz,
 // erst danach das teure zweite Kreuz einer Stufe (z. B. 2/4 bei Stufe 3 → 2, 2, 2, 4, 4, 4)
 const cwCross=(r,k)=>{const p=cwParts(r),N=cw.startLevel||1;return p.length?p[Math.min(p.length-1,Math.floor(k/N))]:0;};
@@ -2731,9 +2732,10 @@ function cwRender(keepScroll){
       <div class="cwsk">${cw.rows.map((r,i)=>{const x=num(r.tx),q=rankFromCrosses(x),rk=q.r,mx=crossesForRank(N);
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
-          :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:"";
-        return skLvRow({label:esc(r.label),x,spec,minus:`data-cwtx="${i}" data-d="-1"`,plus:`data-cwtx="${i}" data-d="1"`,canMinus:x>0,canPlus:x<mx,note:x>=mx?`Rang ${N} ist auf Stufe ${N} das Höchste`:""});}).join("")}</div>
-      <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
+          :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:r.type==="own"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Name der Fertigkeit" aria-label="Name der Fertigkeit"><input data-cwcost="${i}" value="${esc(r.cost||"")}" placeholder="Kosten, z. B. 2 oder 2/4" aria-label="Kosten" style="margin-top:6px">`:"";
+        const rm=r.added?`<button class="linkbtn cwrm" data-cwrm="${i}">Zeile entfernen</button>`:"";
+        return skLvRow({label:esc(r.label),x,spec:spec+rm,minus:`data-cwtx="${i}" data-d="-1"`,plus:`data-cwtx="${i}" data-d="1"`,canMinus:x>0,canPlus:x<mx,note:x>=mx?`Rang ${N} ist auf Stufe ${N} das Höchste`:""});}).join("")}</div>
+      <div class="lab cwh">Weitere Fertigkeit</div><div class="row-actions"><button class="btn small" data-cwadd="spell">+ Spruchliste</button><button class="btn small" data-cwadd="weapon">+ Waffengruppe</button><button class="btn small" data-cwadd="Wissen">+ Wissen</button><button class="btn small" data-cwadd="Kunst">+ Kunst</button><button class="btn small" data-cwadd="own">+ Eigene</button></div>
       <label class="fld" style="margin-top:12px"><span class="lab">Übrige Ausbildungspunkte laut Bogen</span><input type="number" inputmode="numeric" id="cw-left" value="${num(cw.left)||""}" placeholder="0"></label>`;
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
@@ -2742,12 +2744,13 @@ function cwRender(keepScroll){
       <div class="cwsk">${cw.rows.map((r,i)=>{const p=cwParts(r),N=cw.startLevel||1;
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
-          :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:"";
-        if(!p.length)return `<div class="cwsr"><div class="cwsn"><b>${esc(r.label)}</b>${spec}</div><small class="hint">keine Kosten</small></div>`;
+          :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:r.type==="own"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Name der Fertigkeit" aria-label="Name der Fertigkeit"><input data-cwcost="${i}" value="${esc(r.cost||"")}" placeholder="Kosten, z. B. 2 oder 2/4" aria-label="Kosten" style="margin-top:6px">`:"";
+        const rm=r.added?`<button class="linkbtn cwrm" data-cwrm="${i}">Zeile entfernen</button>`:"";
+        if(!p.length)return `<div class="cwsr lvrow"><div class="lvh"><div class="lvn"><b>${esc(r.label)}</b></div></div>${spec}${rm}<small class="hint">${r.type==="own"?"Trag Kosten ein, dann kannst du Kreuze vergeben.":"keine Kosten"}</small></div>`;
         const nx=r.n<cwRowMax(r)?cwCross(r,r.n):0;
         const note=nx?`nächstes Kreuz <b class="cwc">${nx} P.</b>`:r.n>=crossesForRank(N)?`Rang ${N} ist auf Stufe ${N} das Höchste`:`mehr geht nicht: ${p.length>1?"zweimal":"einmal"} pro Stufe, bei ${N} Stufen`;
-        return skLvRow({label:esc(r.label),extra:r.n?`<small class="lvcost">${cwRowCost(r)} P. ausgegeben</small>`:"",x:r.n,spec,costs:costChips(p,p.map((_,j)=>Math.max(0,Math.min(N,r.n-j*N))),p.map(()=>N),nx?Math.min(p.length-1,Math.floor(r.n/N)):-1,!(nx&&cwAPleft()>=nx)),minus:`data-cwstep="${i}" data-d="-1"`,plus:`data-cwstep="${i}" data-d="1"`,canMinus:r.n>0,canPlus:nx&&cwAPleft()>=nx,note});}).join("")}</div>
-      <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
+        return skLvRow({label:esc(r.label),extra:r.n?`<small class="lvcost">${cwRowCost(r)} P. ausgegeben</small>`:"",x:r.n,spec:spec+rm,costs:costChips(p,p.map((_,j)=>Math.max(0,Math.min(N,r.n-j*N))),p.map(()=>N),nx?Math.min(p.length-1,Math.floor(r.n/N)):-1,!(nx&&cwAPleft()>=nx)),minus:`data-cwstep="${i}" data-d="-1"`,plus:`data-cwstep="${i}" data-d="1"`,canMinus:r.n>0,canPlus:nx&&cwAPleft()>=nx,note});}).join("")}</div>
+      <div class="lab cwh">Weitere Fertigkeit</div><div class="row-actions"><button class="btn small" data-cwadd="spell">+ Spruchliste</button><button class="btn small" data-cwadd="weapon">+ Waffengruppe</button><button class="btn small" data-cwadd="Wissen">+ Wissen</button><button class="btn small" data-cwadd="Kunst">+ Kunst</button><button class="btn small" data-cwadd="own">+ Eigene</button></div>
       ${(cw.startLevel||1)>1?`<div class="lab cwh">Attribute steigern</div>
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts:</p>${pricetab()}<div class="cwattr">${ATTR.map(a=>{const f=cwFinal(a),w=f+cw.raise[a],c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`${w} → ${w+1} kostet <b class="cwc">${c} P.</b>`:"Maximum erreicht"}${cw.raise[a]?`<br>schon ${cwRaiseCost(a)} P. ausgegeben`:""}</small></div>
@@ -2783,7 +2786,8 @@ function cwFinish(){
   const extra=[];
   cw.rows.filter(r=>r.type==="spell").forEach(r=>extra.push({name:r.spec,placeholder:"Spruchliste",kind:"spell",fixed:false,rang:cwRank(r),x:cwX(r),boni:0,kosten:""}));
   cw.rows.filter(r=>r.type==="weapon").forEach(r=>extra.push({name:r.spec?`Waffen: ${r.spec}`:"",placeholder:"Waffen",fixed:false,rang:cwRank(r),x:cwX(r),boni:0,kosten:""}));
-  ["Kunst","Wissen"].forEach(n=>{const r=row(n);extra.push({name:r.spec?`${n}: ${r.spec}`:n,placeholder:n,fixed:false,rang:cwRank(r),x:cwX(r),boni:0,kosten:""});});
+  cw.rows.filter(r=>r.type==="spec").forEach(r=>{const n=r.skill;extra.push({name:r.spec?`${n}: ${r.spec}`:n,placeholder:n,fixed:false,rang:cwRank(r),x:cwX(r),boni:0,kosten:""});});
+  cw.rows.filter(r=>r.type==="own"&&String(r.spec||"").trim()).forEach(r=>extra.push({name:r.spec.trim(),placeholder:"Eigene Fertigkeit",fixed:false,rang:cwRank(r),x:cwX(r),boni:0,kosten:String(r.cost||"").trim()}));
   c.skills=fixed.concat(extra,[{name:"",placeholder:"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""}]);
   c.lp={cur:0,max:0};c.mp={cur:0,max:0};recalcChar(c);c.lp.cur=c.lp.max;c.mp.cur=c.mp.max;
   c.ausbildung=cwT()?Math.max(0,num(cw.left)):Math.max(0,cwAPleft());
@@ -2812,12 +2816,16 @@ document.addEventListener("click",e=>{
   if(b.dataset.cwraise){const a=b.dataset.cwraise,d=+b.dataset.d,w=cwFinal(a)+cw.raise[a];if(d>0){if(w<10&&cwAPleft()>=ATTR_PRICE[w+1])cw.raise[a]++;}else cw.raise[a]=Math.max(0,cw.raise[a]-1);cwRender(true);return;}
   if(b.dataset.cwstep!=null){const r=cw.rows[+b.dataset.cwstep],d=+b.dataset.d;if(d>0){if(r.n<cwRowMax(r)&&cwAPleft()>=cwCross(r,r.n))r.n++;}else r.n=Math.max(0,r.n-1);cwRender(true);return;}
   if(b.dataset.cwrow!=null){const r=cw.rows[+b.dataset.cwrow],k=+b.dataset.k;r.n=r.n>k?k:k+1;if(cwAPleft()<0)r.n=Math.max(0,r.n-1);cwRender(true);return;}
-  if(b.dataset.cwadd){const t=b.dataset.cwadd;let i=-1;cw.rows.forEach((r,j)=>{if(r.type===t)i=j;});
-    cw.rows.splice(i+1,0,t==="spell"?{type:"spell",label:"Spruchliste",skill:"Spruchlisten",spec:"",n:0}:{type:"weapon",label:"Waffengruppe",skill:"Waffen",spec:"",n:0});cwRender(true);return;}
+  if(b.dataset.cwadd){const t=b.dataset.cwadd;
+    const mk=t==="spell"?{type:"spell",label:"Spruchliste",skill:"Spruchlisten"}:t==="weapon"?{type:"weapon",label:"Waffengruppe",skill:"Waffen"}:t==="own"?{type:"own",label:"Eigene Fertigkeit",skill:"",cost:""}:{type:"spec",label:t,skill:t};
+    let i=-1;cw.rows.forEach((r,j)=>{if(r.type===mk.type&&(mk.type!=="spec"||r.skill===mk.skill))i=j;});if(i<0)i=cw.rows.length-1;
+    cw.rows.splice(i+1,0,Object.assign(mk,{spec:"",n:0,tx:0,added:true}));cwRender(true);
+    const f=document.querySelector(`#cw [data-cwspec="${i+1}"]`);if(f){f.scrollIntoView({block:"center"});f.focus();}return;}
+  if(b.dataset.cwrm!=null){cw.rows.splice(+b.dataset.cwrm,1);cwRender(true);return;}
   if(b.dataset.cwroll){cwRoll();return;}
   if(b.dataset.cwgo){const d2=+b.dataset.cwgo;
-    if(d2>0&&cw.step===2){const miss=cw.rows.find(r=>cwX(r)&&(r.type==="spell"||r.type==="weapon")&&!r.spec.trim());
-      if(miss){cwToast(miss.type==="spell"?"Bitte wähle aus, welche Spruchliste du lernst.":"Bitte trag ein, welche Waffengruppe du lernst.");return;}}
+    if(d2>0&&cw.step===2){const miss=cw.rows.find(r=>cwX(r)&&(r.type==="own"||r.type==="spell"||r.type==="weapon")&&!r.spec.trim());
+      if(miss){cwToast(miss.type==="spell"?"Bitte wähle aus, welche Spruchliste du lernst.":miss.type==="own"?"Bitte gib deiner eigenen Fertigkeit einen Namen.":"Bitte trag ein, welche Waffengruppe du lernst.");return;}}
     if(d2>0&&cw.step===3){cwFinish();return;}
     cw.step=Math.max(0,Math.min(3,cw.step+d2));cwRender();return;}
 });
@@ -2825,9 +2833,9 @@ document.addEventListener("input",e=>{
   if(!cw)return;const t=e.target;
   if(t.id==="cw-name"){cw.name=t.value;return;}
   if(t.id==="cw-det"){cw.details=t.value;return;}if(t.id==="cw-left"){cw.left=num(t.value);return;}
-  if(t.dataset&&t.dataset.cwspec!=null){cw.rows[+t.dataset.cwspec].spec=t.value;}
+  if(t.dataset&&t.dataset.cwspec!=null){cw.rows[+t.dataset.cwspec].spec=t.value;}if(t.dataset&&t.dataset.cwcost!=null){cw.rows[+t.dataset.cwcost].cost=t.value;}
 });
-document.addEventListener("change",e=>{if(!cw)return;const t=e.target;if(t.dataset&&t.dataset.cwspec!=null&&t.tagName==="SELECT"){cw.rows[+t.dataset.cwspec].spec=t.value;}});
+document.addEventListener("change",e=>{if(!cw)return;const t=e.target;if(t.dataset&&t.dataset.cwspec!=null&&t.tagName==="SELECT"){cw.rows[+t.dataset.cwspec].spec=t.value;}if(t.dataset&&t.dataset.cwcost!=null){cw.rows[+t.dataset.cwcost].cost=t.value;cwRender(true);}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cw)cwClose();});
 
 /* ---------- Papierbogen: Charakter als druckbares PDF im Stil des Aborea-Bogens ---------- */
