@@ -318,6 +318,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .lvst{flex:0 0 auto}.lvst output{min-width:28px;text-align:center;font-weight:700}
 .lvf{display:flex;align-items:center;gap:10px;margin-top:8px}.lvsub{flex:1;min-width:0;font-size:.8rem;color:var(--muted);line-height:1.3}
 .lvrow select,.lvrow>input{margin-top:6px}
+.cwwarn{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 10px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;background:none;color:var(--muted);font:inherit;font-size:.85rem;text-align:left;cursor:pointer}.cwwarn svg{flex:0 0 auto;color:var(--accent)}.cwwarn b{color:var(--ink);font-weight:700}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -1124,6 +1125,10 @@ const INFO={
   cwskill:["Fertigkeiten in der Erstellung",`<p><b>Punkte:</b> 8 Ausbildungspunkte, als Mensch 10. Je Stufe über 1 kommen 8 dazu.</p>
     <p><b>Pfeile:</b> Jedes + ist ein Kreuz, darunter steht der Preis des nächsten. Bei zwei Preisen nimmt die App immer zuerst die günstigen.</p>
     <p><b>Grenze:</b> Ein Rang kann nicht über der Stufe liegen. Übrige Punkte werden aufgespart.</p>`],
+  cwcost:["Kosten bei höherer Startstufe",`<p>Beim normalen Aufstieg lernst du jede Fertigkeit pro Stufe einmal. Ein zweites Kreuz in derselben Stufe kostet bei manchen Fertigkeiten mehr, z. B. 2/4.</p>
+    <p>Hier verteilst du die Punkte mehrerer Stufen auf einmal. Die App nimmt dabei immer zuerst die günstigen Kreuze. Wer früher in einer Stufe zweimal gelernt und den höheren Preis bezahlt hat, hätte so am Ende ein paar Punkte mehr übrig als auf dem Papier.</p>
+    <p>Ganz genau ginge es nur, wenn man jede Stufe einzeln nachspielt. Versuch deshalb, so nah wie möglich an deinem echten Verlauf zu bleiben.</p>
+    <p><b>Später anpassen:</b> Kreuze änderst du im Reiter Fertigkeiten (Fertigkeit antippen), die übrigen Ausbildungspunkte im Bogen unter „Volk & Beruf“.</p>`],
   cwmode:["Neu erstellen oder übertragen",`<p><b>Neu erstellen:</b> nach den Regeln mit Punkten, auch gleich auf höherer Stufe.</p>
     <p><b>Charakter übertragen:</b> für einen Charakter, den es schon auf Papier gibt. Du schreibst Stufe, Attributwerte und Kreuze direkt ab, ohne Punkte zu rechnen, und trägst die übrigen Ausbildungspunkte ein.</p>`]
 };
@@ -2744,6 +2749,7 @@ function cwRender(keepScroll){
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
     h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span>${ib("cwskill")}</div>
+      ${(cw.startLevel||1)>1?`<button class="cwwarn" data-info="cwcost">${ICON_INFO}<span><b>Hinweis zu den Kosten</b> bei Startstufe ${cw.startLevel} – antippen</span></button>`:""}
       <div class="cwsk">${cw.rows.map((r,i)=>{const p=cwParts(r),N=cw.startLevel||1;
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
