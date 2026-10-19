@@ -2718,7 +2718,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.cwtw){const a=b.dataset.cwtw;cw.tw[a]=Math.max(0,Math.min(20,num(cw.tw[a])+ +b.dataset.d));cwRender(true);return;}
   if(b.dataset.cwrank!=null){const r=cw.rows[+b.dataset.cwrank];r.rank=Math.max(0,Math.min(cw.startLevel||1,num(r.rank)+ +b.dataset.d));cwRender(true);return;}
   if(b.dataset.cwlvl){cw.startLevel=Math.max(1,Math.min(20,cw.startLevel+ +b.dataset.cwlvl));cw.rows.forEach(r=>{r.n=Math.min(r.n,cwRowMax(r));r.rank=Math.min(num(r.rank),cw.startLevel);});if(cw.startLevel===1)ATTR.forEach(a=>cw.raise[a]=0);if(cwAPleft()<0){cw.rows.forEach(r=>r.n=0);ATTR.forEach(a=>cw.raise[a]=0);}cwRender(true);return;}
-  if(b.dataset.cwvolk){cw.volk=b.dataset.cwvolk;if(cwAPleft()<0)cw.rows.forEach(r=>r.n=0);cwRender(true);return;}
+  if(b.dataset.cwvolk){if(cw.tw){const A=VOLK[cw.volk]||[0,0,0,0,0],B=VOLK[b.dataset.cwvolk]||[0,0,0,0,0];ATTR.forEach((x,i)=>{cw.tw[x]=Math.max(0,num(cw.tw[x])+B[i]-A[i]);});}cw.volk=b.dataset.cwvolk;if(cwAPleft()<0)cw.rows.forEach(r=>r.n=0);cwRender(true);return;}
   if(b.dataset.cwberuf){const nb=b.dataset.cwberuf;if(nb!==cw.beruf)cw.rows.forEach(r=>r.n=0);cw.beruf=nb;cwRender(true);return;}
   if(b.dataset.cwattr){const a=b.dataset.cwattr,v=cw.buy[a]+(+b.dataset.d);if(v<1||v>10)return;const ep=cwEP()-(ATTR_PRICE[v]-ATTR_PRICE[cw.buy[a]]);if(ep<0)return;cw.buy[a]=v;cwRender(true);return;}
   if(b.dataset.cwraise){const a=b.dataset.cwraise,d=+b.dataset.d,w=cwFinal(a)+cw.raise[a];if(d>0){if(w<10&&cwAPleft()>=ATTR_PRICE[w+1])cw.raise[a]++;}else cw.raise[a]=Math.max(0,cw.raise[a]-1);cwRender(true);return;}
