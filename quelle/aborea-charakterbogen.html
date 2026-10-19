@@ -302,6 +302,9 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .lvrow select,.lvrow>input{margin-top:6px}
 .cwwarn{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 10px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;background:none;color:var(--muted);font:inherit;font-size:.85rem;text-align:left;cursor:pointer}.cwwarn svg{flex:0 0 auto;color:var(--accent)}.cwwarn b{color:var(--ink);font-weight:700}
 .lnaddb .btn.on{border-color:var(--accent);color:var(--accent)}.lnaddf{margin-top:8px}.lnaddf input,.lnaddf select{width:100%}
+.lvcosts{display:flex;gap:6px;margin-top:8px}.lvc{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:6px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.lvc small{grid-column:1/-1;font-size:.66rem;color:var(--muted);line-height:1.15}.lvc b{font-size:.95rem}.lvc i{font-style:normal;font-size:.75rem;color:var(--muted);justify-self:end}
+.lvc.nx{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}.lvc.nx b{color:var(--accent)}.lvc.done{opacity:.55}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -2662,8 +2665,11 @@ const skLvRow=o=>{const q=rankFromCrosses(o.x),nd=boxesFor(q.r+1);
   const sub=[q.rest?`${q.rest} von ${nd} Kreuzen zu Rang ${q.r+1}`:"",o.note||""].filter(Boolean).join(" · ");
   return `<div class="cwsr lvrow${o.x?" on":""}"><div class="lvh"><div class="lvn"><b>${o.label}</b>${o.extra||""}</div>
     <span class="lvrk${q.r?"":" r0"}"><i>Rang</i><b>${q.r}</b></span></div>
-    ${o.spec||""}${rankTrack(o.x)}
+    ${o.spec||""}${o.costs||""}${rankTrack(o.x)}
     <div class="lvf"><small class="lvsub">${sub}</small><div class="step lvst"><button ${o.minus} ${o.canMinus?"":"disabled"} aria-label="Ein Kreuz weniger">−</button><output>${o.x}</output><button ${o.plus} ${o.canPlus?"":"disabled"} aria-label="Ein Kreuz mehr">+</button></div></div></div>`;};
+// Preis-Chips: zeigt, was das 1. und 2. Kreuz in einer Stufe kostet und wie viele davon schon genommen sind
+const costChips=(parts,used,totals,next,lock)=>parts.length<2&&!totals?"":`<div class="lvcosts">${parts.map((c,j)=>{const t=totals?totals[j]:1,u=used[j]||0,full=u>=t,isN=next===j&&!lock;
+  return `<span class="lvc${full?" done":isN?" nx":""}"><small>${j===0?(parts.length>1?"1. Kreuz pro Stufe":"pro Stufe"):"2. Kreuz in derselben Stufe"}</small><b>${c} P.</b>${totals?`<i>${u}/${t}</i>`:full?"<i>✓</i>":""}</span>`;}).join("")}</div>`;
 const pricetab=()=>`<div class="pricetab" aria-label="Kaufpreis je Wert">${ATTR_PRICE.slice(1).map((p,i)=>`<span><small>${i+1}</small><b>${p}</b></span>`).join("")}</div>`;
 const cwAPtotal=()=>(cw.volk==="Mensch"?10:8)+8*((cw.startLevel||1)-1);
 const cwParts=r=>costParts(costOf(cw.beruf,r.skill));
@@ -2740,7 +2746,7 @@ function cwRender(keepScroll){
         if(!p.length)return `<div class="cwsr"><div class="cwsn"><b>${esc(r.label)}</b>${spec}</div><small class="hint">keine Kosten</small></div>`;
         const nx=r.n<cwRowMax(r)?cwCross(r,r.n):0;
         const note=nx?`nächstes Kreuz <b class="cwc">${nx} P.</b>`:r.n>=crossesForRank(N)?`Rang ${N} ist auf Stufe ${N} das Höchste`:`mehr geht nicht: ${p.length>1?"zweimal":"einmal"} pro Stufe, bei ${N} Stufen`;
-        return skLvRow({label:esc(r.label),extra:r.n?`<small class="lvcost">${cwRowCost(r)} P. ausgegeben</small>`:"",x:r.n,spec,minus:`data-cwstep="${i}" data-d="-1"`,plus:`data-cwstep="${i}" data-d="1"`,canMinus:r.n>0,canPlus:nx&&cwAPleft()>=nx,note});}).join("")}</div>
+        return skLvRow({label:esc(r.label),extra:r.n?`<small class="lvcost">${cwRowCost(r)} P. ausgegeben</small>`:"",x:r.n,spec,costs:costChips(p,p.map((_,j)=>Math.max(0,Math.min(N,r.n-j*N))),p.map(()=>N),nx?Math.min(p.length-1,Math.floor(r.n/N)):-1,!(nx&&cwAPleft()>=nx)),minus:`data-cwstep="${i}" data-d="-1"`,plus:`data-cwstep="${i}" data-d="1"`,canMinus:r.n>0,canPlus:nx&&cwAPleft()>=nx,note});}).join("")}</div>
       <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
       ${(cw.startLevel||1)>1?`<div class="lab cwh">Attribute steigern</div>
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts:</p>${pricetab()}<div class="cwattr">${ATTR.map(a=>{const f=cwFinal(a),w=f+cw.raise[a],c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
@@ -3113,7 +3119,7 @@ function lnRender(keep){
     const capped=rk.r>=lvlNow(),nc=done<parts.length?parts[done]:0;
     if(!parts.length)return `<div class="cwsr"><div class="cwsn"><b>${esc(nm||"Fertigkeit")}</b></div><small class="hint">keine Kosten</small></div>`;
     const note=capped?`höher geht erst ab Stufe ${rk.r+1}${done?` · ${done} in dieser Stufe`:""}`:nc?`nächstes Kreuz <b class="cwc">${nc} P.</b>${done?` · ${done} in dieser Stufe`:""}`:`in dieser Stufe ${parts.length>1?"schon zweimal":"schon"} gelernt`;
-    return skLvRow({label:esc(nm||"Fertigkeit"),x,minus:`data-lnsx="${i}" data-d="-1"`,plus:`data-lnsx="${i}" data-d="1"`,canMinus:done>0,canPlus:!!nc&&!capped&&ap>=nc,note});
+    return skLvRow({label:esc(nm||"Fertigkeit"),x,costs:costChips(parts,parts.map((_,j)=>done>j?1:0),null,done<parts.length?done:-1,capped||ap<nc),minus:`data-lnsx="${i}" data-d="-1"`,plus:`data-lnsx="${i}" data-d="1"`,canMinus:done>0,canPlus:!!nc&&!capped&&ap>=nc,note});
   }).join("");
   const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]:0,bo=attrB(A);
     return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`${w} → ${w+1} kostet <b class="cwc">${c} P.</b>`:"Maximum erreicht"}</small></div>
