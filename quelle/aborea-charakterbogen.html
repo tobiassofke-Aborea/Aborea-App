@@ -286,6 +286,15 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .cwmode{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.cwmode button{flex:1;min-height:44px;border:0;background:var(--card);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}.cwmode button+button{border-left:1px solid var(--line)}.cwmode button.on{background:color-mix(in srgb,var(--accent) 16%,var(--card));color:var(--accent)}
 .cwsh .step{flex:0 0 auto}.cwsh .step output{min-width:30px;text-align:center;font-weight:700}
 .rtrack.tap i{cursor:pointer}.rtrack.tap b{height:20px}.detrk{display:block;font-size:.9rem;margin-bottom:2px}.cwq{display:block;font-size:.78rem;color:var(--muted);font-weight:400}
+.ib{display:inline-grid;place-items:center;width:28px;height:28px;margin:-6px -4px -6px 2px;padding:0;border:0;background:none;color:var(--muted);opacity:.65;cursor:pointer;vertical-align:middle;border-radius:50%;font:inherit;line-height:0}
+.ib:hover,.ib:focus-visible{opacity:1;color:var(--accent)}.top .ib{margin-right:auto}
+#infopop{position:fixed;inset:0;z-index:60;background:rgba(20,15,10,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+#infopop[hidden]{display:none}
+.ipbox{width:100%;max-width:480px;max-height:80vh;overflow-y:auto;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.ipbox h3{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0 0 8px}
+.ipbody{font-size:.95rem;line-height:1.45}.ipbody p{margin:0 0 8px}.ipbody ol{margin:0 0 8px;padding-left:20px}.ipbody li{margin-bottom:4px}
+.ipbox .btn{width:100%;margin-top:6px}
+@media (min-width:600px){#infopop{align-items:center}}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -800,7 +809,7 @@ function iniParts(){const ws=[cur.kampf.main,cur.kampf.off].filter(i=>i!=null&&c
     ["Rüstungsmalus",num(cur.ruestungMalus),"im Bogen"],["Waffenmalus",ws.reduce((a,w)=>a+num(w.malus),0),ws.length?ws.map(w=>w.name||"Waffe").join(" + "):"keine Waffe"]];}
 let iniOpen=false;try{iniOpen=localStorage.getItem("aborea-iniopen")==="1";}catch(e){}
 function iniHtml(){const last=cur.kampf.iniLast;
-  return `<div class="comb"><div class="head"><button class="t initog" data-initog="1" aria-expanded="${iniOpen}">Initiative${chev(iniOpen)}</button><span class="tot">${iniBase()} <small>− W6</small></span><button class="die" data-roll="ini" aria-label="Initiative würfeln">${DIE6}</button></div>
+  return `<div class="comb"><div class="head"><button class="t initog" data-initog="1" aria-expanded="${iniOpen}">Initiative${chev(iniOpen)}</button>${ib("ini")}<span class="tot">${iniBase()} <small>− W6</small></span><button class="die" data-roll="ini" aria-label="Initiative würfeln">${DIE6}</button></div>
     ${iniOpen?`<div class="inil">${iniParts().map(([l,v,h],i)=>`<div><span>${l}${h?` <i>${esc(h)}</i>`:""}</span><b>${i?(v<0?"−"+(-v):"+"+v):v}</b></div>`).join("")}</div>`:""}
     ${last!=null?`<p class="note" style="margin:0">Zuletzt gewürfelt: <b>${last}</b></p>`:""}</div>`;}
 function iniBase(){return iniParts().reduce((a,x)=>a+x[1],0);}
@@ -816,7 +825,7 @@ function pool(key,label){
   const p=cur[key],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
   const minus=key==="lp"?"Schaden":"Mana",plus=key==="lp"?"Heilung":"Mana";
   return `<div class="card pool ${key}" data-poolcard="${key}"><div class="pmain">
-    <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button></div>
+    <div class="top"><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button>${ib(key==="lp"?"lp":"mp")}</div>
     <div class="valrow"><div class="val" id="${key}-val">${num(p.cur)}<small> / ${num(p.max)}</small></div><span class="delta" id="${key}-delta"></span>${key==="lp"?armorBtnHtml():""}</div>
     ${key==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}
     <div class="pbar"><i id="${key}-bar" style="width:${pct}%"></i></div>
@@ -842,7 +851,7 @@ function combat(key,title,labels){
 }
 let attrEdit=false;
 function renderAttr(){
-  return `<h2>Attribute</h2><div class="card rows">${ATTR.map(a=>{const v=cur.attr[a],xb=num(v.x);return `<div class="row attr${attrEdit?" edit":""}">
+  return `<h2>Attribute${ib("attr")}</h2><div class="card rows">${ATTR.map(a=>{const v=cur.attr[a],xb=num(v.x);return `<div class="row attr${attrEdit?" edit":""}">
     <span class="key" title="${ATTR_LONG[a]}">${a}</span>
     ${attrEdit?`<div class="f"><span class="lab">Wert</span><input type="number" inputmode="numeric" id="a-${a}-w" data-k="attr.${a}.w" value="${esc(v.w)}"></div>
     <div class="f"><span class="lab">Extra</span><input type="number" inputmode="numeric" id="a-${a}-x" data-k="attr.${a}.x" data-num value="${xb?esc(v.x):""}" placeholder="0" aria-label="${ATTR_LONG[a]}: Extra-Bonus"></div>
@@ -887,7 +896,7 @@ function skillRow(s,i){
 }
 function renderSkills(){
   const n=cur.skills.length;
-  return `<h2>Fertigkeiten</h2><div class="card${skillEdit?" sedit":""}">${skillEdit?`<p class="hint" style="margin:0 0 6px">Reihenfolge ändern mit ↑ ↓, eigene Zeilen entfernen mit ✕. Die Kosten kommen automatisch aus dem Beruf. Hier kannst du sie für einzelne Fertigkeiten anders eintragen, leer heißt automatisch.</p>`:""}${cur.skills.map((s,i)=>skillEdit?`<div class="skill srow">
+  return `<h2>Fertigkeiten${ib("fert")}</h2><div class="card${skillEdit?" sedit":""}">${skillEdit?`<p class="hint" style="margin:0 0 6px">Reihenfolge ändern mit ↑ ↓, eigene Zeilen entfernen mit ✕. Die Kosten kommen automatisch aus dem Beruf. Hier kannst du sie für einzelne Fertigkeiten anders eintragen, leer heißt automatisch.</p>`:""}${cur.skills.map((s,i)=>skillEdit?`<div class="skill srow">
     <div class="nm">${esc(s.name||(s.kind==="spell"?"Spruchliste (leer)":s.placeholder||"Eigene Fertigkeit"))}${s.kind==="spell"?' <span class="sltag">Spruchliste</span>':""}</div>
     <label class="kedit"><span class="lab">Kosten</span><input class="kost" id="s-${i}-k" data-k="skills.${i}.kosten" value="${esc(s.kosten)}" placeholder="${esc(skillCostAuto(s)||"–")}" aria-label="Kosten ${esc(s.name||"")}"></label>
     <div class="mv"><button class="btn small" data-mv="${i}" data-d="-1" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="btn small" data-mv="${i}" data-d="1" ${i===n-1?"disabled":""} aria-label="Nach unten">↓</button>
@@ -965,15 +974,15 @@ function renderBogen(){
       ${tile("","Krit",sum(cur.krit),kritWeapon()?esc(kritWeapon().w.name||"Waffe"):"keine Waffe")}
     </div>
     <button class="lvup" id="levelup"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V6M6 11l6-6 6 6"/></svg><span><b>Stufe aufsteigen</b><small>+8 Ausbildungspunkte, dann verteilen</small></span></button>
-    <div class="hfoot"><button class="btn small${apts?" acc2":""}" id="learnopen">${apts?`${apts} Ausbildungspunkte verteilen`:"Lernen"}</button>${lvl>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvl-1}?`:"Stufe zurück"}</button>`:""}</div>
+    <div class="hfoot">${ib("stufe")}<button class="btn small${apts?" acc2":""}" id="learnopen">${apts?`${apts} Ausbildungspunkte verteilen`:"Lernen"}</button>${lvl>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvl-1}?`:"Stufe zurück"}</button>`:""}</div>
   </div>`;
   const herkunft=`<div class="grid2">${choiceFld("volk","Volk",Object.keys(VOLK))}${choiceFld("beruf","Beruf",Object.keys(BERUF))}${fld("ausbildung","Ausbildungspunkte",{num:true,full:true})}</div>
     <p class="note" style="margin:8px 0 0">${VOLK[cur.volk]?"Ein Volkswechsel verschiebt die Attribute um die Volksanpassung. ":""}${hasB?`LP, Mana und Kosten richten sich nach ${esc(cur.beruf)}.`:"Bei eigenem Beruf trägst du LP und Mana unter „Kampfwerte & Boni“ selbst ein."}</p>`;
-  const ruest=`<label class="fld"><span class="lab">Rüstung</span><select id="f-armortype" data-k="armorType" data-prev="${esc(cur.armorType||"")}"><option value="" ${a?"":"selected"}>Eigene / keine Vorlage</option>${ARMOR.map(x=>`<option value="${esc(x[0])}" ${a&&a[0]===x[0]?"selected":""}>${esc(x[0])} · ${x[1]}${x[2]?` · Malus ${x[2]}`:""}</option>`).join("")}</select></label>
+  const ruest=`<label class="fld"><span class="lab">Rüstung${ib("ruestung")}</span><select id="f-armortype" data-k="armorType" data-prev="${esc(cur.armorType||"")}"><option value="" ${a?"":"selected"}>Eigene / keine Vorlage</option>${ARMOR.map(x=>`<option value="${esc(x[0])}" ${a&&a[0]===x[0]?"selected":""}>${esc(x[0])} · ${x[1]}${x[2]?` · Malus ${x[2]}`:""}</option>`).join("")}</select></label>
     <div class="grid2" style="margin-top:10px"><label class="fld"><span class="lab">Anpassung (±)</span><input type="number" inputmode="numeric" id="f-armoradj" data-k="armorAdj" data-num value="${esc(cur.armorAdj||0)}"></label>
       ${fld("ruestungMalus","Malus (Ini)",{num:true})}</div>
     <div class="armtot" style="margin-top:6px"><b id="armtot">${num(cur.ruestung)}</b><small id="armsub">${a?`${a[1]} ${num(cur.armorAdj)<0?"−":"+"} ${Math.abs(num(cur.armorAdj))}${a[3]?` · ${a[3]} kg`:""}`:"Rüstungswert"}</small></div>`;
-  const werte=`<div class="wtop"><span class="hint">${cur.kwManual?"Von Hand eingetragen":"Automatisch berechnet"}</span><button class="gearmini${cur.kwManual?" on":""}" data-kwman="1" aria-pressed="${!!cur.kwManual}" title="${cur.kwManual?"Wieder automatisch berechnen":"Werte von Hand ändern"}" aria-label="${cur.kwManual?"Kampfwerte wieder automatisch berechnen":"Kampfwerte von Hand ändern"}">${ICON_GEAR}</button></div>
+  const werte=`<div class="wtop"><span class="hint">${cur.kwManual?"Von Hand eingetragen":"Automatisch berechnet"}${ib("werte")}</span><button class="gearmini${cur.kwManual?" on":""}" data-kwman="1" aria-pressed="${!!cur.kwManual}" title="${cur.kwManual?"Wieder automatisch berechnen":"Werte von Hand ändern"}" aria-label="${cur.kwManual?"Kampfwerte wieder automatisch berechnen":"Kampfwerte von Hand ändern"}">${ICON_GEAR}</button></div>
     ${combat("ap","Aktionspunkte",["Basis","Höchster Attr.-Bonus","Athletik"])}
     ${renderKrit()}
     <div class="comb"><div class="head"><span class="t">Trefferzone</span><span class="tot">${esc(tzText())}</span></div>
@@ -1035,6 +1044,79 @@ document.addEventListener("change",e=>{const t=e.target;if(!t||t.id!=="impfile"|
 document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("[data-sxset],[data-cwtxset]");if(!c)return;const n=+c.dataset.c;
   if(c.dataset.sxset!=null){const sk=cur.skills[+c.dataset.sxset];const x=sxOf(sk);sk.x=x===n+1?n:n+1;sk.rang=rankFromCrosses(sk.x).r;recalcChar(cur);refreshComputed();queueSave(cur);const st=window.scrollY;renderAll();window.scrollTo(0,st);return;}
   if(cw&&c.dataset.cwtxset!=null){const r=cw.rows[+c.dataset.cwtxset];const x=num(r.tx);r.tx=Math.min(crossesForRank(cw.startLevel||1),x===n+1?n:n+1);cwRender(true);}});
+/* ---------- Info-Knöpfe: kurze Regel-Erklärung zu einer Überschrift ---------- */
+const ICON_INFO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.1"/></svg>';
+const INFO={
+  fert:["Fertigkeiten",`<p><b>Würfeln:</b> Der Würfel rechts würfelt eine Probe: W10 + Rang + Boni.</p>
+    <p><b>Rang und Kreuze:</b> Ränge entstehen aus Kreuzen. Rang 1–5 braucht je ein Kreuz, Rang 6–10 je zwei, ab Rang 11 je vier. Tipp eine Fertigkeit an, um Kreuze und Boni zu ändern.</p>
+    <p><b>Kosten:</b> stehen beim Beruf fest, z. B. 2/4. Pro Stufe lernst du eine Fertigkeit einmal; bei zwei Preisen ein zweites Mal zum höheren Preis. Ein Rang kann nicht über deiner Stufe liegen.</p>
+    <p><b>Zahnrad:</b> Reihenfolge, eigene Zeilen und Kosten von Hand ändern.</p>`],
+  attr:["Attribute",`<p><b>Wert und Bonus:</b> Der Bonus ergibt sich aus dem Wert: 1 → −3, 2 → −2, 3–4 → −1, 5 → 0, 6–7 → +1, 8–9 → +2, 10–11 → +3, 12–13 → +4.</p>
+    <p><b>Würfeln:</b> so viele W6 wie der Bonus. Bei Bonus 0 ein Plus- und ein Minus-W6, bei −1 ein Plus- und zwei Minus-W6 usw.</p>
+    <p><b>Steigern:</b> über „Stufe aufsteigen“ und „Lernen“. Es kostet den vollen Kaufpreis des neuen Werts, z. B. von 7 auf 8 zehn Punkte.</p>
+    <p><b>Zahnrad:</b> Werte von Hand ändern und einen Extra-Bonus eintragen, etwa durch einen Ring. Der Extra-Bonus zählt nicht in Kaufpreise.</p>`],
+  lp:["Lebenspunkte",`<p><b>Schaden und Heilung:</b> Wert eintragen und „Schaden“ oder „Heilung“ tippen, oder die Schnellknöpfe nehmen. Am Rad rechts kannst du die LP auch direkt drehen.</p>
+    <p><b>Rüstung:</b> Ist der Schild-Knopf an, fängt deine Rüstung jeden Treffer zuerst ab. Nur was darüber hinausgeht, kostet LP.</p>
+    <p><b>Unter 0:</b> LP können ins Minus gehen. Was das bedeutet, entscheidet die Spielleitung.</p>
+    <p><b>TZ und Krit:</b> Trefferzone (Körper/Kopf) und dein Krit-Wert stehen als kleine Werte daneben.</p>`],
+  mp:["Mana",`<p><b>Zaubern kostet:</b> Level des Zaubers + gewirkte Stufe. Beispiel: Level 2 auf Stufe 3 = 5 Mana.</p>
+    <p><b>Rast:</b> Pro Stunde kommt Mana in Höhe der Fertigkeit „Magie entwickeln“ zurück.</p>
+    <p><b>Maximum:</b> (IN- bzw. CH-Bonus + 3) × Rang „Magie entwickeln“. Ohne Rang gibt es kein Mana.</p>`],
+  ini:["Initiative",`<p><b>Wert:</b> 50 − KO-Bonus − Wahrnehmung − Athletik + Rüstungsmalus + Waffenmalus.</p>
+    <p><b>Würfeln:</b> Vom Wert wird ein W6 abgezogen. Der Würfel macht das für dich.</p>`],
+  angriff:["Angriff",`<ol><li><b>Würfel verteilen:</b> Die Waffenfertigkeit gibt die Anzahl W10. Du verteilst sie auf Treffen und Schaden.</li>
+    <li><b>Treffen:</b> W10 fürs Treffen + GE-Bonus als W6 + Trefferwürfel der Waffe. Treffer ab 15 (Körper) oder 40 (Kopf), dazu die Athletik des Ziels.</li>
+    <li><b>Schaden</b> (nur bei Treffer): W10 für Schaden + ST-Bonus als W6 + Schadenswürfel der Waffe. Kopftreffer zählen doppelt.</li></ol>
+    <p><b>Krit:</b> Danach W100. Liegt er unter oder gleich dem Krit-Wert (Waffenfertigkeit + Krit-Wert der Waffe), gibt es doppelten Schaden.</p>
+    <p><b>AP:</b> 1. Angriff 2 AP, 2. Angriff 4 AP, 3. Angriff 8 AP usw.</p>`],
+  verteidigen:["Verteidigen",`<p><b>Bereithalten:</b> In deiner Runde legst du AP für Verteidigungen zurück: 1. Verteidigung 3 AP, 2. 6 AP, 3. 12 AP usw.</p>
+    <p><b>Verteidigen:</b> Wirst du angegriffen, würfelst du Waffenfertigkeit als W10 + KO-Bonus als W6. Das Ergebnis wird vom Schaden abgezogen.</p>
+    <p><b>Neue Runde:</b> Nicht genutzte Verteidigungen verfallen.</p>`],
+  spezial:["Spezialattacken",`<p><b>Freischalten:</b> mit jedem Level der Waffenfertigkeit (Nah- und Fernkampf) bzw. von List (Heimlich).</p>
+    <p><b>Kosten:</b> zusätzlich zum normalen Angriff. Erster Einsatz im Kampf +2 AP, zweiter +4, dritter +6 usw.</p>
+    <p>Fähigkeiten über deinem Level sind ausgegraut, lassen sich aber trotzdem einsetzen.</p>`],
+  magie:["Zauber wirken",`<p><b>Stufe wählen:</b> Du wirkst einen Zauber auf einer Stufe von 1 bis zu deiner gelernten Stufe. Niedriger ist billiger, aber schwächer.</p>
+    <p><b>Mana:</b> Level des Zaubers + gewirkte Stufe. <b>AP:</b> wie ein Angriff, 2 AP, dann 4 AP usw.</p>
+    <p><b>Gezielt:</b> Dann musst du treffen: „Gezielte Sprüche“ als W10 + INT- oder CHA-Bonus als W6. Körper ab 15, Kopf ab 40.</p>
+    <p><b>Lernen:</b> in der Zauberbibliothek (Buch oben). Pro Level einer Spruchliste gibt es 3 Punkte für ihre Zauber.</p>`],
+  waffen:["Waffen",`<p><b>Eintragen:</b> Name, die passende Waffenfertigkeit, Trefferwürfel, Schadenswürfel, Krit-Wert und Malus (für die Initiative).</p>
+    <p><b>Haupt- und Nebenhand:</b> Hauptwaffe 2 AP, normaler Angriff. Nebenwaffe 1 AP, nur Waffenwerte und Waffenfertigkeit, ohne Würfel aus Stärke oder Geschick. Die schwerere Waffe gehört in die Haupthand.</p>`],
+  stufe:["Stufe und Lernen",`<p><b>Stufe aufsteigen:</b> +8 Ausbildungspunkte. LP, Mana und AP werden neu berechnet.</p>
+    <p><b>Lernen:</b> Punkte auf Fertigkeiten und Attribute verteilen. Jede Fertigkeit einmal pro Stufe, bei zwei Preisen zweimal. Ein Rang kann nicht über deiner Stufe liegen. Übrige Punkte bleiben aufgespart.</p>
+    <p><b>Stufe zurück:</b> nimmt den letzten Aufstieg samt allem, was du in dieser Stufe gelernt hast, wieder zurück.</p>`],
+  werte:["Kampfwerte",`<p><b>AP:</b> 3 + höchster Attributsbonus + Athletik.</p>
+    <p><b>Krit:</b> Waffenfertigkeit + Krit-Wert der Waffe. Im Kampf: W100 unter oder gleich diesem Wert = doppelter Schaden.</p>
+    <p><b>Trefferzone:</b> Körper 15, Kopf 40, jeweils + Athletik.</p>
+    <p><b>Zahnrad:</b> Werte von Hand überschreiben. Ohne Zahnrad rechnet die App alles selbst.</p>
+    <p><b>LP- und Mana-Bonus:</b> kommen auf das berechnete Maximum obendrauf.</p>`],
+  ruestung:["Rüstung",`<p><b>Rüstungswert:</b> fängt im Kampf Schaden ab, wenn der Schild-Knopf bei den LP an ist.</p>
+    <p><b>Malus:</b> schwere Rüstung verschlechtert die Initiative um diesen Wert.</p>
+    <p><b>Anpassung:</b> für besondere Teile oder Zauber, die die Rüstung verändern.</p>`],
+  lernen:["Lernen",`<p><b>Fertigkeiten:</b> Ein Kästchen ist ein Kreuz, die Zahl darin der Preis. Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Preisen (z. B. 2/4) ein zweites Mal zum höheren Preis.</p>
+    <p><b>Ränge:</b> Rang 1–5 braucht je ein Kreuz, 6–10 je zwei, ab 11 je vier. Ein Rang kann nicht über deiner Stufe liegen.</p>
+    <p><b>Attribute:</b> kosten den vollen Kaufpreis des neuen Werts.</p>
+    <p>Ein Kreuz dieser Stufe nimmst du durch erneutes Antippen zurück. Übrige Punkte bleiben aufgespart.</p>`],
+  cwattr:["Attribute kaufen",`<p>Du hast 35 Entwicklungspunkte. Jeder Wert hat einen Gesamtpreis: 1–6 kostet so viel wie der Wert, 7 kostet 8, 8 kostet 10, 9 kostet 12, 10 kostet 16.</p>
+    <p>Danach kommt die Volksanpassung automatisch dazu. Nicht ausgegebene Punkte verfallen.</p>`],
+  cwskill:["Fertigkeiten in der Erstellung",`<p><b>Punkte:</b> 8 Ausbildungspunkte, als Mensch 10. Je Stufe über 1 kommen 8 dazu.</p>
+    <p><b>Kästchen:</b> Ein Kästchen ist ein Kreuz, die Zahl darin der Preis. Bei höherer Startstufe hat jede Stufe eine Spalte; die günstigen Kästchen werden zuerst genommen.</p>
+    <p><b>Grenze:</b> Ein Rang kann nicht über der Stufe liegen. Übrige Punkte werden aufgespart.</p>`],
+  cwmode:["Neu erstellen oder übertragen",`<p><b>Neu erstellen:</b> nach den Regeln mit Punkten, auch gleich auf höherer Stufe.</p>
+    <p><b>Charakter übertragen:</b> für einen Charakter, den es schon auf Papier gibt. Du schreibst Stufe, Attributwerte und Kreuze direkt ab, ohne Punkte zu rechnen, und trägst die übrigen Ausbildungspunkte ein.</p>`]
+};
+const ib=k=>`<button class="ib" data-info="${k}" aria-label="Erklärung: ${INFO[k]?INFO[k][0]:""}">${ICON_INFO}</button>`;
+let ipHist=false;
+function infoOpen(k){const d=INFO[k];if(!d)return;let el=$("#infopop");
+  if(!el){el=document.createElement("div");el.id="infopop";document.body.appendChild(el);}
+  el.innerHTML=`<div class="ipbox" role="dialog" aria-modal="true" aria-label="${esc(d[0])}"><h3>${esc(d[0])}</h3><div class="ipbody">${d[1]}</div><button class="btn pri" id="ipclose">Verstanden</button></div>`;
+  el.hidden=false;if(!ovHist){histOpen();ipHist=true;}const b=$("#ipclose");if(b)b.focus();}
+function infoClose(){const el=$("#infopop");if(!el||el.hidden)return;el.hidden=true;if(ipHist){ipHist=false;histClose();}}
+document.addEventListener("click",e=>{const t=e.target;
+  const b=t.closest&&t.closest("[data-info]");if(b){e.preventDefault();e.stopPropagation();infoOpen(b.dataset.info);return;}
+  const el=$("#infopop");if(el&&!el.hidden&&(t.id==="ipclose"||t===el)){e.stopPropagation();infoClose();}},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const el=$("#infopop");if(el&&!el.hidden){e.stopPropagation();infoClose();}}},true);
+window.addEventListener("popstate",()=>{const el=$("#infopop");if(el&&!el.hidden){el.hidden=true;ipHist=false;}});
+
 function renderEmpty(){
   return `<div class="empty"><h1>Noch kein Charakter</h1><p class="hint">Leg einen neuen Charakter an oder schau dir zuerst den Beispielcharakter an.</p>
     <div class="row-actions" style="justify-content:center;margin-top:16px"><button class="btn pri" id="new1">Neuer Charakter</button><button class="btn" id="ex1">Beispiel laden</button></div></div>`;
@@ -1493,14 +1575,14 @@ const zGezielt=sp=>/gezielt/i.test([sp.details||"",...nList(sp.effekt)].join(" "
 function zauberCardHtml(){
   const {db,ch}=sbParse();
   const learned=db?(db.spells||[]).filter(sp=>num(ch.learned[sp.id])>0):[];
-  if(!learned.length)return `<h2>Zauber</h2><div class="card kstack"><p class="hint">${db?"Noch keine Zauber gelernt.":"Die Zauberbibliothek wurde noch nicht geöffnet."} In der Zauberbibliothek lernst du Zauber, dann erscheinen sie hier.</p>
+  if(!learned.length)return `<h2>Zauber${ib("magie")}</h2><div class="card kstack"><p class="hint">${db?"Noch keine Zauber gelernt.":"Die Zauberbibliothek wurde noch nicht geöffnet."} In der Zauberbibliothek lernst du Zauber, dann erscheinen sie hier.</p>
     <div><button class="btn pri" id="openbook2">Zauberbibliothek öffnen</button></div></div>`;
   const lists=db.spellLists||[],lname=id=>(lists.find(l=>l.id===id)||{}).name||"";
   const known=lists.filter(l=>learned.some(sp=>sp.listId===l.id));
   const act=known.find(l=>l.id===ch.activeList)||known[0];
   const shown=learned.filter(sp=>sp.listId===act.id).sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
   const ki=known.indexOf(act);
-  return `<div class="zhd"><h2>${esc(act.name)}</h2>${known.length>1?`<div class="zdots">${known.map((l,i)=>`<button data-zlist="${l.id}" class="${i===ki?"on":""}" aria-label="${esc(l.name)}"></button>`).join("")}</div>`:""}</div>
+  return `<div class="zhd"><h2>${esc(act.name)}${ib("magie")}</h2>${known.length>1?`<div class="zdots">${known.map((l,i)=>`<button data-zlist="${l.id}" class="${i===ki?"on":""}" aria-label="${esc(l.name)}"></button>`).join("")}</div>`:""}</div>
   ${known.length>1?`<div class="zchips ichips${zSlide?" "+zSlide:""}" id="zlchips" data-for="zlist">${known.map(l=>`<button class="chip${l.id===act.id?" on":""}" data-zlist="${l.id}">${esc(l.name)}</button>`).join("")}</div>`:""}
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,steig=zSteig(sp,cs,ch),eff=nList(sp.effekt);
@@ -1646,7 +1728,7 @@ const wOpen=new Set();
 let kpage="angriff",kSlide="";try{const v=localStorage.getItem("aborea-kpage");if(KPAGES.some(k=>k[0]===v))kpage=v;}catch(e){}
 function kpHead(){
   const r=num(cur.kampf.defRes),pages=KPAGES;
-  return `<div class="zhd"><h2>${(KPAGES.find(k=>k[0]===kpage)||KPAGES[0])[1]}</h2><div class="zdots">${pages.map(([k,t])=>`<button data-kpage="${k}" class="${k===kpage?"on":""}" aria-label="${t}"></button>`).join("")}</div></div>
+  return `<div class="zhd"><h2>${(KPAGES.find(k=>k[0]===kpage)||KPAGES[0])[1]}${ib((KPAGES.find(k=>k[0]===kpage)||KPAGES[0])[0])}</h2><div class="zdots">${pages.map(([k,t])=>`<button data-kpage="${k}" class="${k===kpage?"on":""}" aria-label="${t}"></button>`).join("")}</div></div>
   <div class="zchips kchips ichips${kSlide?" "+kSlide:""}" id="kpchips" data-for="kpages">${pages.map(([k,t])=>`<button class="chip${k===kpage?" on":""}" ${k==="spezial"?'data-spmenu="1"':`data-kpage="${k}"`}>${k==="spezial"?`<span>Spezial ${ICON_CHEV}</span><small>${curSpArt(curWeapon())}</small>`:`<span>${t}</span>`}${k==="verteidigen"&&r?`<small class="cb">${r} bereit</small>`:""}${k==="spezial"&&atk.special?`<i class="cdot" aria-label="gewählt"></i>`:""}</button>`).join("")}</div>`;
 }
 function setKpage(pg){if(pg===kpage)return;const ix=k=>KPAGES.findIndex(x=>x[0]===k),dir=ix(pg)>ix(kpage)?1:-1;kpage=pg;try{localStorage.setItem("aborea-kpage",pg)}catch(e){}kSlide=calmMotion()?"":(dir>0?"slidel":"slider");renderAll();kSlide="";}
@@ -1756,10 +1838,10 @@ function renderKampf(){
   }
   h+=`<div class="slots bottom"><div class="lab">Angelegte Waffen</div>${slotLine("main","Haupthand")}${slotLine("off","Nebenhand")}</div></div>`;
   }
-  if(kmode==="magie")h+=`<h2>Verteidigen</h2><div class="card kstack">${defendInner(w)}</div>`;
+  if(kmode==="magie")h+=`<h2>Verteidigen${ib("verteidigen")}</h2><div class="card kstack">${defendInner(w)}</div>`;
   h+=`
   ${kmode==="magie"?magieCardHtml():""}
-  <h2>Waffen</h2><div class="card">${cur.weapons.map((x,i)=>{
+  <h2>Waffen${ib("waffen")}</h2><div class="card">${cur.weapons.map((x,i)=>{
     const where=cur.kampf.main===i?"main":cur.kampf.off===i?"off":null;
     return `<div class="weapon${where?" eq":""}">
     <button class="whead full" data-wtog="${i}" aria-expanded="${wOpen.has(i)}"><span class="wchev${wOpen.has(i)?" open":""}" aria-hidden="true">▸</span><b>${esc(x.name||"Waffe "+(i+1))}</b><span class="wsum">${esc([x.hit,x.dmg].filter(Boolean).join(" / "))}</span>${where?`<span class="badge">${where==="main"?"Haupthand":"Nebenhand"}</span>`:`<span class="hint">abgelegt</span>`}</button>
@@ -2594,7 +2676,7 @@ function cwRender(keepScroll){
   const s=cw.step;let h="";
   if(s===0){
     h=`<div class="seg cwmode" role="group" aria-label="Art"><button class="${cwT()?"":"on"}" data-cwmode="neu" aria-pressed="${!cwT()}">Neu erstellen</button><button class="${cwT()?"on":""}" data-cwmode="ueb" aria-pressed="${cwT()}">Charakter übertragen</button></div>
-      <p class="note" style="margin-top:6px">${cwT()?"Für einen Charakter, den es schon auf Papier gibt: Du trägst Attribute und Ränge direkt ab, ohne Punkte zu rechnen.":"Mit Punkten nach den Regeln, auf Wunsch gleich auf höherer Stufe."}</p>
+      <p class="note" style="margin-top:6px">${ib("cwmode")}${cwT()?"Für einen Charakter, den es schon auf Papier gibt: Du trägst Attribute und Ränge direkt ab, ohne Punkte zu rechnen.":"Mit Punkten nach den Regeln, auf Wunsch gleich auf höherer Stufe."}</p>
       <label class="fld"><span class="lab">Name</span><input id="cw-name" value="${esc(cw.name)}" placeholder="Name deines Charakters"></label>
       <div class="lab cwh">Volk</div><div class="cwopts">${Object.keys(VOLK).map(v=>`<button class="cwopt${cw.volk===v?" on":""}" data-cwvolk="${v}"><b>${v}</b><small>${VOLK[v].map((x,i)=>x?`${ATTR[i]} ${x>0?"+":"−"}${Math.abs(x)}`:"").filter(Boolean).join(" · ")||"keine Anpassung"}${v==="Mensch"?" · 10 Ausbildungspunkte":""}</small></button>`).join("")}</div>
       <div class="lab cwh">Beruf</div><div class="cwopts">${Object.keys(BERUF).map(k=>`<button class="cwopt${cw.beruf===k?" on":""}" data-cwberuf="${k}"><b>${k}</b><small>${BERUF[k].tp} TP pro Stufe · Magie über ${BERUF[k].mp==="Int"?"Intelligenz":"Charisma"}</small></button>`).join("")}</div>
@@ -2612,7 +2694,7 @@ function cwRender(keepScroll){
           <div class="cwres"><small>Wert</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>`;
   }else if(s===1){
     const ep=cwEP(),adj=VOLK[cw.volk]||[0,0,0,0,0];
-    h=`<div class="cwpts${ep<0?" bad":ep===0?" done":""}"><b>${ep}</b><span>von 35 Entwicklungspunkten übrig</span></div>
+    h=`<div class="cwpts${ep<0?" bad":ep===0?" done":""}"><b>${ep}</b><span>von 35 Entwicklungspunkten übrig</span>${ib("cwattr")}</div>
       <p class="note">Gesamtpreis je Wert:</p>${pricetab()}
       <div class="cwattr">${ATTR.map((a,i)=>{const v=cw.buy[a],f=cwFinal(a),bo=attrBonus(f),nextCost=v<10?ATTR_PRICE[v+1]-ATTR_PRICE[v]:0;
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>Wert ${v} kostet ${ATTR_PRICE[v]} EP${v<10?`<br>${v} → ${v+1}: <b class="cwc">+${nextCost} EP</b>`:"<br>Maximum"}</small></div>
@@ -2631,7 +2713,7 @@ function cwRender(keepScroll){
       <label class="fld" style="margin-top:12px"><span class="lab">Übrige Ausbildungspunkte laut Bogen</span><input type="number" inputmode="numeric" id="cw-left" value="${num(cw.left)||""}" placeholder="0"></label>`;
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
-    h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span></div>
+    h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span>${ib("cwskill")}</div>
       <div class="cwsk">${cw.rows.map((r,i)=>{const p=cwParts(r),N=cw.startLevel||1;
         const box=(k)=>{const on=r.n>k,can=!on&&k<cwRowMax(r)&&(cwAPleft()-(p.slice(r.n,k+1).reduce((s,x)=>s+x,0)))>=0;return `<button class="cwbox${on?" on":""}" data-cwrow="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(r.label)} ${k+1}. Rang für ${p[k]} Punkte">${p[k]}</button>`;};
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
@@ -3008,7 +3090,7 @@ function lnRender(keep){
       <div class="lab cwh">Attribute</div>
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts, z. B. von 7 auf 8 zehn Punkte.</p>${pricetab()}
       <div class="cwattr">${attrs}</div>
-      <div class="lab cwh">Fertigkeiten</div>
+      <div class="lab cwh">Fertigkeiten${ib("lernen")}</div>
       <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 vier. Ein Rang kann nicht über deiner Stufe liegen. Ein Kreuz in dieser Stufe nimmst du durch erneutes Antippen zurück.</p>
       <div class="cwsk">${rows}</div>
     </div><div class="cwmsg" hidden></div>`;
