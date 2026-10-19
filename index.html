@@ -2578,8 +2578,9 @@ const rankTrack=x=>{let left=x;const R=Math.max(12,rankFromCrosses(x).r+1);retur
 const pricetab=()=>`<div class="pricetab" aria-label="Kaufpreis je Wert">${ATTR_PRICE.slice(1).map((p,i)=>`<span><small>${i+1}</small><b>${p}</b></span>`).join("")}</div>`;
 const cwAPtotal=()=>(cw.volk==="Mensch"?10:8)+8*((cw.startLevel||1)-1);
 const cwParts=r=>costParts(costOf(cw.beruf,r.skill));
-// Kosten des k-ten Kreuzes: die Kosten wiederholen sich jede Stufe (z. B. 2/4 → 2, 4, 2, 4 …)
-const cwCross=(r,k)=>{const p=cwParts(r);return p.length?p[k%p.length]:0;};
+// Kosten des k-ten Kreuzes bei Startstufe N: erst in jeder Stufe das günstige erste Kreuz,
+// erst danach das teure zweite Kreuz einer Stufe (z. B. 2/4 bei Stufe 3 → 2, 2, 2, 4, 4, 4)
+const cwCross=(r,k)=>{const p=cwParts(r),N=cw.startLevel||1;return p.length?p[Math.min(p.length-1,Math.floor(k/N))]:0;};
 const cwRowMax=r=>cwParts(r).length*(cw.startLevel||1);
 const cwRowCost=r=>{let t=0;for(let k=0;k<r.n;k++)t+=cwCross(r,k);return t;};
 const cwRank=r=>rankFromCrosses(r.n).r;
@@ -2628,7 +2629,7 @@ function cwRender(keepScroll){
         // Startstufe über 1: je Stufe eine Spalte mit den Kästchen dieser Stufe, so wie beim normalen Aufstieg
         if(N>1&&p.length){
           const cost=(a,b)=>{let t=0;for(let k=a;k<=b;k++)t+=cwCross(r,k);return t;};
-          const grid=Array.from({length:N},(_,lv)=>`<div class="cwlvg"><small>Stufe ${lv+1}</small><div>${p.map((c,j)=>{const k=lv*p.length+j,on=k<r.n,can=!on&&cwAPleft()>=cost(r.n,k);
+          const grid=Array.from({length:N},(_,lv)=>`<div class="cwlvg"><small>Stufe ${lv+1}</small><div>${p.map((c,j)=>{const k=j*N+lv,on=k<r.n,can=!on&&cwAPleft()>=cost(r.n,k);
             return `<button class="cwbox sm${on?" on":""}" data-cwrow="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(r.label)}, Stufe ${lv+1}: ${c} Punkte">${c}</button>`;}).join("")}</div></div>`).join("");
           return `<div class="cwsr multi${r.n?" on":""}"><div class="cwsh"><b>${esc(r.label)}</b><span>${r.n?`Rang ${cwRank(r)} · ${cwRowCost(r)} P.`:""}</span></div>${spec}<div class="cwgrid">${grid}</div>${rankTrack(r.n)}</div>`;}
         const ctl=!p.length?'<small class="hint">keine Kosten</small>':p.map((_,k)=>box(k)).join("");
@@ -2640,7 +2641,7 @@ function cwRender(keepScroll){
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`${w} → ${w+1} kostet <b class="cwc">${c} P.</b>`:"Maximum erreicht"}${cw.raise[a]?`<br>schon ${cwRaiseCost(a)} P. ausgegeben`:""}</small></div>
           <div class="step"><button data-cwraise="${a}" data-d="-1" ${cw.raise[a]?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-cwraise="${a}" data-d="1" ${w>=10||cwAPleft()<c?"disabled":""} aria-label="${ATTR_LONG[a]} steigern">+</button></div>
           <div class="cwres"><small>${cw.raise[a]?`+${cw.raise[a]}`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>`:""}
-      <p class="note">${(cw.startLevel||1)>1?`Jede Spalte ist eine Stufe, wie beim normalen Aufstieg: In jeder Stufe lernst du eine Fertigkeit einmal, bei zwei Kästchen zweimal. Die Zahl im Kästchen ist der Preis. Die Leiste darunter zeigt, wie aus Kreuzen Ränge werden: bis Rang 5 reicht ein Kreuz pro Rang, Rang 6 bis 10 brauchen je zwei, ab Rang 11 je vier.`:"Ein Kästchen ist ein Kreuz, die Zahl darin die Kosten. Fertigkeiten mit zwei Kästchen darfst du pro Stufe zweimal lernen. Die Leiste darunter zeigt die Ränge: bis Rang 5 reicht ein Kreuz pro Rang, Rang 6 bis 10 brauchen je zwei, ab Rang 11 je vier."}</p>`;
+      <p class="note">${(cw.startLevel||1)>1?`Jede Spalte ist eine Stufe, wie beim normalen Aufstieg: In jeder Stufe lernst du eine Fertigkeit einmal, bei zwei Kästchen zweimal. Die Zahl im Kästchen ist der Preis. Bei zwei Preisen (z. B. 2/4) ist das zweite Kästchen einer Stufe teurer. Die App nimmt deshalb immer zuerst die günstigen Kästchen aller Stufen und erst dann die teuren, so zahlst du nie mehr als nötig. Die Leiste darunter zeigt, wie aus Kreuzen Ränge werden: bis Rang 5 reicht ein Kreuz pro Rang, Rang 6 bis 10 brauchen je zwei, ab Rang 11 je vier.`:"Ein Kästchen ist ein Kreuz, die Zahl darin die Kosten. Fertigkeiten mit zwei Kästchen darfst du pro Stufe zweimal lernen. Die Leiste darunter zeigt die Ränge: bis Rang 5 reicht ein Kreuz pro Rang, Rang 6 bis 10 brauchen je zwei, ab Rang 11 je vier."}</p>`;
   }else{
     const c=cwPreview(),hb=c.ap[1];
     h=`<div class="cwsum">
