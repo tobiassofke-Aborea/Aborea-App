@@ -313,6 +313,11 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .ipbody{font-size:.95rem;line-height:1.45}.ipbody p{margin:0 0 8px}.ipbody ol{margin:0 0 8px;padding-left:20px}.ipbody li{margin-bottom:4px}
 .ipbox .btn{width:100%;margin-top:6px}
 @media (min-width:600px){#infopop{align-items:center}}
+.cwsr.lvrow{display:block}.lvh{display:flex;align-items:center;gap:8px}.lvn{flex:1;min-width:0}.lvn b{display:block}.lvcost{display:block;font-size:.75rem;color:var(--muted)}
+.lvrk{display:grid;justify-items:center;min-width:46px;padding:2px 6px;border-radius:8px;background:color-mix(in srgb,var(--accent) 14%,var(--card))}.lvrk i{font-style:normal;font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}.lvrk b{font-size:1.25rem;line-height:1;color:var(--accent)}.lvrk.r0 b{color:var(--muted)}
+.lvst{flex:0 0 auto}.lvst output{min-width:28px;text-align:center;font-weight:700}
+.lvf{display:flex;align-items:center;gap:10px;margin-top:8px}.lvsub{flex:1;min-width:0;font-size:.8rem;color:var(--muted);line-height:1.3}
+.lvrow select,.lvrow>input{margin-top:6px}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -1110,14 +1115,14 @@ const INFO={
   ruestung:["Rüstung",`<p><b>Rüstungswert:</b> fängt im Kampf Schaden ab, wenn der Schild-Knopf bei den LP an ist.</p>
     <p><b>Malus:</b> schwere Rüstung verschlechtert die Initiative um diesen Wert.</p>
     <p><b>Anpassung:</b> für besondere Teile oder Zauber, die die Rüstung verändern.</p>`],
-  lernen:["Lernen",`<p><b>Fertigkeiten:</b> Ein Kästchen ist ein Kreuz, die Zahl darin der Preis. Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Preisen (z. B. 2/4) ein zweites Mal zum höheren Preis.</p>
+  lernen:["Lernen",`<p><b>Fertigkeiten:</b> Mit + kaufst du ein Kreuz, darunter steht der Preis. Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Preisen (z. B. 2/4) ein zweites Mal zum höheren Preis.</p>
     <p><b>Ränge:</b> Rang 1–5 braucht je ein Kreuz, 6–10 je zwei, ab 11 je vier. Ein Rang kann nicht über deiner Stufe liegen.</p>
     <p><b>Attribute:</b> kosten den vollen Kaufpreis des neuen Werts.</p>
-    <p>Ein Kreuz dieser Stufe nimmst du durch erneutes Antippen zurück. Übrige Punkte bleiben aufgespart.</p>`],
+    <p>Mit − nimmst du ein Kreuz aus dieser Stufe zurück. Übrige Punkte bleiben aufgespart.</p>`],
   cwattr:["Attribute kaufen",`<p>Du hast 35 Entwicklungspunkte. Jeder Wert hat einen Gesamtpreis: 1–6 kostet so viel wie der Wert, 7 kostet 8, 8 kostet 10, 9 kostet 12, 10 kostet 16.</p>
     <p>Danach kommt die Volksanpassung automatisch dazu. Nicht ausgegebene Punkte verfallen.</p>`],
   cwskill:["Fertigkeiten in der Erstellung",`<p><b>Punkte:</b> 8 Ausbildungspunkte, als Mensch 10. Je Stufe über 1 kommen 8 dazu.</p>
-    <p><b>Kästchen:</b> Ein Kästchen ist ein Kreuz, die Zahl darin der Preis. Bei höherer Startstufe hat jede Stufe eine Spalte; die günstigen Kästchen werden zuerst genommen.</p>
+    <p><b>Pfeile:</b> Jedes + ist ein Kreuz, darunter steht der Preis des nächsten. Bei zwei Preisen nimmt die App immer zuerst die günstigen.</p>
     <p><b>Grenze:</b> Ein Rang kann nicht über der Stufe liegen. Übrige Punkte werden aufgespart.</p>`],
   cwmode:["Neu erstellen oder übertragen",`<p><b>Neu erstellen:</b> nach den Regeln mit Punkten, auch gleich auf höherer Stufe.</p>
     <p><b>Charakter übertragen:</b> für einen Charakter, den es schon auf Papier gibt. Du schreibst Stufe, Attributwerte und Kreuze direkt ab, ohne Punkte zu rechnen, und trägst die übrigen Ausbildungspunkte ein.</p>`]
@@ -2664,6 +2669,13 @@ function cwNew(){
 const cwEP=()=>35-ATTR.reduce((s,a)=>s+ATTR_PRICE[cw.buy[a]],0);
 const rankTrack=(x,tap)=>{let left=x,ci=0;const R=Math.max(12,rankFromCrosses(x).r+1);return `<div class="rtrack${tap?" tap":""}" ${tap?"":"aria-hidden=\"true\""}>${Array.from({length:R},(_,i)=>{const n=boxesFor(i+1),full=left>=n;
   const cells=Array.from({length:n},()=>{const c=ci++;return tap?`<i class="${left-->0?"on":""}" ${tap}="${c}" role="button" aria-label="${c+1} Kreuze"></i>`:`<i class="${left-->0?"on":""}"></i>`;}).join("");return `<span class="${full?"done":""}${n>1?" w"+n:""}"><small>${i+1}</small><b>${cells}</b></span>`;}).join("")}</div>`;};
+// Eine Fertigkeitszeile zum Leveln: Pfeile geben Kreuze, die Leiste füllt sich, angezeigt wird der letzte volle Rang
+const skLvRow=o=>{const q=rankFromCrosses(o.x),nd=boxesFor(q.r+1);
+  const sub=[q.rest?`${q.rest} von ${nd} Kreuzen zu Rang ${q.r+1}`:"",o.note||""].filter(Boolean).join(" · ");
+  return `<div class="cwsr lvrow${o.x?" on":""}"><div class="lvh"><div class="lvn"><b>${o.label}</b>${o.extra||""}</div>
+    <span class="lvrk${q.r?"":" r0"}"><i>Rang</i><b>${q.r}</b></span></div>
+    ${o.spec||""}${rankTrack(o.x)}
+    <div class="lvf"><small class="lvsub">${sub}</small><div class="step lvst"><button ${o.minus} ${o.canMinus?"":"disabled"} aria-label="Ein Kreuz weniger">−</button><output>${o.x}</output><button ${o.plus} ${o.canPlus?"":"disabled"} aria-label="Ein Kreuz mehr">+</button></div></div></div>`;};
 const pricetab=()=>`<div class="pricetab" aria-label="Kaufpreis je Wert">${ATTR_PRICE.slice(1).map((p,i)=>`<span><small>${i+1}</small><b>${p}</b></span>`).join("")}</div>`;
 const cwAPtotal=()=>(cw.volk==="Mensch"?10:8)+8*((cw.startLevel||1)-1);
 const cwParts=r=>costParts(costOf(cw.beruf,r.skill));
@@ -2721,38 +2733,32 @@ function cwRender(keepScroll){
       <p class="note">Werte über 5 sind überdurchschnittlich. Gib alle Punkte aus, sie verfallen nach der Erstellung. Rechts steht der Endwert mit Volksanpassung und darunter der Bonus, mit dem du später würfelst.</p>`;
   }else if(s===2&&cwT()){
     const names=spellListNames(),N=cw.startLevel||1;
-    h=`<p class="note">Trag die Kreuze von deinem Bogen ein, mit − und + oder direkt in der Leiste. Der Rang ergibt sich daraus, auch halbe Ränge wie „5 und ein Kreuz zu 6“ gehen. Höher als deine Stufe (${N}) geht kein Rang; Boni kommen später im Bogen dazu.</p>
+    h=`<p class="note">Trag die Kreuze von deinem Bogen ein, mit − und +. Der Rang ergibt sich daraus, auch halbe Ränge wie „5 und ein Kreuz zu 6“ gehen. Höher als deine Stufe (${N}) geht kein Rang; Boni kommen später im Bogen dazu.</p>
       <div class="cwsk">${cw.rows.map((r,i)=>{const x=num(r.tx),q=rankFromCrosses(x),rk=q.r,mx=crossesForRank(N);
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
           :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:"";
-        return `<div class="cwsr multi${rk?" on":""}"><div class="cwsh"><div><b>${esc(r.label)}</b><small class="cwq">Rang ${rk}${q.rest?` · ${q.rest} von ${boxesFor(rk+1)} zu Rang ${rk+1}`:""}</small></div><div class="step"><button data-cwtx="${i}" data-d="-1" ${x?"":"disabled"} aria-label="${esc(r.label)}: ein Kreuz weniger">−</button><output>${x}</output><button data-cwtx="${i}" data-d="1" ${x>=mx?"disabled":""} aria-label="${esc(r.label)}: ein Kreuz mehr">+</button></div></div>${spec}${rankTrack(x,`data-cwtxset="${i}" data-c`)}</div>`;}).join("")}</div>
+        return skLvRow({label:esc(r.label),x,spec,minus:`data-cwtx="${i}" data-d="-1"`,plus:`data-cwtx="${i}" data-d="1"`,canMinus:x>0,canPlus:x<mx,note:x>=mx?`Rang ${N} ist auf Stufe ${N} das Höchste`:""});}).join("")}</div>
       <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
       <label class="fld" style="margin-top:12px"><span class="lab">Übrige Ausbildungspunkte laut Bogen</span><input type="number" inputmode="numeric" id="cw-left" value="${num(cw.left)||""}" placeholder="0"></label>`;
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
     h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span>${ib("cwskill")}</div>
       <div class="cwsk">${cw.rows.map((r,i)=>{const p=cwParts(r),N=cw.startLevel||1;
-        const box=(k)=>{const on=r.n>k,can=!on&&k<cwRowMax(r)&&(cwAPleft()-(p.slice(r.n,k+1).reduce((s,x)=>s+x,0)))>=0;return `<button class="cwbox${on?" on":""}" data-cwrow="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(r.label)} ${k+1}. Rang für ${p[k]} Punkte">${p[k]}</button>`;};
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
           :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:"";
-        // Startstufe über 1: je Stufe eine Spalte mit den Kästchen dieser Stufe, so wie beim normalen Aufstieg
-        if(N>1&&p.length){
-          const cost=(a,b)=>{let t=0;for(let k=a;k<=b;k++)t+=cwCross(r,k);return t;};
-          const grid=Array.from({length:N},(_,lv)=>`<div class="cwlvg"><small>Stufe ${lv+1}</small><div>${p.map((c,j)=>{const k=j*N+lv,on=k<r.n,can=!on&&k<cwRowMax(r)&&cwAPleft()>=cost(r.n,k);
-            return `<button class="cwbox sm${on?" on":""}" data-cwrow="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(r.label)}, Stufe ${lv+1}: ${c} Punkte">${c}</button>`;}).join("")}</div></div>`).join("");
-          return `<div class="cwsr multi${r.n?" on":""}"><div class="cwsh"><b>${esc(r.label)}</b><span>${r.n?`Rang ${cwRank(r)} · ${cwRowCost(r)} P.`:""}</span></div>${spec}<div class="cwgrid">${grid}</div>${rankTrack(r.n)}</div>`;}
-        const ctl=!p.length?'<small class="hint">keine Kosten</small>':p.map((_,k)=>box(k)).join("");
-        const info=r.n?`Rang ${r.n}`:"",sub="";
-        return `<div class="cwsr${r.n?" on":""}"><div class="cwsn"><b>${esc(r.label)}</b>${spec}</div><div class="cwboxes">${ctl}</div><span class="cwrk">${info}</span>${rankTrack(r.n)}</div>`;}).join("")}</div>
+        if(!p.length)return `<div class="cwsr"><div class="cwsn"><b>${esc(r.label)}</b>${spec}</div><small class="hint">keine Kosten</small></div>`;
+        const nx=r.n<cwRowMax(r)?cwCross(r,r.n):0;
+        const note=nx?`nächstes Kreuz <b class="cwc">${nx} P.</b>`:r.n>=crossesForRank(N)?`Rang ${N} ist auf Stufe ${N} das Höchste`:`mehr geht nicht: ${p.length>1?"zweimal":"einmal"} pro Stufe, bei ${N} Stufen`;
+        return skLvRow({label:esc(r.label),extra:r.n?`<small class="lvcost">${cwRowCost(r)} P. ausgegeben</small>`:"",x:r.n,spec,minus:`data-cwstep="${i}" data-d="-1"`,plus:`data-cwstep="${i}" data-d="1"`,canMinus:r.n>0,canPlus:nx&&cwAPleft()>=nx,note});}).join("")}</div>
       <div class="row-actions"><button class="btn small" data-cwadd="spell">+ weitere Spruchliste</button><button class="btn small" data-cwadd="weapon">+ weitere Waffengruppe</button></div>
       ${(cw.startLevel||1)>1?`<div class="lab cwh">Attribute steigern</div>
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts:</p>${pricetab()}<div class="cwattr">${ATTR.map(a=>{const f=cwFinal(a),w=f+cw.raise[a],c=w<10?ATTR_PRICE[w+1]:0,bo=attrBonus(w);
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`${w} → ${w+1} kostet <b class="cwc">${c} P.</b>`:"Maximum erreicht"}${cw.raise[a]?`<br>schon ${cwRaiseCost(a)} P. ausgegeben`:""}</small></div>
           <div class="step"><button data-cwraise="${a}" data-d="-1" ${cw.raise[a]?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-cwraise="${a}" data-d="1" ${w>=10||cwAPleft()<c?"disabled":""} aria-label="${ATTR_LONG[a]} steigern">+</button></div>
           <div class="cwres"><small>${cw.raise[a]?`+${cw.raise[a]}`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>`:""}
-      <p class="note">${(cw.startLevel||1)>1?`Jede Spalte ist eine Stufe, wie beim normalen Aufstieg: In jeder Stufe lernst du eine Fertigkeit einmal, bei zwei Kästchen zweimal. Die Zahl im Kästchen ist der Preis. Ein Rang kann nicht über deiner Stufe liegen. Bei zwei Preisen (z. B. 2/4) ist das zweite Kästchen einer Stufe teurer. Die App nimmt deshalb immer zuerst die günstigen Kästchen aller Stufen und erst dann die teuren, so zahlst du nie mehr als nötig. Die Leiste darunter zeigt, wie aus Kreuzen Ränge werden: bis Rang 5 reicht ein Kreuz pro Rang, Rang 6 bis 10 brauchen je zwei, ab Rang 11 je vier.`:"Ein Kästchen ist ein Kreuz, die Zahl darin die Kosten. Auf Stufe 1 ist Rang 1 das Höchste, ein Rang kann nicht über deiner Stufe liegen. Die Leiste darunter zeigt die Ränge: bis Rang 5 reicht ein Kreuz pro Rang, Rang 6 bis 10 brauchen je zwei, ab Rang 11 je vier."}</p>`;
+      <p class="note">Mit + gibst du einer Fertigkeit ein Kreuz, die Leiste zeigt den Fortschritt. Rang 1–5 brauchen je ein Kreuz, Rang 6–10 je zwei, ab Rang 11 je vier; angezeigt wird der letzte volle Rang. Ein Rang kann nicht über der Stufe liegen. Bei zwei Preisen (z. B. 2/4) ist ein zweites Kreuz in derselben Stufe teurer; die App nimmt immer zuerst die günstigen.</p>`;
   }else{
     const c=cwPreview(),hb=c.ap[1];
     h=`<div class="cwsum">
@@ -2809,6 +2815,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.cwberuf){const nb=b.dataset.cwberuf;if(nb!==cw.beruf)cw.rows.forEach(r=>r.n=0);cw.beruf=nb;cwRender(true);return;}
   if(b.dataset.cwattr){const a=b.dataset.cwattr,v=cw.buy[a]+(+b.dataset.d);if(v<1||v>10)return;const ep=cwEP()-(ATTR_PRICE[v]-ATTR_PRICE[cw.buy[a]]);if(ep<0)return;cw.buy[a]=v;cwRender(true);return;}
   if(b.dataset.cwraise){const a=b.dataset.cwraise,d=+b.dataset.d,w=cwFinal(a)+cw.raise[a];if(d>0){if(w<10&&cwAPleft()>=ATTR_PRICE[w+1])cw.raise[a]++;}else cw.raise[a]=Math.max(0,cw.raise[a]-1);cwRender(true);return;}
+  if(b.dataset.cwstep!=null){const r=cw.rows[+b.dataset.cwstep],d=+b.dataset.d;if(d>0){if(r.n<cwRowMax(r)&&cwAPleft()>=cwCross(r,r.n))r.n++;}else r.n=Math.max(0,r.n-1);cwRender(true);return;}
   if(b.dataset.cwrow!=null){const r=cw.rows[+b.dataset.cwrow],k=+b.dataset.k;r.n=r.n>k?k:k+1;if(cwAPleft()<0)r.n=Math.max(0,r.n-1);cwRender(true);return;}
   if(b.dataset.cwadd){const t=b.dataset.cwadd;let i=-1;cw.rows.forEach((r,j)=>{if(r.type===t)i=j;});
     cw.rows.splice(i+1,0,t==="spell"?{type:"spell",label:"Spruchliste",skill:"Spruchlisten",spec:"",n:0}:{type:"weapon",label:"Waffengruppe",skill:"Waffen",spec:"",n:0});cwRender(true);return;}
@@ -3095,8 +3102,10 @@ function lnRender(keep){
     const nm=s.name||(s.kind==="spell"?"":""),parts=costParts(skillCost(s));
     if(!nm&&!s.fixed)return "";
     const key=uidOf(s),done=learnedNow("s",key).length,x=sxOf(s),rk=rankFromCrosses(x),need=boxesFor(rk.r+1);
-    const capped=rk.r>=lvlNow(),boxes=parts.map((c,k)=>{const on=done>k,can=!on&&k===done&&ap>=c&&!capped;return `<button class="cwbox${on?" on":""}" data-lnsk="${i}" data-k="${k}" ${!on&&!can?"disabled":""} aria-pressed="${on}" aria-label="${esc(nm)}: ${k+1}. Kreuz in dieser Stufe für ${c} Punkte">${c}</button>`;}).join("");
-    return `<div class="cwsr${done?" on":""}"><div class="cwsn"><b>${esc(nm||"Fertigkeit")}</b><small class="lnrk">${capped&&!done?`Rang ${rk.r} · höher geht erst ab Stufe ${rk.r+1}`:`Rang ${rk.r} · für Rang ${rk.r+1} ${need===1?"ein Kreuz":need+" Kreuze"}${rk.rest?` (${rk.rest} von ${need} da)`:""}`}</small></div><div class="cwboxes">${parts.length?boxes:'<small class="hint">keine Kosten</small>'}</div><span class="cwrk">${done?`+${done}`:""}</span>${rankTrack(x)}</div>`;
+    const capped=rk.r>=lvlNow(),nc=done<parts.length?parts[done]:0;
+    if(!parts.length)return `<div class="cwsr"><div class="cwsn"><b>${esc(nm||"Fertigkeit")}</b></div><small class="hint">keine Kosten</small></div>`;
+    const note=capped&&!done?`höher geht erst ab Stufe ${rk.r+1}`:nc?`nächstes Kreuz <b class="cwc">${nc} P.</b>${done?` · ${done} in dieser Stufe`:""}`:`in dieser Stufe ${parts.length>1?"schon zweimal":"schon"} gelernt`;
+    return skLvRow({label:esc(nm||"Fertigkeit"),x,minus:`data-lnsx="${i}" data-d="-1"`,plus:`data-lnsx="${i}" data-d="1"`,canMinus:done>0,canPlus:!!nc&&!capped&&ap>=nc,note});
   }).join("");
   const attrs=ATTR.map(a=>{const A=cur.attr[a],w=num(A.w),done=learnedNow("a",a).length,c=w<10?ATTR_PRICE[w+1]:0,bo=attrB(A);
     return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>${w<10?`${w} → ${w+1} kostet <b class="cwc">${c} P.</b>`:"Maximum erreicht"}</small></div>
@@ -3109,7 +3118,7 @@ function lnRender(keep){
       <p class="note">Ein Attribut steigern kostet den vollen Kaufpreis des neuen Werts, z. B. von 7 auf 8 zehn Punkte.</p>${pricetab()}
       <div class="cwattr">${attrs}</div>
       <div class="lab cwh">Fertigkeiten${ib("lernen")}</div>
-      <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 vier. Ein Rang kann nicht über deiner Stufe liegen. Ein Kreuz in dieser Stufe nimmst du durch erneutes Antippen zurück.</p>
+      <p class="note">Pro Stufe darfst du jede Fertigkeit einmal lernen, bei zwei Kosten (z. B. 2/4) zweimal. Ab Rang 6 braucht ein Rang zwei Kreuze, ab Rang 11 vier. Ein Rang kann nicht über deiner Stufe liegen. Mit − nimmst du ein Kreuz aus dieser Stufe zurück.</p>
       <div class="cwsk">${rows}</div>
     </div><div class="cwmsg" hidden></div>`;
   const nb=el.querySelector(".cwbody");if(nb)nb.scrollTop=st;
@@ -3118,6 +3127,7 @@ function lnToast(t){const f=document.querySelector("#learn .cwmsg");if(!f||!t)re
 document.addEventListener("click",e=>{
   const el=$("#learn");if(!el||el.hidden)return;const b=e.target.closest("button");if(!b||!el.contains(b))return;
   if(b.id==="lnclose"){lnClose();return;}
+  if(b.dataset.lnsx!=null){const s=cur.skills[+b.dataset.lnsx];const msg=skillLearn(s,+b.dataset.d>0);if(msg)lnToast(msg);else{buzz(8);clack(.2,1);}lnRender(true);return;}
   if(b.dataset.lnsk!=null){const s=cur.skills[+b.dataset.lnsk],k=+b.dataset.k,done=learnedNow("s",uidOf(s)).length;
     const msg=skillLearn(s,k>=done);if(msg)lnToast(msg);else{buzz(8);clack(.2,1);}lnRender(true);return;}
   if(b.dataset.lnat){const msg=attrLearn(b.dataset.lnat,+b.dataset.d>0);if(msg)lnToast(msg);else buzz(8);lnRender(true);return;}
