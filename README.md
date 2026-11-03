@@ -14,9 +14,9 @@ Die Web-Adresse wird von `.github/workflows/pages.yml` gebaut. Einmalig nötig: 
 
 Die Daten liegen nur auf dem Handy. Charaktere zieht man mit „Charakter als Text kopieren“ und „Charakter einfügen“ im Bogen um.
 
-## Kofferliste
+## Nicola packt
 
-Im Ordner `kofferliste/` liegt eine eigene, davon unabhängige Web-App (Packliste mit dem kleinen Tobi): https://tobiassofke-aborea.github.io/Aborea-App/kofferliste/
+Im Ordner `kofferliste/` liegt eine eigene, davon unabhängige Web-App „Nicola packt“ (Packliste mit dem kleinen Tobi): https://tobiassofke-aborea.github.io/Aborea-App/kofferliste/
 
 ## Aufbau
 

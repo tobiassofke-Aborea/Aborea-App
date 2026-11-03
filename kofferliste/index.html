@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nicolas Kofferliste</title>
+<title>Nicola packt</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Kofferliste">
+<meta name="apple-mobile-web-app-title" content="Nicola packt">
+<meta name="application-name" content="Nicola packt">
 <meta name="theme-color" content="#F1F6EE" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#18201B" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
@@ -33,6 +34,7 @@
   --accent:#7FCB98; --accent-soft:#273A2E; --sun:#F2C266; --sun-soft:#3A3220; --blush:#E3928A;
   --on-accent:#12261A; --warn:#E8AE4E; --bad:#EE8A7C; color-scheme:dark}
 *{box-sizing:border-box}
+html{background:var(--bg);overscroll-behavior-y:none}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
 body.has-gauge{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
@@ -157,8 +159,9 @@ button:focus-visible,input:focus-visible,.item:focus-visible{outline:3px solid v
 .tagw{flex:none;font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:999px}
 .tagw.won{background:var(--accent-soft);color:var(--accent)}
 .tagw.lost{background:var(--line);color:var(--muted)}
-.stage{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--bg);display:flex;flex-direction:column;gap:6px;padding-block:8px 6px;border-bottom:2px solid var(--line)}
+.stage{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--bg);box-shadow:-50vw 0 0 var(--bg),50vw 0 0 var(--bg);display:flex;flex-direction:column;gap:6px;padding-block:8px 6px;border-bottom:2px solid var(--line)}
 .stage .bubble{margin-bottom:28px}
+.stage::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:100vh;background:var(--bg);box-shadow:-50vw 0 0 var(--bg),50vw 0 0 var(--bg);pointer-events:none}
 body:has(.stage)::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);z-index:30;width:min(480px,calc(100% - 32px));
   background:var(--surface);border:2px solid var(--sun);border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:2px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
