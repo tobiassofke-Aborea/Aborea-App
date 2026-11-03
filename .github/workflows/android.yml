@@ -6,6 +6,8 @@ name: Android-App bauen
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'kofferliste/**'
   workflow_dispatch:
 
 permissions:
