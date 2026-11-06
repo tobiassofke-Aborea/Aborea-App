@@ -324,6 +324,15 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .lvc small{grid-column:1/-1;font-size:.66rem;color:var(--muted);line-height:1.15}.lvc b{font-size:.95rem}.lvc i{font-style:normal;font-size:.75rem;color:var(--muted);justify-self:end}
 .lvc.nx{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}.lvc.nx b{color:var(--accent)}.lvc.done{opacity:.55}
 .linkbtn.cwrm{display:block;margin-top:6px;font-size:.8rem;font-weight:400}
+#rhist{position:fixed;inset:0;z-index:60;background:rgba(20,15,10,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+#rhist[hidden]{display:none}@media (min-width:600px){#rhist{align-items:center}}
+.rhhead .btn{width:auto;margin:0;flex:0 0 auto}.rhbox{display:flex;flex-direction:column;max-height:82vh;padding-bottom:10px}.rhhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}.rhhead h3{margin:0}
+.rhlist{overflow-y:auto;margin:0 -4px;padding:0 4px}.rhday{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.rhrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.rhday+.rhrow{border-top:0}
+.rhtime{flex:0 0 auto;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}.rhmid{flex:1;min-width:0}.rhmid b{display:block;font-size:.95rem}.rhmid small{display:block;font-size:.76rem;color:var(--muted);line-height:1.3}.rhmid em{display:inline-block;margin-top:2px;font-style:normal;font-size:.74rem;font-weight:700;color:var(--accent)}
+.rhres{flex:0 0 auto;min-width:44px;text-align:right;font-family:var(--display);font-size:1.6rem;line-height:1;font-variant-numeric:tabular-nums}
+.rhclear{align-self:center;margin-top:8px;font-size:.82rem}
+.x.rhbtn{opacity:.75}.rhtb{display:inline-grid;place-items:center;width:40px;padding:0;margin-left:auto;flex:0 0 auto}
 .cwlvl{display:flex;align-items:center;gap:12px}.cwlvl .step{flex:0 0 auto}.cwlvl small{color:var(--muted);font-size:.85rem;line-height:1.3}.cwlvl .step output{min-width:36px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwar .step output{min-width:32px;text-align:center;font-weight:700;font-size:1.15rem}
 .cwres{display:grid;justify-items:end;gap:1px;text-align:right}
@@ -449,7 +458,7 @@ body.kampf .wrap{padding-bottom:250px}
 .wheel:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 #table{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 #table .tbar,#table .tray,#table .cuprow,#table .tres{max-width:760px;width:100%;margin:0 auto;padding-inline:16px}
-.tbar{display:flex;align-items:center;gap:8px;padding-block:10px}
+.tbar{display:flex;align-items:center;gap:8px;padding-block:10px}.tbar .btn{white-space:nowrap}
 .tbar h1{flex:1;font-family:var(--display);font-weight:400;font-size:1.5rem;margin:0}
 .tray{display:flex;gap:6px;overflow-x:auto;padding-top:8px;padding-bottom:4px}
 .tray.nudge{animation:nudge .5s}
@@ -1150,6 +1159,31 @@ document.addEventListener("click",e=>{const t=e.target;
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){const el=$("#infopop");if(el&&!el.hidden){e.stopPropagation();infoClose();}}},true);
 window.addEventListener("popstate",()=>{const el=$("#infopop");if(el&&!el.hidden){el.hidden=true;ipHist=false;}});
 
+const ICON_HIST='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4v4h4"/><path d="M12 8v4.5l3 2"/></svg>';
+/* ---------- Würfel-Verlauf: die letzten Würfe pro Charakter ---------- */
+let rhLocal=[];
+const rhList=()=>cur?(Array.isArray(cur.rollLog)?cur.rollLog:(cur.rollLog=[])):rhLocal;
+function logRoll(what,total,detail,tag){const L=rhList();L.unshift({t:Date.now(),w:String(what||"Wurf"),r:total,d:String(detail||""),g:String(tag||"")});
+  if(L.length>60)L.length=60;if(cur)queueSave(cur);const el=$("#rhist");if(el&&!el.hidden)rhRender();}
+let rhHist=false;
+function rhRender(){const el=$("#rhist");if(!el)return;const L=rhList();
+  const day=t=>{const d=new Date(t),n=new Date();return d.toDateString()===n.toDateString()?"Heute":d.toLocaleDateString("de-DE",{day:"numeric",month:"short"});};
+  let last="";const rows=L.map(e=>{const dd=day(e.t),hd=dd!==last?`<div class="rhday">${dd}</div>`:"";last=dd;
+    return `${hd}<div class="rhrow"><span class="rhtime">${new Date(e.t).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}</span><div class="rhmid"><b>${esc(e.w)}</b>${e.d?`<small>${esc(e.d)}</small>`:""}${e.g?`<em>${esc(e.g)}</em>`:""}</div><span class="rhres">${esc(String(e.r))}</span></div>`;}).join("");
+  el.innerHTML=`<div class="ipbox rhbox" role="dialog" aria-modal="true" aria-label="Würfel-Verlauf"><div class="rhhead"><h3>Würfel-Verlauf</h3><button class="btn small" id="rhclose">Schließen</button></div>
+    <div class="rhlist">${rows||'<p class="note">Noch keine Würfe. Alles, was du würfelst, landet hier – Fertigkeiten, Attribute, Kampf und der Würfeltisch.</p>'}</div>
+    ${L.length?`<button class="linkbtn rhclear" id="rhclear">Verlauf leeren</button>`:""}</div>`;}
+function rhOpen(){let el=$("#rhist");if(!el){el=document.createElement("div");el.id="rhist";document.body.appendChild(el);}
+  el.hidden=false;rhRender();if(!ovHist){histOpen();rhHist=true;}}
+function rhClose(){const el=$("#rhist");if(!el||el.hidden)return;el.hidden=true;if(rhHist){rhHist=false;histClose();}}
+document.addEventListener("click",e=>{const t=e.target;const b=t.closest&&t.closest("button");
+  if(b&&b.dataset.rhopen!=null){e.preventDefault();e.stopPropagation();rhOpen();return;}
+  const el=$("#rhist");if(!el||el.hidden)return;
+  if(t===el||(b&&b.id==="rhclose")){e.stopPropagation();rhClose();return;}
+  if(b&&b.id==="rhclear"){e.stopPropagation();if(b.dataset.sure){rhList().length=0;if(cur)queueSave(cur);rhRender();}else{b.dataset.sure="1";b.textContent="Wirklich alles löschen? Nochmal tippen";}}},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const el=$("#rhist");if(el&&!el.hidden){e.stopPropagation();rhClose();}}},true);
+window.addEventListener("popstate",()=>{const el=$("#rhist");if(el&&!el.hidden){el.hidden=true;rhHist=false;}});
+
 function renderEmpty(){
   return `<div class="empty"><h1>Noch kein Charakter</h1><p class="hint">Leg einen neuen Charakter an oder schau dir zuerst den Beispielcharakter an.</p>
     <div class="row-actions" style="justify-content:center;margin-top:16px"><button class="btn pri" id="new1">Neuer Charakter</button><button class="btn" id="ex1">Beispiel laden</button></div></div>`;
@@ -1219,7 +1253,7 @@ function animateRoll(what,dice,sides,base,mod,tag,key){
     <div class="brow"><div class="info"><div class="what">${esc(what)}</div>
     <div class="calc" id="rcalc" hidden></div><span class="tag" id="rtag" hidden></span>
 </div>
-    <div class="res wait" id="rres">…</div><button class="x" id="rollx" aria-label="Schließen">×</button></div></div>`;
+    <div class="res wait" id="rres">…</div><button class="x rhbtn" data-rhopen aria-label="Würfel-Verlauf">${ICON_HIST}</button><button class="x" id="rollx" aria-label="Schließen">×</button></div></div>`;
   rollIn(R,dice[0]);
 }
 function rollIn(R,v){
@@ -1271,7 +1305,7 @@ function afterLand(R){
   clearTimeout(rollTimer);
   markAgain();
   if(canAgain)return; // wait for the player to tap "Nochmal würfeln"
-  R.done=true;
+  R.done=true;logRoll(R.what,total,parts.join(" · "),tag);
   if(tab==="kampf"&&!document.activeElement.matches("input,textarea"))renderAll();
   rollTimer=setTimeout(()=>{if(!(curRoll&&curRoll.waiting))$("#roll").innerHTML=""},9000);
 }
@@ -1383,7 +1417,7 @@ function rollPool(title,spec,onDone){
   if(spec.d100){const tn=items.find(x=>x.tens).v%10,on=items.find(x=>x.ones).v%10;total=tn*10+on||100;}
   $("#roll").innerHTML=`<div class="box rb" role="status"><div class="track" id="track"></div>
     <div class="brow"><div class="info"><div class="what">${esc(title)}</div><div class="calc" id="rcalc" hidden></div><span class="tag" id="rtag" hidden></span></div>
-    <div class="res wait" id="rres">…</div><button class="x" id="rollx" aria-label="Schließen">×</button></div></div>`;
+    <div class="res wait" id="rres">…</div><button class="x rhbtn" data-rhopen aria-label="Würfel-Verlauf">${ICON_HIST}</button><button class="x" id="rollx" aria-label="Schließen">×</button></div></div>`;
   const track=$("#track"),W=track.clientWidth,S=40,G=6,per=Math.max(1,Math.floor((W-10)/(S+G)));
   const rows=Math.max(1,Math.ceil(items.length/per));
   track.style.height=(rows*(S+G)+6)+"px";
@@ -1426,6 +1460,7 @@ function rollPool(title,spec,onDone){
     const c=$("#rcalc");c.textContent=lines.join(" · ");c.hidden=false;
     const res=onDone?onDone(total):null;
     if(res&&res.tag){const tg=$("#rtag");tg.textContent=res.tag;tg.className="tag"+(res.cls?" "+res.cls:"");tg.hidden=false;}
+    logRoll(title,total,lines.join(" · "),res&&res.tag);
     if(tab==="kampf"&&!document.activeElement.matches("input,textarea,select"))renderAll();
     rollTimer=setTimeout(()=>{$("#roll").innerHTML=""},12000);
   }
@@ -2275,7 +2310,7 @@ const throwSet=()=>tmode==="4218"?Array(Math.max(0,5-g42.kept.length)).fill(6):c
 function tBuild(){
   const el=document.createElement("div");el.id="table";el.hidden=true;
   el.setAttribute("role","dialog");el.setAttribute("aria-label","Würfeltisch");
-  el.innerHTML=`<div class="tbar"><h1>Würfeltisch</h1>
+  el.innerHTML=`<div class="tbar"><h1>Würfeltisch</h1><button class="btn small rhtb" data-rhopen aria-label="Würfel-Verlauf" title="Würfel-Verlauf">${ICON_HIST}</button>
       <button class="btn small" id="tsound" aria-pressed="${settings.sound}">${settings.sound?"Ton an":"Ton aus"}</button>
       <button class="btn small" id="tclose">Schließen</button></div>
     <div class="tmoderow"><div class="chips"><button class="chip" data-tmode="free">Freier Wurf</button><button class="chip" data-tmode="4218">42/18</button></div></div>
@@ -2592,6 +2627,7 @@ function tResult(noHist){
   $("#tdet").textContent=parts.join(" · ");
   const label=T_TYPES.filter(s=>by[s]).map(s=>`${by[s].length}W${s}`).join("+");
   if(noHist)return;
+  logRoll("Würfeltisch"+(label?": "+label:""),total,parts.join(" · "));
   clack(.35,1.4);buzz(25);
 }
 let flashT;
