@@ -1,16 +1,15 @@
 {
   "name": "Kampf-Tracker",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "manifest_version": 1,
-  "description": "Initiative, LP und Würfel für den Spielleiter. Spieler sehen, wer dran ist.",
+  "description": "Kampf-Tracker mit Vorlagen, INI, LP, AP/Mana und Würfeln. Spieler sehen, wer dran ist.",
   "author": "Tobias Sofke",
   "icon": "/Aborea-App/kampf-tracker/icon.svg",
-  "background_url": "/Aborea-App/kampf-tracker/background.html",
   "action": {
     "title": "Kampf-Tracker",
     "icon": "/Aborea-App/kampf-tracker/icon.svg",
     "popover": "/Aborea-App/kampf-tracker/index.html",
-    "height": 640,
-    "width": 420
+    "height": 720,
+    "width": 480
   }
 }

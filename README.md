@@ -20,7 +20,7 @@ Im Ordner `kofferliste/` liegt eine eigene, davon unabhängige Web-App „Nicola
 
 ## Kampf-Tracker für Owlbear Rodeo
 
-Im Ordner `kampf-tracker/` liegt eine Owlbear-Rodeo-Extension: Der Spielleiter verwaltet Initiative, LP, Gegner und Würfel, die Spieler sehen nur, wer am Zug ist und wer als Nächstes dran ist.
+Im Ordner `kampf-tracker/` liegt der Kampf-Tracker (Vorlagen, INI, LP, AP/Mana, Treffer-/Schadens- und Krit-Würfe) als Owlbear-Rodeo-Extension. Der Spielleiter hat das ganze Tool, die Spieler sehen nur, wer am Zug ist und wer als Nächstes dran ist. Vorlagen und Kampf liegen im Browser des Spielleiters; Backup über ⚙️ → Speichern / Laden.
 
 Manifest-URL zum Einbinden (Owlbear-Profil → Add Extension): https://tobiassofke-aborea.github.io/Aborea-App/kampf-tracker/manifest.json
 

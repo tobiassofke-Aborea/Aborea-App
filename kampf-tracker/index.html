@@ -1,76 +1,137 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kampf-Tracker</title>
-    <script type="module" crossorigin src="./assets/main-olFNT6Px.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/state-DpeBqtlh.js">
-    <link rel="stylesheet" crossorigin href="./assets/main-BeeJswtu.css">
-  </head>
-  <body>
-    <div id="loading">Lädt …</div>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kampf-Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>:root{--bg:#f2e8d3;--panel:#e9dcbc;--panel-2:#f2e8d3;--line:#cbb488;--text:#2c2013;--muted:#52411f;--accent:#a3781f;--accent-dim:#f3dca0;--danger:#8a2620;--danger-dim:#f2b9b3;--ok:#4b6b3a;--ok-bright:#4b6b3a;--warn:#d9a13a;--mana:#5b4b8a;--player:#a3781f;--npc:#8a2620;--mono:ui-monospace, "JetBrains Mono", "SF Mono", Consolas, monospace;--sans:"EB Garamond", "Source Serif 4", Georgia, serif;--heading:"Cinzel", "EB Garamond", serif}*{box-sizing:border-box}body{background:var(--bg);color:var(--text);font-family:var(--sans);margin:0;padding-bottom:60px;font-size:14px;line-height:1.4}header{border-bottom:1px solid var(--line);background:var(--bg);z-index:10;align-items:center;padding:16px 20px;display:flex;position:sticky;top:0}header h1{font-family:var(--heading);letter-spacing:.02em;margin:0;font-size:20px;font-weight:600}header h1 .rund{color:var(--muted);margin-left:10px;font-size:13px;font-weight:400}.subnav{flex-wrap:wrap;gap:4px;margin-bottom:18px;display:flex}.subnav button.active{color:var(--text);border-color:var(--accent);background:var(--accent-dim)}.settings-sub{margin-bottom:8px}.fab-settings{z-index:20;background:var(--panel-2);border:1px solid var(--line);opacity:.65;border-radius:50%;justify-content:center;align-items:center;width:34px;height:34px;padding:0;font-size:16px;display:flex;position:fixed;bottom:44px;right:16px;box-shadow:0 2px 6px #0000004d}.fab-settings:hover{opacity:1}.fab-settings.active{opacity:1;border-color:var(--accent);background:var(--accent-dim)}main{max-width:1100px;margin:0 auto;padding:20px}.toolbar{flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px;display:flex}.add-toggle-bar{cursor:pointer;background:0 0;border:none;align-items:center;gap:10px;width:100%;margin-bottom:8px;padding:2px 0;display:flex}.add-toggle-line{background:var(--line);flex:1;height:1px}.add-toggle-icon{border:1px solid var(--line);width:20px;height:20px;color:var(--muted);border-radius:50%;flex-shrink:0;justify-content:center;align-items:center;font-size:13px;transition:border-color .15s,color .15s;display:flex}.add-toggle-bar:hover .add-toggle-icon{border-color:var(--accent);color:var(--accent)}#addControlsToolbar{margin-bottom:8px}.mini-queue{flex-wrap:wrap;align-items:center;gap:6px 4px;margin-bottom:4px;padding:2px 2px 10px;display:flex}.mini-badge{width:26px;min-width:26px;height:26px;font-size:11px;font-family:var(--mono);border:1px solid var(--line);cursor:pointer;border-radius:50%;flex-shrink:0;justify-content:center;align-items:center;font-weight:700;display:flex}.mini-badge.npc{background:color-mix(in srgb, var(--npc) 20%, transparent);color:var(--npc);border-color:var(--npc)}.mini-badge.player{background:color-mix(in srgb, var(--player) 20%, transparent);color:var(--player);border-color:var(--player)}.mini-badge.active{border-width:2px;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}.mini-badge.mini-disabled{opacity:.4;filter:grayscale(60%)}.mini-badge.mini-dead{opacity:.35;filter:grayscale(90%);text-decoration:line-through}.mini-sep{color:var(--muted);flex-shrink:0;font-size:11px}.mini-popup{z-index:200;background:var(--panel);border:1px solid var(--line);border-radius:6px;min-width:150px;padding:10px;display:none;position:fixed;box-shadow:0 6px 18px #00000073}.mini-popup-name{margin-bottom:6px;font-size:12px;font-weight:600}.mini-popup-badge{min-width:16px;height:16px;font-size:10px;font-family:var(--mono);border:1px solid var(--line);vertical-align:middle;border-radius:50%;justify-content:center;align-items:center;padding:0 3px;font-weight:700;display:inline-flex}.mini-popup-badge.npc{background:color-mix(in srgb, var(--npc) 20%, transparent);color:var(--npc);border-color:var(--npc)}.mini-popup-badge.player{background:color-mix(in srgb, var(--player) 20%, transparent);color:var(--player);border-color:var(--player)}.mini-popup-hp{align-items:center;gap:6px;margin-bottom:8px;display:flex}.mini-popup-hp-label{font-family:var(--mono);color:var(--muted);white-space:nowrap;font-size:11px}.mini-popup-bar{flex:0 0 90px;width:90px;height:6px}.mini-popup-row{align-items:center;gap:6px;display:flex}.mini-popup-row input{width:80px}#view-kampf .toolbar select,#view-kampf .toolbar button.btn{box-sizing:border-box;text-align:center;justify-content:center;align-items:center;width:160px;height:34px;display:inline-flex}#view-kampf .toolbar select{text-align-last:center}#view-kampf .toolbar button.icon-add-btn{width:34px;padding:0;font-size:18px;line-height:1}select,input[type=text],input[type=number]{background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-family:var(--sans);border-radius:4px;padding:6px 8px;font-size:13px}input[type=number]{font-family:var(--mono);width:70px}button.btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);cursor:pointer;font-size:13px;font-family:var(--heading);letter-spacing:.01em;border-radius:5px;padding:6px 12px;font-weight:600}button.btn:hover{border-color:var(--accent)}button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fbf3e0}button.btn.primary:hover{background:#8a6519}button.btn.danger{background:var(--danger-dim);border-color:var(--danger);color:var(--danger)}button.btn.ok{background:color-mix(in srgb, var(--ok) 16%, transparent);border-color:var(--ok);color:var(--ok)}button.btn.small{padding:3px 8px;font-size:12px}button.btn:disabled{opacity:.4;cursor:default}.empty{color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:6px;padding:40px 0}.combat-row{background:var(--panel);border:1px solid var(--line);max-width:420px;box-shadow:0 1px 3px color-mix(in srgb, var(--text) 12%, transparent);border-left:3px solid #0000;border-radius:8px;margin-bottom:10px;padding:10px 14px}.combat-row.active{border-left-color:var(--accent);background:var(--accent-dim)}.combat-row.dead{opacity:.5}.combat-row.disabled{opacity:.6}.combat-row.disabled .name{font-style:italic}.badge{font-size:13px;font-weight:700;font-family:var(--mono);text-align:center;border-radius:12px;min-width:22px;padding:2px 8px;display:inline-block}.badge.player{background:color-mix(in srgb, var(--player) 20%, transparent);color:var(--player);border:1px solid var(--player)}.badge.npc{background:color-mix(in srgb, var(--npc) 20%, transparent);color:var(--npc);border:1px solid var(--npc)}.row-main{flex-direction:column;gap:6px;display:flex}.row-top{flex-wrap:wrap;align-items:center;gap:10px;display:flex}.name{font-size:14px;font-weight:600}.ini-val{font-family:var(--mono);color:var(--accent);font-size:13px}.ini-base{font-family:var(--mono);color:var(--muted);font-size:11px}.turn-label{color:var(--accent);letter-spacing:.02em;font-size:11px;font-weight:600}.last-activity{font-family:var(--mono);color:var(--muted);font-size:11px;font-style:italic}.hp-row{align-items:center;gap:10px;margin-top:2px;display:flex}.hp-label{font-family:var(--mono);color:var(--muted);white-space:nowrap;font-size:12px}.hp-label b{color:var(--ok-bright);font-weight:700}.hp-bar-outer{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;flex:0 0 140px;width:140px;height:8px;overflow:hidden}.hp-bar-inner{background:var(--ok-bright);height:100%;transition:width .25s,background .25s;display:block}.hp-bar-inner.warn{background:var(--warn)}.hp-bar-inner.crit{background:var(--danger)}.hp-actions{flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;display:flex}.lp-input{width:80px}.lp-feedback{font-family:var(--mono);font-size:11px}.lp-feedback.danger-text{color:var(--danger)}.lp-feedback.ok-text{color:var(--ok-bright)}.action-line{flex-wrap:wrap;align-items:center;gap:16px;width:100%;min-height:14px;margin-top:6px;display:flex}.roll-group{align-items:center;gap:6px;display:inline-flex}.dice-btn{background:var(--panel-2);border-width:2px;border-radius:6px;padding:5px 10px;font-size:16px}.dice-btn:hover{transform:scale(1.08)}.dice-btn.atk-dice{border-color:var(--accent)}.dice-btn.dmg-dice{border-color:var(--danger)}.krit-row{min-height:0}.krit-result{font-family:var(--mono);font-size:12px}.krit-result.krit-hit{color:#fff;letter-spacing:.02em;background:linear-gradient(90deg, var(--danger), var(--warn));border-radius:6px;align-items:center;gap:6px;margin-top:4px;padding:5px 12px;font-size:14px;font-weight:800;animation:.55s ease-in-out infinite alternate kritPulse;display:inline-flex;box-shadow:0 0 14px #c9a15a8c}.krit-roll-note{opacity:.85;font-size:11px;font-weight:400}@keyframes kritPulse{0%{transform:scale(1);box-shadow:0 0 8px #c9a15a73}to{transform:scale(1.05);box-shadow:0 0 18px #c9a15acc}}.action-label{color:var(--muted);font-size:12px}.dice-note{font-family:var(--mono);color:var(--text);font-size:12px}.roll-result{font-family:var(--mono);text-align:center;min-width:16px;font-size:13px;font-weight:700}.roll-result.atk-result{color:var(--accent)}.roll-result.dmg-result{color:var(--danger)}.stats{font-family:var(--mono);color:var(--muted);flex-wrap:wrap;align-items:center;gap:16px;margin-top:6px;font-size:12px;display:flex}.stats b{font-weight:700}.counter{font-family:var(--mono);align-items:center;gap:5px;font-size:12px;display:inline-flex}.counter-btn{text-align:center;background:var(--panel-2);border:1px solid var(--line);width:18px;height:18px;color:var(--text);cursor:pointer;font-size:12px;line-height:16px;font-family:var(--sans);border-radius:4px;padding:0}.counter-btn:hover{border-color:var(--accent)}.counter-val{text-align:center;min-width:14px;font-weight:700}.counter-max{color:var(--muted)}.counter.ap .counter-val{color:var(--warn)}.counter.mana .counter-val{color:var(--mana)}.ref-row{color:var(--muted);flex-wrap:wrap;align-items:center;gap:14px;margin-top:4px;font-size:11px;display:flex}.ref-item{align-items:center;gap:4px;display:inline-flex}.kill-mark{text-decoration:line-through}.row-footer{border-top:1px solid var(--line);flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;margin-top:8px;padding-top:6px;display:flex}.footer-actions{flex-wrap:wrap;align-items:center;gap:6px;display:flex}.history{border-top:1px solid var(--line);margin-top:6px;padding-top:6px;display:none}.history.open{display:block}.history ul{flex-direction:column;gap:2px;margin:0;padding:0;list-style:none;display:flex}.history li{font-family:var(--mono);color:var(--muted);font-size:11px}.history .empty-hist{color:var(--muted);border:none;padding:0;font-size:11px;font-style:italic}.tpl-grid{grid-template-columns:1fr;gap:8px;display:grid}.tpl-row{background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 3px color-mix(in srgb, var(--text) 12%, transparent);border-radius:8px;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 14px;display:grid}.tpl-fields{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.tpl-fields label{color:var(--muted);text-transform:uppercase;letter-spacing:.04em;flex-direction:column;gap:2px;font-size:10px;display:flex}.tpl-fields input{width:90px}.tpl-fields input.name-field{width:150px}.group-name-list{flex-direction:column;gap:6px;margin-bottom:24px;display:flex}.group-name-row{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.group-name-row input{flex:160px;min-width:120px;max-width:280px}.group-name-row .hint{white-space:nowrap}.tpl-fields select.group-select{width:150px}.section-title{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:20px 0 10px;font-size:12px}.hint{color:var(--muted);margin-top:4px;font-size:12px}footer.status{color:var(--muted);background:var(--bg);border-top:1px solid var(--line);padding:6px 20px;font-size:11px;position:fixed;bottom:0;left:0;right:0}.modal-overlay{z-index:100;background:#0009;justify-content:center;align-items:center;display:none;position:fixed;inset:0}.modal-overlay.open{display:flex}.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:280px;max-width:90vw;padding:20px}.modal-msg{margin-bottom:12px;font-size:14px}.modal-box input[type=text]{width:100%;margin-top:4px}.modal-actions{justify-content:flex-end;gap:8px;margin-top:16px;display:flex}body:not(.role-gm)>header,body:not(.role-gm)>main,body:not(.role-gm)>.fab-settings,body:not(.role-gm)>footer.status,body:not(.role-player) #player-view{display:none}body.role-player{padding-bottom:0}#player-view{padding:16px 18px}#player-view .pv-round{font-family:var(--heading);margin-bottom:6px;font-size:15px;font-weight:600}#player-view .pv-label{color:var(--muted);margin-top:10px;font-size:12px}#player-view .pv-who{align-items:center;gap:8px;margin-top:2px;display:flex}#player-view .pv-who .name{font-size:16px}#player-view .pv-who.big .name{font-size:20px}#player-view .pv-empty{color:var(--muted)}</style>
+  <script type="module" crossorigin src="./assets/main-zWkjobX1.js"></script>
+</head>
+<body>
 
-    <!-- Spieleransicht -->
-    <section id="player-view" hidden>
-      <div class="round" id="p-round"></div>
-      <div class="label">Am Zug</div>
-      <div class="big" id="p-current">–</div>
-      <div class="label">Als Nächstes</div>
-      <div class="next" id="p-next">–</div>
-    </section>
+<section id="player-view">
+  <div class="pv-round" id="pvRound">Kein Kampf aktiv</div>
+  <div class="pv-label">Am Zug</div>
+  <div class="pv-who big" id="pvActive"><span class="pv-empty">–</span></div>
+  <div class="pv-label">Als Nächstes</div>
+  <div class="pv-who" id="pvNext"><span class="pv-empty">–</span></div>
+</section>
 
-    <!-- Spielleiteransicht -->
-    <section id="gm-view" hidden>
-      <div class="bar">
-        <span class="round" id="g-round"></span>
-        <span class="spacer"></span>
-        <button id="btn-back" title="Einen Zug zurück">◀</button>
-        <button id="btn-next" class="primary">Weiter ▶</button>
+<header>
+  <h1>Kampf-Tracker <span class="rund" id="turnCounter"></span></h1>
+</header>
+
+<main>
+
+  <section id="view-kampf">
+    <div class="toolbar" id="addControlsToolbar">
+      <select id="gegnerSelect"></select>
+      <button class="btn icon-add-btn" id="addGegnerBtn" title="Gegner hinzufügen">+</button>
+      <span style="width:1px;height:20px;background:var(--line);"></span>
+      <select id="spielerSelect"></select>
+      <button class="btn icon-add-btn" id="addSpielerBtn" title="Spieler hinzufügen">+</button>
+      <span style="width:1px;height:20px;background:var(--line);"></span>
+      <button class="btn danger" id="resetCombatBtn">Kampf zurücksetzen</button>
+    </div>
+    <button class="add-toggle-bar" id="addToggleBtn" title="Hinzufügen-Leiste ein-/ausblenden">
+      <span class="add-toggle-line"></span>
+      <span class="add-toggle-icon" id="addToggleIcon">−</span>
+      <span class="add-toggle-line"></span>
+    </button>
+    <div id="miniQueue" class="mini-queue"></div>
+    <div class="toolbar">
+      <button class="btn primary" id="nextTurnBtn" style="width:100%; height:44px; font-size:15px;">Zug abschließen ▸</button>
+    </div>
+    <div id="combatList"></div>
+  </section>
+
+  <section id="view-einstellungen" style="display:none;">
+    <div class="toolbar">
+      <button class="btn" id="backToKampfBtn">← Zurück zum Kampf</button>
+    </div>
+    <nav class="subnav">
+      <button class="btn small active" data-subview="gruppen">Gruppen</button>
+      <button class="btn small" data-subview="gegner">Gegner-Vorlagen</button>
+      <button class="btn small" data-subview="spieler">Spieler-Vorlagen</button>
+      <button class="btn small" data-subview="speichern">Speichern / Laden</button>
+    </nav>
+
+    <div id="sub-gruppen" class="settings-sub">
+      <div class="section-title">Gruppen</div>
+      <div class="hint" style="margin-bottom:10px;">Gruppennamen anlegen — die eigentliche Zuordnung machst du direkt bei jeder Gegner-/Spieler-Vorlage über das Gruppen-Dropdown.</div>
+      <div class="toolbar">
+        <button class="btn primary" id="addGroupNameBtn">+ Neue Gruppe</button>
       </div>
-      <div class="sub" id="g-next"></div>
+      <div id="groupNameList" class="group-name-list"></div>
+    </div>
 
-      <details open class="block">
-        <summary>Würfeln</summary>
-        <div class="dice-row">
-          <label>Treffen</label>
-          <input id="dice-hit" value="1W20" />
-          <button id="roll-hit">Würfeln</button>
-        </div>
-        <div class="dice-row">
-          <label>Schaden</label>
-          <input id="dice-dmg" value="1W6" />
-          <button id="roll-dmg">Würfeln</button>
-        </div>
-        <div class="quick" id="quick"></div>
-        <div id="dice-result" class="dice-result"></div>
-        <div id="dice-log" class="dice-log"></div>
-      </details>
-
-      <details class="block" id="add-block">
-        <summary>Hinzufügen</summary>
-        <div class="toggle">
-          <label><input type="radio" name="kind" value="enemy" checked /> Gegner</label>
-          <label><input type="radio" name="kind" value="player" /> Spieler</label>
-        </div>
-        <div class="form">
-          <label class="only-player">Name <input id="add-name" /></label>
-          <label class="only-enemy">Level <input id="add-level" type="number" value="1" min="0" /></label>
-          <label class="only-enemy">Anzahl <input id="add-count" type="number" value="1" min="1" max="20" /></label>
-          <label>Ini <input id="add-ini" placeholder="z. B. 12 oder 1W10+3" /></label>
-          <label>LP <input id="add-lp" placeholder="z. B. 20 oder 3W6" /></label>
-        </div>
-        <button id="btn-add" class="primary">Hinzufügen</button>
-        <p class="hint">Ini und LP können Zahlen oder Würfel sein. Bei mehreren Gegnern wird für jeden einzeln gewürfelt. Tokens lassen sich auch per Rechtsklick auf der Karte hinzufügen.</p>
-      </details>
-
-      <div id="list"></div>
-
-      <div class="bar end">
-        <button id="btn-reset-round">Runden zurücksetzen</button>
-        <button id="btn-clear">Kampf leeren</button>
+    <div id="sub-gegner" class="settings-sub" style="display:none;">
+      <div class="section-title">Gegner-Vorlagen</div>
+      <div class="toolbar">
+        <button class="btn primary" id="addTplBtn">+ Neue Vorlage</button>
+        <span class="hint">Platzhalterwerte — hier direkt anpassen.</span>
       </div>
-    </section>
+      <div class="tpl-grid" id="tplList"></div>
+    </div>
 
-  </body>
+    <div id="sub-spieler" class="settings-sub" style="display:none;">
+      <div class="section-title">Spieler-Vorlagen</div>
+      <div class="toolbar">
+        <button class="btn primary" id="addPlayerTplBtn">+ Neuer Spieler</button>
+        <span class="hint">Gespeicherte Charaktere für schnellen Zugriff im Kampf.</span>
+      </div>
+      <div class="tpl-grid" id="playerTplList"></div>
+    </div>
+
+    <div id="sub-speichern" class="settings-sub" style="display:none;">
+      <div class="section-title">Kampf speichern / laden</div>
+      <div class="hint" style="margin-bottom:10px;">Der aktuelle Kampf wird ohnehin automatisch gespeichert. Für ein Backup oder um ihn auf einem anderen Gerät fortzusetzen, als Datei sichern.</div>
+      <div class="toolbar">
+        <button class="btn" id="exportCombatBtn" title="Kampf als Datei speichern">💾 Kampf speichern</button>
+        <button class="btn" id="importCombatBtn" title="Gespeicherten Kampf laden">📂 Kampf laden</button>
+        <input type="file" id="importCombatInput" accept="application/json" style="display:none;">
+      </div>
+      <div class="section-title">Vorlagen speichern / laden</div>
+      <div class="hint" style="margin-bottom:10px;">Gegner- und Spieler-Vorlagen samt Gruppen als Datei sichern oder auf einem anderen Gerät bzw. in einem anderen Browser wieder einspielen.</div>
+      <div class="toolbar">
+        <button class="btn" id="exportTplBtn">💾 Vorlagen speichern</button>
+        <button class="btn" id="importTplBtn">📂 Vorlagen laden</button>
+        <input type="file" id="importTplInput" accept="application/json" style="display:none;">
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<button class="btn fab-settings" id="settingsFab" title="Einstellungen">⚙️</button>
+
+<footer class="status" id="statusBar">wird geladen…</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-msg" id="modalMsg"></div>
+    <input type="text" id="modalInput" style="display:none;">
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">Abbrechen</button>
+      <button class="btn primary" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="mini-popup" id="miniPopup">
+  <div class="mini-popup-name" id="miniPopupName"></div>
+  <div class="mini-popup-hp">
+    <span class="mini-popup-hp-label" id="miniPopupHpLabel"></span>
+    <span class="hp-bar-outer mini-popup-bar"><span class="hp-bar-inner" id="miniPopupHpBar"></span></span>
+  </div>
+  <div class="mini-popup-row">
+    <input type="number" id="miniDmgInput" placeholder="Schaden">
+    <button class="btn small danger" id="miniDmgBtn">Schaden</button>
+  </div>
+</div>
+
+</body>
 </html>
