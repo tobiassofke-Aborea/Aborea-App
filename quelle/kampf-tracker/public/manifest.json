@@ -8,7 +8,7 @@
   "action": {
     "title": "Kampf-Tracker",
     "icon": "/Aborea-App/kampf-tracker/icon.svg",
-    "popover": "/Aborea-App/kampf-tracker/index.html",
+    "popover": "/Aborea-App/kampf-tracker/index.html?v=2",
     "height": 720,
     "width": 480
   }
