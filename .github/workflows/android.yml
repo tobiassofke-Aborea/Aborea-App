@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths-ignore:
       - 'kofferliste/**'
+      - 'kampf-tracker/**'
+      - 'quelle/kampf-tracker/**'
   workflow_dispatch:
 
 permissions:

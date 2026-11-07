@@ -1,0 +1,16 @@
+{
+  "name": "Kampf-Tracker",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "description": "Initiative, LP und Würfel für den Spielleiter. Spieler sehen, wer dran ist.",
+  "author": "Tobias Sofke",
+  "icon": "icon.svg",
+  "background_url": "background.html",
+  "action": {
+    "title": "Kampf-Tracker",
+    "icon": "icon.svg",
+    "popover": "index.html",
+    "height": 640,
+    "width": 420
+  }
+}

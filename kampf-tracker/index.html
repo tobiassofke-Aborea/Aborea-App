@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kampf-Tracker</title>
+    <script type="module" crossorigin src="./assets/main-olFNT6Px.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/state-DpeBqtlh.js">
+    <link rel="stylesheet" crossorigin href="./assets/main-BeeJswtu.css">
+  </head>
+  <body>
+    <div id="loading">Lädt …</div>
+
+    <!-- Spieleransicht -->
+    <section id="player-view" hidden>
+      <div class="round" id="p-round"></div>
+      <div class="label">Am Zug</div>
+      <div class="big" id="p-current">–</div>
+      <div class="label">Als Nächstes</div>
+      <div class="next" id="p-next">–</div>
+    </section>
+
+    <!-- Spielleiteransicht -->
+    <section id="gm-view" hidden>
+      <div class="bar">
+        <span class="round" id="g-round"></span>
+        <span class="spacer"></span>
+        <button id="btn-back" title="Einen Zug zurück">◀</button>
+        <button id="btn-next" class="primary">Weiter ▶</button>
+      </div>
+      <div class="sub" id="g-next"></div>
+
+      <details open class="block">
+        <summary>Würfeln</summary>
+        <div class="dice-row">
+          <label>Treffen</label>
+          <input id="dice-hit" value="1W20" />
+          <button id="roll-hit">Würfeln</button>
+        </div>
+        <div class="dice-row">
+          <label>Schaden</label>
+          <input id="dice-dmg" value="1W6" />
+          <button id="roll-dmg">Würfeln</button>
+        </div>
+        <div class="quick" id="quick"></div>
+        <div id="dice-result" class="dice-result"></div>
+        <div id="dice-log" class="dice-log"></div>
+      </details>
+
+      <details class="block" id="add-block">
+        <summary>Hinzufügen</summary>
+        <div class="toggle">
+          <label><input type="radio" name="kind" value="enemy" checked /> Gegner</label>
+          <label><input type="radio" name="kind" value="player" /> Spieler</label>
+        </div>
+        <div class="form">
+          <label class="only-player">Name <input id="add-name" /></label>
+          <label class="only-enemy">Level <input id="add-level" type="number" value="1" min="0" /></label>
+          <label class="only-enemy">Anzahl <input id="add-count" type="number" value="1" min="1" max="20" /></label>
+          <label>Ini <input id="add-ini" placeholder="z. B. 12 oder 1W10+3" /></label>
+          <label>LP <input id="add-lp" placeholder="z. B. 20 oder 3W6" /></label>
+        </div>
+        <button id="btn-add" class="primary">Hinzufügen</button>
+        <p class="hint">Ini und LP können Zahlen oder Würfel sein. Bei mehreren Gegnern wird für jeden einzeln gewürfelt. Tokens lassen sich auch per Rechtsklick auf der Karte hinzufügen.</p>
+      </details>
+
+      <div id="list"></div>
+
+      <div class="bar end">
+        <button id="btn-reset-round">Runden zurücksetzen</button>
+        <button id="btn-clear">Kampf leeren</button>
+      </div>
+    </section>
+
+  </body>
+</html>

@@ -18,6 +18,14 @@ Die Daten liegen nur auf dem Handy. Charaktere zieht man mit „Charakter als Te
 
 Im Ordner `kofferliste/` liegt eine eigene, davon unabhängige Web-App „Nicola packt“ (Packliste mit dem kleinen Tobi): https://tobiassofke-aborea.github.io/Aborea-App/kofferliste/
 
+## Kampf-Tracker für Owlbear Rodeo
+
+Im Ordner `kampf-tracker/` liegt eine Owlbear-Rodeo-Extension: Der Spielleiter verwaltet Initiative, LP, Gegner und Würfel, die Spieler sehen nur, wer am Zug ist und wer als Nächstes dran ist.
+
+Manifest-URL zum Einbinden (Owlbear-Profil → Add Extension): https://tobiassofke-aborea.github.io/Aborea-App/kampf-tracker/manifest.json
+
+Der Quellcode liegt in `quelle/kampf-tracker/`. Nach Änderungen dort `npm install` und `npm run build` ausführen, das schreibt die fertigen Dateien nach `kampf-tracker/`.
+
 ## Aufbau
 
 - `quelle/aborea-charakterbogen.html`: die App selbst
