@@ -598,6 +598,12 @@ body.zdlgon #roll .box{margin-top:0}
 .zamb{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #zdlg .zdbox{position:relative;z-index:1}
 #zdlg .zinfo{margin-top:2px}
+.ziso .gl{stroke:var(--line);stroke-width:1;fill:none}
+.ziso .fl{fill:color-mix(in srgb,var(--accent) 55%,var(--card));stroke:var(--accent);stroke-width:1}
+.ziso .fr{fill:color-mix(in srgb,var(--accent) 75%,var(--card));stroke:var(--accent);stroke-width:1}
+.ziso .ft{fill:color-mix(in srgb,var(--accent) 30%,var(--card));stroke:var(--accent);stroke-width:1}
+.ziso .pers line{stroke:var(--ink);stroke-width:2}.ziso .pers circle{fill:var(--ink)}
+.ziso text{font-size:10px;fill:var(--muted);text-anchor:middle;font-family:var(--body)}
 .zaoeb{font-size:.82rem;margin-left:4px}
 .zaoe{display:grid;gap:4px;justify-items:start;margin:4px 0}.zaoe svg{max-width:100%;height:auto}
 .zaoe .grid rect{fill:none;stroke:var(--line);stroke-width:1}.zaoe .grid rect.on{fill:color-mix(in srgb,var(--accent) 38%,transparent)}
@@ -1740,7 +1746,7 @@ const zbAttr=a=>String(a||"").toUpperCase().replace(/[^A-ZÄÖÜ/]/g,"").replace
 function zbCalc(z,cs,choice){
   const slots=Math.max(0,cs-1),opts=z.st||[],oder=z.m==="ODER"&&opts.length>1;
   const per=f=>/pro W\d+/i.test(f.w);
-  const fx=z.fx.map(f=>({...f,dice:per(f)?null:zbDiceIn(f.w),okD:zbDiceIn(f.ok),noD:zbDiceIn(f.no),tdN:/^-?\d+$/.test(String(f.td))?+f.td:null,plus:0,sh:zShape(f.f),du:zDur(f.d),
+  const fx=z.fx.map(f=>({...f,dice:per(f)?null:zbDiceIn(f.w),okD:zbDiceIn(f.ok),noD:zbDiceIn(f.no),tdN:/^-?\d+$/.test(String(f.td))?+f.td:null,plus:0,sh:zShape(f.f)||((m=>m?zShape(m[0]):null)(String(f.t).match(/\d+(?:,\d+)?x\d+(?:,\d+)?x\d+(?:,\d+)?m/))),du:zDur(f.d),
     di:(m=>m?{v:zNum(m[1]),u:m[2],rest:m[3]||""}:null)(String(f.f||"").match(/^([\d,]+)\s*(m|km)(\s+(?:Weite|Bewegung))?$/))}));
   let probeBonus=0;const extra=[];
   opts.forEach((o,i)=>{
@@ -1817,8 +1823,8 @@ function zbFxHtml(sp,z,calc,cs){
     const bft=/beaufort/i.test(f.a);const br=bft&&zbRes[sp.id]&&zbRes[sp.id].bft;
     const shift=bft?(calc.extra.find(x=>/Einfluss/.test(x))?Math.max(0,cs-1):0):0;
     return `<div class="zfx"><div class="zft">${esc(f.t)}${val?` · ${val}`:""}${bft?ib("beaufort"):""}</div>
-      ${meta.length?`<div class="zmeta">${meta.map(esc).join(" · ")}${f.sh?` <button class="linkbtn zaoeb" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}">${zAoeOpen.has(sp.id+":"+i)?"Fläche ausblenden":"Fläche zeigen"}</button>`:""}</div>`:""}
-      ${f.sh&&zAoeOpen.has(sp.id+":"+i)?zAoeSvg(f.sh,z.o):""}${test}
+      ${meta.length?`<div class="zmeta">${meta.map(esc).join(" · ")}${f.sh?` <button class="linkbtn zaoeb" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}">${zAoeOpen.has(sp.id+":"+i)?"ausblenden":f.sh.t==="rect"&&f.sh.c!=null?"Aufbau zeigen":"Fläche zeigen"}</button>`:""}</div>`:""}
+      ${f.sh&&zAoeOpen.has(sp.id+":"+i)?(f.sh.t==="rect"&&f.sh.c!=null?zIsoSvg(f.sh):zAoeSvg(f.sh,z.o)):""}${test}
       ${rolls.length?`<div class="zrolls">${rolls.join("")}</div>`:""}
       ${br!=null?`${bftHtml(br.v)}${shift?`<div class="zbshift"><span class="hint">Einfluss: bis ${shift} Stufe${shift>1?"n":""} verschieben</span><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="-1" ${br.v<=Math.max(1,br.base-shift)?"disabled":""}>−</button><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="1" ${br.v>=Math.min(12,br.base+shift)?"disabled":""}>+</button></div>`:""}`:""}
       ${f.n?`<div class="hint">${esc(f.n)}</div>`:""}</div>`;
@@ -2109,7 +2115,7 @@ function zShape(s){
 function zShapeTxt(h){
   if(h.t==="circle")return `${zFmt(h.v)}${h.u} ${h.w}`;
   if(h.t==="sq")return `${zFmt(h.v)}m²`;
-  return `${zFmt(h.a)}x${zFmt(h.b)}${h.c!=null?"x"+zFmt(h.c):""}${h.u}${h.t==="cone"?" Kegel":""}`;
+  return `${h.n>1?h.n+"× ":""}${zFmt(h.a)}x${zFmt(h.b)}${h.c!=null?"x"+zFmt(h.c):""}${h.u}${h.t==="cone"?" Kegel":""}`;
 }
 const zDur=d=>{const m=String(d||"").match(/^(\d+)\s*(Runden?|min|h|sek\.?|Tage?)(.*)$/i);return m?{n:+m[1],u:m[2],rest:m[3]}:null;};
 const zDurU=u=>/^runde/i.test(u)?"r":/^tag/i.test(u)?"t":u.toLowerCase().replace(".","");
@@ -2122,12 +2128,44 @@ function zApplyMisc(o,c,fx,z){
     let v=zNum(m[1])*c;const dia=x=>/durchmesser|kugel/i.test(x);if(dia(f.sh.w)&&!dia(m[3]))v*=2;if(!dia(f.sh.w)&&dia(m[3]))v/=2;f.sh.v+=v;return true;}
   if((m=o.match(/^\+([\d,]+)\s*x\s*([\d,]+)(?:\s*x\s*([\d,]+))?\s*(m|km)(\s*Kegel)?\b/i))){const F=fx.filter(f=>f.sh&&(f.sh.t==="rect"||f.sh.t==="cone"));if(!F.length)return false;
     F.forEach(f=>{f.sh.a+=zNum(m[1])*c;f.sh.b+=zNum(m[2])*c;if(m[3]&&f.sh.c!=null)f.sh.c+=zNum(m[3])*c;});return true;}
+  if((m=o.match(/^\+(\d+)\s+(?:weitere\s+)?(?:[\dx,]+m\s+)?(Wallelement|Erweiterung)/i))){const f=fx.find(f=>f.sh&&f.sh.t==="rect"&&f.sh.c!=null);if(!f)return false;f.sh.n=(f.sh.n||1)+(+m[1])*c;return true;}
   if((m=o.match(/^\+([\d,]+)\s*m²$/))){const f=fx.find(f=>f.sh&&f.sh.t==="sq");if(!f)return false;f.sh.v+=zNum(m[1])*c;return true;}
   if((m=o.match(/^\+([\d,]+)\s*m(\s+Distanz)?$/i))){const v=zNum(m[1])*c;
     const d=fx.find(f=>f.di);if(d){d.di.v+=v;return true;}
     const r=fx.find(f=>f.sh&&f.sh.t==="rect");if(r){if(r.sh.a>=r.sh.b)r.sh.a+=v;else r.sh.b+=v;return true;}
     const ci=fx.find(f=>f.sh&&f.sh.t==="circle");if(ci){ci.sh.v+=v;return true;}}
   return false;
+}
+
+/* Isometrische Ansicht für Bauten mit drei Maßen (B x H x T), z.B. Wall, Steinfestung */
+function zIsoSvg(h){
+  const k=h.u==="km"?1000:1,B=h.a*k,H=h.b*k,T=h.c*k,n=Math.max(1,h.n||1);
+  const c30=Math.cos(Math.PI/6),s30=.5,W=B*n;
+  const ex=(W+T)*c30,ey=(W+T)*s30+Math.max(H,1.8);
+  const sc=Math.min(260/Math.max(ex+1.2,1),190/Math.max(ey,1)),pad=14;
+  const P=(x,y,z)=>[(x-y)*c30*sc,((x+y)*s30-z)*sc];
+  const pts=a=>a.map(([x,y,z])=>P(x,y,z)).map(([u,v])=>`${u.toFixed(1)},${v.toFixed(1)}`).join(" ");
+  const all=[];for(const x of [0,W])for(const y of [0,T])for(const z of [0,H])all.push(P(x,y,z));all.push(P(W+1.2,0,0),P(W+1.2,0,1.8));
+  const minX=Math.min(...all.map(p=>p[0]))-pad-34,maxX=Math.max(...all.map(p=>p[0]))+pad,minY=Math.min(...all.map(p=>p[1]))-pad,maxY=Math.max(...all.map(p=>p[1]))+pad+12;
+  let g="";
+  // Boden-Raster (1m), nur wenn nicht zu groß
+  const step=W+T>30?Math.pow(10,Math.floor(Math.log10((W+T)/6))):1;
+  for(let x=0;x<=Math.ceil(W)+0.001;x+=step)g+=`<polyline class="gl" points="${pts([[x,0,0],[x,Math.ceil(T),0]])}"/>`;
+  for(let y=0;y<=Math.ceil(T)+0.001;y+=step)g+=`<polyline class="gl" points="${pts([[0,y,0],[Math.ceil(W),y,0]])}"/>`;
+  let blocks="";
+  for(let i=0;i<n;i++){const x0=i*B,x1=x0+B;
+    blocks+=`<polygon class="fl" points="${pts([[x0,T,0],[x1,T,0],[x1,T,H],[x0,T,H]])}"/>`+ // vorne (zum Betrachter: y=T)
+      `<polygon class="fr" points="${pts([[x1,0,0],[x1,T,0],[x1,T,H],[x1,0,H]])}"/>`+
+      `<polygon class="ft" points="${pts([[x0,0,H],[x1,0,H],[x1,T,H],[x0,T,H]])}"/>`;}
+  // Person zum Größenvergleich (1,8m)
+  const [px,py]=P(W+1.2,0,0),[,hy]=P(W+1.2,0,1.8);
+  const person=`<g class="pers"><line x1="${px}" y1="${py}" x2="${px}" y2="${hy+sc*.3}"/><circle cx="${px}" cy="${hy+sc*.15}" r="${Math.max(2.5,sc*.15)}"/></g>`;
+  const [bx,by]=P(W/2,T,0),[hx,hy2]=P(0,T,H/2),[tx,ty]=P(W,T/2,0);
+  const f=v=>zFmt(v/k)+h.u;
+  const lab=`<text x="${bx}" y="${by+13}">B ${n>1?n+"×":""}${f(B)}</text><text x="${hx-6}" y="${hy2}" text-anchor="end">H ${f(H)}</text><text x="${tx+6}" y="${ty+12}" text-anchor="start">T ${f(T)}</text>`;
+  return `<div class="zaoe ziso"><svg viewBox="${minX} ${minY} ${maxX-minX} ${maxY-minY}" width="${Math.round(maxX-minX)}" role="img" aria-label="Aufbau ${n>1?n+" Elemente ":""}Breite ${f(B)}, Höhe ${f(H)}, Tiefe ${f(T)}">
+    <g>${g}</g>${blocks}${person}${lab}</svg>
+    <div class="hint">${n>1?`${n} Elemente nebeneinander · `:""}Maße: Breite × Höhe × Tiefe · Figur = 1,8 m</div></div>`;
 }
 /* Rastergrafik für die Fläche */
 function zAoeSvg(h,self){
