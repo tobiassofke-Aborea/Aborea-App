@@ -2295,7 +2295,7 @@ function zauberCardHtml(){
       calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||""))req=req.filter(r=>r.k!=="f"+j);});
       if(!open){const castH=zCastRow(sp,st,cs,cost,gz,req);
         const bits=calc.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
-        const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"K*":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
+        const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"Konzentration":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
         return compact(bits.join("<br>"),castH,tg.map(esc).join(" · "));}
       return `<div class="zspell">${head}
       ${tags.length?`<div class="ztags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
