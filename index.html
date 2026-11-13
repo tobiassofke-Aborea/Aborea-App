@@ -574,6 +574,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zdbox{width:100%;max-width:440px;max-height:85vh;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 .zdbox h3{font-family:var(--display);font-weight:400;font-size:1.5rem;margin:2px 0}
 .zdsum{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}.zdsum b{font-size:1.3rem}
+.zmhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .zsumbox{display:grid;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .zelr .chips .chip small{color:inherit;opacity:.75;font-size:.72rem;margin-left:3px}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -1620,6 +1621,17 @@ function kampfDo(b){
       if(e.sum.lp<=0){zAkt().splice(zAkt().indexOf(e),1);queueSave(cur);renderAll();showMsg(`${e.n} wurde zerstört.`);return;}queueSave(cur);return renderAll();}
     case "zsroll":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.sum)return;const d=e.sum[b.dataset.w];if(!d)return;
       zbRollDice(`${e.n}: ${b.dataset.w==="heal"?"Heilung":"Angriff"}`,d,t=>({tag:`${t} ${b.dataset.w==="heal"?"Heilung":"Schaden"}`}));return;}
+    case "zmine":{if(!zArm||zArm.phase!=="armed")return;const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===zArm.id);if(!sp)return;
+      const ln=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",mi=zMineInfo(zbFor(sp,ln),zArm.cs,zbChoice(sp,ch));if(!mi)return;
+      const m=zArm.mines||(zArm.mines=[1]),sum=m.reduce((p,q)=>p+q,0),op=b.dataset.op;
+      if(op==="add"&&m.length<mi.max&&sum<mi.pool)m.push(1);
+      if(op==="del"&&m.length>1)m.pop();
+      if(op==="dice"){const i=+b.dataset.i,d=+b.dataset.d;if(d>0&&sum<mi.pool)m[i]++;if(d<0&&m[i]>1)m[i]--;}
+      return renderAll();}
+    case "zmboom":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.mines)return;const i=+b.dataset.i,mo=e.mines[i];if(!mo)return;const n=mo.d||mo,nr=mo.i||i+1;
+      e.mines.splice(i,1);e.boom=num(e.boom)+1;const last=!e.mines.length;if(last)zAkt().splice(zAkt().indexOf(e),1);queueSave(cur);renderAll();
+      rollPool(`Explosiver Stein ${nr}: ${n}W10`,{groups:[{label:`${n}W10`,n,s:10}],flat:0},t=>({tag:`${t} Schaden · 1m Radius${last?" · letzter Stein":""}`}));
+      try{zMagic("earth");}catch(err){}return;}
     case "zelem":{if(!zArm||zArm.phase!=="armed")return;const el=zArm.elems||(zArm.elems=[]);el[+b.dataset.i]=b.dataset.v;return renderAll();}
     case "zend":{const L=zAkt(),i=L.findIndex(e=>e.k===b.dataset.k);if(i>=0)L.splice(i,1);queueSave(cur);return renderAll();}
     case "zst":{const {ch}=sbParse();const st=num(ch.learned[b.dataset.spell]);let cs=Math.min(num(ch.castStufe[b.dataset.spell])||st,st);
@@ -2055,12 +2067,12 @@ function zDlgRender(){
   const ap=fin?a.ap:atkCost(2);
   el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div><div class="lab">Zauber wirken</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${ap} AP</div></div>
     ${kwarn}
-    ${zSumDlg(sp,z,a)}
+    ${zSumDlg(sp,z,a)}${zMineDlg(sp,z,a)}
     ${steps.length?`<ol class="zsteps">${rows}</ol>`:""}
     ${sum}
     ${fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>
       <div class="row-actions"><button class="btn pri" data-act="zclose">Fertig</button></div>`
-     :all&&(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);return !si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN;})()?`<div class="row-actions"><button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} Mana · ${ap} AP</button></div><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`
+     :all&&(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})()?`<div class="row-actions"><button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} Mana · ${ap} AP</button></div><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`
      :`<p class="hint">Erst ${gz?"zielen, dann ":""}die Effekte würfeln. Danach siehst du alle Ergebnisse und tippst auf „Wirken“. Erst dann werden Mana und AP abgezogen.</p><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`}
     ${info}</div>`;
   if(!fin)zAmbient(zKind(z,lname),el);else zAmbStop();
@@ -2178,10 +2190,25 @@ function zSumInfo(z,cs,choice,elems){
   return {i,atkI,lp,lpTxt:lpm?lpm[1]:"",ap,dmg,heal,elem,bonusN,du:calc.fx[i].du,name:nm,count:(f.t.match(/(\d+)\s+Verbündete/)||[])[1]||1};
 }
 function zSumLine(si){return [si.lp!=null?`${si.lp} LP`:si.lpTxt?`${si.lpTxt} LP`:"",si.ap?`${si.ap} AP`:"",si.dmg?`Angriff ${zbDiceTxt(si.dmg)}`:"",si.heal?`Heilung ${zbDiceTxt(si.heal)}`:""].filter(Boolean).join(" · ");}
+
+/* Kristall Chaos: Steine und W10 pro Stein verteilen, Explosion erst beim Auslösen würfeln */
+function zMineInfo(z,cs,choice){if(!z||z.nr!==19)return null;const slots=Math.max(0,cs-1),odr=z.m==="ODER"&&z.st.length>1;
+  const c=odr?[num(choice&&choice[0]),num(choice&&choice[1])]:[slots,slots];return {pool:5+c[0],max:5+c[1]};}
+function zMinesOk(a,mi){const m=a.mines||[];const sum=m.reduce((p,q)=>p+q,0);return m.length>0&&m.every(x=>x>=1)&&sum<=mi.pool;}
+function zMineDlg(sp,z,a){
+  const {ch}=sbParse(),mi=zMineInfo(z,a.cs,zbChoice(sp,ch));if(!mi)return "";
+  if(!a.mines){const n=Math.min(mi.max,mi.pool);a.mines=Array.from({length:n},()=>1);}
+  const m=a.mines,sum=m.reduce((p,q)=>p+q,0),ro=a.phase!=="armed"?"disabled":"";
+  return `<div class="zsumbox"><div class="zmhead"><span class="lab">Explosive Steine</span><div class="step"><button data-act="zmine" data-op="del" ${ro||m.length<=1?"disabled":""} aria-label="ein Stein weniger">−</button><output>${m.length}</output><button data-act="zmine" data-op="add" ${ro||m.length>=mi.max||sum>=mi.pool?"disabled":""} aria-label="ein Stein mehr">+</button></div></div>
+    <div class="hint">${sum} von ${mi.pool} W10 verteilt · höchstens ${mi.max} Steine</div>
+    ${m.map((x,i)=>`<div class="zop"><span>Stein ${i+1}: <b>${x}W10</b></span><div class="step"><button data-act="zmine" data-op="dice" data-i="${i}" data-d="-1" ${ro||x<=1?"disabled":""} aria-label="weniger">−</button><output>${x}</output><button data-act="zmine" data-op="dice" data-i="${i}" data-d="1" ${ro||sum>=mi.pool?"disabled":""} aria-label="mehr">+</button></div></div>`).join("")}
+    <div class="hint">Der Schaden wird erst gewürfelt, wenn ein Stein ausgelöst wird. Die Steine findest du danach unter „Aktive Zauber“.</div></div>`;
+}
 function zTrack(sp,z,calc,cs){
   const L=zAkt();let msg="";
   let rounds=0,time="";calc.fx.forEach(f=>{if(!f.du)return;if(zDurU(f.du.u)==="r")rounds=Math.max(rounds,f.du.n);else if(!time)time=zDurTxt(f.du);});
   if(z.k){const old=zKonz();if(old){L.splice(L.indexOf(old),1);msg=`Konzentration auf ${old.n} beendet. `;}}
+  if(z.nr===19&&zArm&&zArm.mines){L.push({k:Math.random().toString(36).slice(2,8),n:"Explosive Steine",sp:sp.name,st:cs,r:null,t:"",konz:false,mines:zArm.mines.map((d,i)=>({i:i+1,d})),boom:0});return msg;}
   const {ch}=sbParse(),si=zSumInfo(z,cs,zbChoice(sp,ch),zArm&&zArm.id===sp.id?zArm.elems:null);
   if(si){const d=si.du;for(let n=0;n<+si.count;n++)L.push({k:Math.random().toString(36).slice(2,8),n:si.count>1?`${si.name} ${n+1}`:si.name,sp:sp.name,st:cs,
       r:d&&zDurU(d.u)==="r"?d.n:null,t:d&&zDurU(d.u)!=="r"?zDurTxt(d):"",konz:!!z.k,sum:{lp:si.lp,lpMax:si.lp,ap:si.ap,dmg:si.dmg,heal:si.heal}});return msg;}
@@ -2191,6 +2218,9 @@ function zTrack(sp,z,calc,cs){
 function zAktHtml(){
   if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";
   return `<h2>Aktive Zauber${ib("aktiv")}</h2><div class="card zakt">${L.map(e=>{const S=e.sum;
+    if(e.mines)return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">${esc(e.sp)} · Stufe ${e.st}</span><div class="hint">${e.mines.length} Stein${e.mines.length===1?"":"e"} scharf · Annäherung auf 1m löst aus</div></div>
+      <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
+      <div class="zrolls">${e.mines.map((x,i)=>`<button class="btn small zroll2" data-act="zmboom" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}Stein ${x.i||i+1} explodiert: ${x.d||x}W10</button>`).join("")}</div></div>`;
     const dur=e.r!=null?`noch ${e.r} Runde${e.r===1?"":"n"}`:e.t?`läuft ${esc(e.t)}`:S?"bis es zerstört wird":"solange du dich konzentrierst";
     if(!S)return `<div class="zak${e.konz?" konz":""}"><div><b>${esc(e.n)}</b> <span class="hint">Stufe ${e.st}</span>${e.konz?' <span class="ktag">Konzentration</span>':""}
     <div class="hint">${dur}</div></div><button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>`;
@@ -2243,6 +2273,7 @@ function zauberCardHtml(){
     if(z){const calc=zbCalc(z,cs,zbChoice(sp,ch)),tags=zbTags(z);gz=!!z.gz;
       const fxh=zbFxHtml(sp,z,calc,cs),prh=zbProbeHtml(sp,z,calc),si0=zSumInfo(z,cs,zbChoice(sp,ch));let req=zReqFrom(fxh+prh);
       if(si0&&si0.atkI>=0)req=req.filter(r=>r.k!=="f"+si0.atkI);
+      if(z.nr===19)req=req.filter(r=>r.k!=="f1");
       return `<div class="zspell">${head}
       ${tags.length?`<div class="ztags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
       ${zbOderHtml(sp,z,calc,ch)}
