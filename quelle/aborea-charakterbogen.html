@@ -563,12 +563,15 @@ body.zdlgon #roll .box{margin-top:0}
 .zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zslp{display:flex;align-items:center;gap:6px}.zslp b{font-size:1.25rem;font-variant-numeric:tabular-nums;min-width:52px;text-align:center}.zslp b small{font-size:.8rem;color:var(--muted)}
 .zhbtn{width:100%;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .zhr{display:flex;align-items:center;gap:8px}
-.zspell.zc{gap:2px;padding:8px 0}
-.zspell.zc .zname{font-size:1rem}.zspell.zc .badge{font-size:.72rem;padding:2px 7px}
-.zbrief{flex:1;min-width:0;font-size:.86rem;line-height:1.3}
+.zspell.zc{gap:2px;padding:9px 0;cursor:pointer}
+.zch{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.zspell.zc .zname{font-size:1rem}
+.zmeta2{font-size:.76rem;color:var(--muted)}
+.zst2{font-size:.8rem;color:var(--muted);font-weight:500}
+.zbrief{font-size:.88rem;line-height:1.3}
 .ztg{display:block;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .zqrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.zqb{display:grid;justify-items:center;line-height:1.1;min-height:40px;padding:3px 10px;flex:none}.zqb small{font-size:.66rem;font-weight:500;opacity:.85}
+.zqb{min-height:34px;padding:0 14px;flex:none}
 .zsteps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .zst{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px}
 .zst.now{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--card))}
@@ -2272,9 +2275,12 @@ function zauberCardHtml(){
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,z=zbFor(sp,act.name);
     const open=zExp.has(sp.id);
-    const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="badge">Stufe ${st}</span>${chev(open)}</span></button>`;
-    const compact=(brief,castH)=>{const a=zArm&&zArm.id===sp.id&&zArm.phase==="done"?zArm:null;
-      return `<div class="zspell zc">${head}<div class="zqrow"><div class="zbrief">${brief}</div><button class="btn small pri zqb" data-act="zopen" data-spell="${sp.id}" aria-label="${esc(sp.name)} wirken, ${cost} Mana, ${atkCost(2)} AP">Wirken<small>${cost} MP · ${atkCost(2)} AP</small></button></div>
+    const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname">${esc(sp.name)}</span><span class="zhr"><span class="zst2">Lvl ${sp.level} · Stufe ${st}</span>${chev(open)}</span></button>`;
+    const compact=(brief,castH,meta)=>{const a=zArm&&zArm.id===sp.id&&zArm.phase==="done"?zArm:null;
+      return `<div class="zspell zc" data-zexp="${sp.id}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(sp.name)}: Details aufklappen">
+      <div class="zch"><span class="zname">${esc(sp.name)}</span><button class="btn small pri zqb" data-act="zopen" data-spell="${sp.id}" aria-label="${esc(sp.name)} wirken, ${cost} Mana, ${atkCost(2)} AP">Wirken</button></div>
+      <div class="zmeta2">Lvl ${sp.level} · Stufe ${st} · ${cost} MP · ${atkCost(2)} AP${meta?" · "+meta:""}</div>
+      <div class="zbrief">${brief}</div>
       ${a?`<div class="zdone">Gewirkt auf Stufe ${a.cs}: −${a.cost} Mana, −${a.ap} AP.</div>`:""}</div>`;};
     const lock=h=>zCanRoll(sp,gz)?h:h.replace(/class="btn small zroll"/g,'class="btn small zroll" disabled');
     let gz;
@@ -2286,7 +2292,7 @@ function zauberCardHtml(){
       if(!open){const castH=zCastRow(sp,st,cs,cost,gz,req);
         const bits=calc.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
         const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"K*":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
-        return compact(`${tg.length?`<span class="ztg">${tg.map(esc).join(" · ")}</span>`:""}${bits.join("<br>")}`,castH);}
+        return compact(bits.join("<br>"),castH,tg.map(esc).join(" · "));}
       return `<div class="zspell">${head}
       ${tags.length?`<div class="ztags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
       ${zbOderHtml(sp,z,calc,ch)}
@@ -2299,7 +2305,7 @@ function zauberCardHtml(){
     gz=zGezielt(sp);
     const steig=zSteig(sp,cs,ch),eff=nList(sp.effekt);
     if(!open){zCastRow(sp,st,cs,cost,gz,zReqFrom(eff.map((e,i)=>{const d=zbDiceIn(e);return d?`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${esc(zbDiceTxt(d))}</button>`:"";}).join("")));
-      return compact(eff.slice(0,2).map(e=>esc(e.split("\n")[0])).join("<br>"),"");}
+      return compact(eff.slice(0,2).map(e=>esc(e.split("\n")[0])).join("<br>"),"",gz?"Gezielt":"");}
     return `<div class="zspell">${head}
       ${gz?`<div class="hint">Gezielt: Zielwurf beim Ausführen</div>`:""}
       ${zCastRow(sp,st,cs,cost,gz,zReqFrom(eff.map((e,i)=>{const d=zbDiceIn(e);return d?`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${esc(zbDiceTxt(d))}</button>`:"";}).join("")))}
@@ -2339,6 +2345,8 @@ function zInfoHtml(sp,listName,z){
     <div class="zrow"><span class="lab">Mana-Kosten</span><div>Level + gewirkte Stufe</div></div>
   </div></details>`;
 }
+document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("[data-zexp]");if(!c||e.target.closest("button"))return;zExp.add(c.dataset.zexp);renderAll();});
+document.addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const c=e.target.closest&&e.target.closest("[data-zexp]");if(!c||e.target!==c)return;e.preventDefault();zExp.add(c.dataset.zexp);renderAll();});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("zinfo")){d.open?zOpen.add(d.dataset.zid):zOpen.delete(d.dataset.zid);}},true);
 let zSlide="";
 function zSetList(id,dir){const {ch}=sbParse();if(ch.activeList===id&&dir!==0)return;ch.activeList=id;zSaveCh(ch);zSlide=dir>0?"slidel":dir<0?"slider":"";renderAll();zSlide="";}
