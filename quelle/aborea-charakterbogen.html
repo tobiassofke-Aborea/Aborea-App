@@ -577,6 +577,10 @@ body.zdlgon #roll .box{margin-top:0}
 .zgo2{display:inline-flex;align-items:center;justify-content:center;gap:8px;justify-self:start}
 .zsum{padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
 .zfinrow .btn.big{flex:1}
+.zdinner{display:contents}
+.zamb{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#zdlg .zdbox{position:relative;z-index:1}
+#zdlg .zinfo{margin-top:2px}
 .zaoeb{font-size:.82rem;margin-left:4px}
 .zaoe{display:grid;gap:4px;justify-items:start;margin:4px 0}.zaoe svg{max-width:100%;height:auto}
 .zaoe .grid rect{fill:none;stroke:var(--line);stroke-width:1}.zaoe .grid rect.on{fill:color-mix(in srgb,var(--accent) 38%,transparent)}
@@ -1593,10 +1597,15 @@ function kampfDo(b){
     case "zst":{const {ch}=sbParse();const st=num(ch.learned[b.dataset.spell]);let cs=Math.min(num(ch.castStufe[b.dataset.spell])||st,st);
       cs=Math.max(1,Math.min(st,cs+(+b.dataset.d)));ch.castStufe[b.dataset.spell]=cs;zSaveCh(ch);return renderAll();}
     case "zcancel":zArm=null;return renderAll();
+    case "zclose":if(zArm)zArm.show=false;return renderAll();
+    case "zopen":{
+      const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return;
+      const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st);if(!zAfford(sp,cs))return;
+      zArm={id:sp.id,cs,phase:"armed",show:true,name:sp.name,cost:sp.level+cs,done:[],res:{}};return renderAll();}
     case "zgo":{
       const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return;
       const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st);
-      if(!zArm||zArm.id!==sp.id||zArm.phase!=="armed"){if(!zAfford(sp,cs))return;zArm={id:sp.id,cs,phase:"armed",name:sp.name,cost:sp.level+cs,done:[],res:{}};}
+      if(!zArm||zArm.id!==sp.id||zArm.phase!=="armed")return;
       zArm.aimed=true;zStepKey="aim";renderAll();zAim(sp,sp.level+cs);return;}
     case "zfin":{
       const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return;
@@ -1807,8 +1816,7 @@ function zbAct(b){
   if(a==="zaoe"){const k=sp.id+":"+b.dataset.fx;zAoeOpen.has(k)?zAoeOpen.delete(k):zAoeOpen.add(k);renderAll();return true;}
   if(a==="zroll"||a==="zprobe"){
     const gz=z?!!z.gz:zGezielt(sp);
-    if(!zArm||zArm.id!==sp.id||zArm.phase!=="armed"){if(gz)return true;if(!zAfford(sp,cs))return true;
-      zArm={id:sp.id,cs,phase:"armed",name:sp.name,cost:sp.level+cs,done:[],res:{}};}
+    if(!zArm||zArm.id!==sp.id||zArm.phase!=="armed")return true;
     if(gz&&!zArm.aimed)return true;cs=zArm.cs;
     const k=zKeyOf(b.dataset);if(!zArm.done.includes(k))zArm.done.push(k);zStepKey=k;renderAll();}
   if(!z){ // eigener Zauber ohne Tabellendaten: Würfel aus dem Effekttext
@@ -1935,7 +1943,7 @@ function zExec(sp,cs,listName,z){
   if(z){const {ch}=sbParse();note=zTrack(sp,z,zbCalc(z,cs,zbChoice(sp,ch)),cs);}
   else if(/K\*/.test(sp.details||"")){const L=zAkt(),old=zKonz();if(old){L.splice(L.indexOf(old),1);note=`Konzentration auf ${old.n} beendet. `;}L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:true});}
   queueSave(cur);
-  zArm={id:sp.id,cs,phase:"done",cost,ap,note,name:sp.name,req:zArm&&zArm.req,gz:zArm&&zArm.gz,aimed:zArm&&zArm.aimed,done:zArm&&zArm.done,res:zArm&&zArm.res};
+  zArm={id:sp.id,cs,phase:"done",cost,ap,note,show:true,name:sp.name,req:zArm&&zArm.req,gz:zArm&&zArm.gz,aimed:zArm&&zArm.aimed,done:zArm&&zArm.done,res:zArm&&zArm.res};
   try{zMagic(zKind(z,listName));}catch(e){}
   buzz([25,50,70]);
   renderAll();return true;
@@ -1948,52 +1956,84 @@ function zAfford(sp,cs){const cost=sp.level+cs,ap=atkCost(2);
   if(num(cur.mp.cur)<cost){showMsg(`Nicht genug Mana für ${sp.name}: ${num(cur.mp.cur)} da, ${cost} nötig.`);return false;}
   if(apLeft()<ap){showMsg(`Nicht genug AP: ${apLeft()} übrig, ${ap} nötig. Tipp auf „Neue Runde“.`);return false;}return true;}
 function zCastRow(sp,st,cs,cost,gz,req){
-  let arm=zArm&&zArm.id===sp.id?zArm:null;const ap=atkCost(2);
+  const arm=zArm&&zArm.id===sp.id?zArm:null,ap=atkCost(2);
   if(arm&&arm.phase==="armed"){arm.req=req;arm.gz=gz;}
   const busy=arm&&arm.phase==="armed";
   const stepper=`<div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${cs<=1||busy?"disabled":""} aria-label="Stufe senken">−</button><output>${cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${cs>=st||busy?"disabled":""} aria-label="Stufe erhöhen">+</button></div>`;
-  const fin=arm&&arm.phase==="done",A=busy||fin?arm:{done:[],res:{}};
-  const steps=[...(gz?[{k:"aim",label:"Zielwurf",at:`data-act="zgo" data-spell="${sp.id}"`}]:[]),...req];
-  const okOf=x=>x.k==="aim"?!!A.aimed:(A.done||[]).includes(x.k);
-  let nowI=-1;if(!fin)steps.forEach((x,i)=>{if(!okOf(x)&&nowI<0)nowI=i;});
-  const res=A.res||{};
-  const list=steps.map((x,i)=>{const ok=okOf(x),r=res[x.k],st2=ok?"ok":i===nowI?"now":"wait";
-    return `<li class="zst ${st2}"><span class="zsn">${ok?"✓":i+1}</span><div class="zsb"><div class="zsl">${esc(x.label)}${r?` <b class="zsv">${r.t}</b>`:""}</div>
-      ${r&&r.g?`<div class="hint">${esc(r.g)}</div>`:""}
-      ${st2==="now"?`<button class="btn pri zgo2" ${x.at.replace(/class="[^"]*"/,"")}>${ICON_DICE_S} ${x.k==="aim"?"Zielwurf würfeln":esc(x.label)+" würfeln"}</button>`:""}</div></li>`;}).join("");
-  const all=steps.every(okOf);
-  const kz=zKonz(),isK=(()=>{const {db}=sbParse();const ln=db?((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name:"";const z=zbFor(sp,ln||"");return z?z.k:/K\*/.test(sp.details||"");})();
-  const kwarn=!fin&&isK&&kz&&kz.n!==sp.name?`<div class="zwarn">Du konzentrierst dich gerade auf ${esc(kz.n)}. Wenn du ${esc(sp.name)} wirkst, endet ${esc(kz.n)}.</div>`:"";
-  const sum=steps.length&&all?`<div class="zsum"><span class="lab">Ergebnis</span><div>${steps.map(x=>{const r=res[x.k];return r?`${esc(x.label)}: <b>${r.t}</b>`:"";}).filter(Boolean).join(" · ")}</div></div>`:"";
-  return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}</div>
-    ${steps.length?`<ol class="zsteps">${list}</ol>`:""}
-    ${kwarn}
-    ${fin?`${sum}<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP.${arm.note?`<br><span class="zwarn">${esc(arm.note)}</span>`:""}</div>
-      <div class="row-actions"><button class="btn small" data-act="zcancel">Nochmal wirken</button></div>`
-     :all?`${sum}<div class="row-actions zfinrow"><button class="btn pri big" data-act="zfin" data-spell="${sp.id}">Wirken: ${cost} Mana · ${ap} AP</button>${busy?`<button class="btn" data-act="zcancel">Verwerfen</button>`:""}</div>`
-     :`<div class="hint">${gz?"Erst zielen, dann die Effekte würfeln.":"Erst die Effekte würfeln."} Danach tippst du auf „Wirken“, dann werden ${cost} Mana und ${ap} AP abgezogen.</div>${busy?`<div class="row-actions"><button class="btn small" data-act="zcancel">Verwerfen</button></div>`:""}`}`;
+  return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}
+    <button class="btn pri" data-act="zopen" data-spell="${sp.id}">Wirken: ${cost} Mana · ${ap} AP</button></div>
+    ${arm&&arm.phase==="done"?`<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP.${arm.note?`<br><span class="zwarn">${esc(arm.note)}</span>`:""}</div>`:""}`;
 }
-/* Fenster zum Wirken: führt Schritt für Schritt durch alle Würfe */
-function zDlgRender(){const e=document.getElementById("zdlg");if(e)e.remove();document.body.classList.remove("zdlgon");return;
+/* Fenster zum Wirken: Schritt für Schritt würfeln, Ergebnis ansehen, dann wirken */
+let zAmb=null;
+function zAmbient(kind,host){
+  if(zAmb&&zAmb.kind===kind&&zAmb.cv.isConnected)return;zAmbStop();
+  if(calmMotion())return;
+  const cv=document.createElement("canvas");cv.className="zamb";host.prepend(cv);
+  const dpr=Math.min(2,window.devicePixelRatio||1);let W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
+  const c=cv.getContext("2d");c.scale(dpr,dpr);const R=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
+  const K=kind==="mix"?["fire","ice","storm","earth"]:[kind],P=[];
+  const COL={fire:["#ffd76a","#ff9a3a","#ff5a26"],ice:["#f2fbff","#bfe6ff","#82c6ff"],water:["#7cc4ff","#3f8fd9","#c9e9ff"],earth:["#a77b45","#c19a63","#8a6236"],air:["rgba(240,245,250,.9)"],
+    storm:["#e9f4ff","#9fd2ff","#fff6a8"],holy:["#fff3c2","#ffd66b","#f5b93b"],wild:["#93c47d","#6aa84f","#e8ff8a"],blood:["#b3121b","#8b0a0a"],white:["#ffffff","#e3f1ff","#fff7d6"],arcane:["#c39bff","#8f5cff","#5ad1ff"]};
+  function spawn(){const k=pick(K),p={k,col:pick(COL[k]),a:0,life:R(2500,5000),t:0,s:R(1.5,4)};
+    if(k==="ice"||k==="blood"||k==="wild"){p.x=R(0,W);p.y=R(-10,H*.9);p.vx=R(-.3,.3)+(k==="wild"?.4:0);p.vy=R(.3,.9)*(k==="blood"?1.6:1);}
+    else if(k==="air"){p.x=-40;p.y=R(0,H);p.vx=R(1.5,3);p.vy=R(-.2,.2);p.s=R(30,70);}
+    else if(k==="arcane"){p.ang=R(0,6.3);p.rad=R(80,Math.min(W,H)*.45);p.va=R(.003,.008);}
+    else if(k==="white"||k==="storm"){p.x=R(0,W);p.y=R(0,H);p.vx=0;p.vy=0;p.life=R(800,1600);}
+    else{p.x=R(0,W);p.y=R(H*.1,H+10);p.vx=R(-.2,.2);p.vy=-R(.4,1.2);}
+    if(k==="air")p.x=R(-40,W);
+    P.push(p);}
+  for(let i=0;i<35;i++){spawn();P[P.length-1].t=R(0,1500);}
+  let last=performance.now(),acc=0,alive=true;
+  function frame(now){if(!alive||!cv.isConnected)return;const dt=Math.min(50,now-last);last=now;acc+=dt;
+    while(acc>110){acc-=110;if(P.length<70)spawn();}
+    c.clearRect(0,0,W,H);c.globalCompositeOperation=kind==="blood"||kind==="earth"?"source-over":"lighter";
+    for(let i=P.length-1;i>=0;i--){const p=P[i];p.t+=dt;if(p.t>p.life){P.splice(i,1);continue;}
+      const a=Math.sin(Math.PI*p.t/p.life)*.8;
+      if(p.k==="arcane"){p.ang+=p.va*dt/16;p.x=W/2+Math.cos(p.ang)*p.rad;p.y=H/2+Math.sin(p.ang)*p.rad;}
+      else{p.x+=p.vx*dt/16+(p.k==="fire"?Math.sin(p.t/300)*.3:0);p.y+=p.vy*dt/16;}
+      c.globalAlpha=a;c.fillStyle=p.col;c.strokeStyle=p.col;
+      if(p.k==="air"){c.lineWidth=1.2;c.beginPath();c.moveTo(p.x,p.y);c.quadraticCurveTo(p.x+p.s/2,p.y-8,p.x+p.s,p.y);c.stroke();}
+      else if(p.k==="wild"&&p.s>3){c.beginPath();c.ellipse(p.x,p.y,p.s*1.6,p.s*.7,p.t/600,0,6.3);c.fill();}
+      else{c.beginPath();c.arc(p.x,p.y,p.s,0,6.3);c.fill();}}
+    c.globalAlpha=1;c.globalCompositeOperation="source-over";requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
+  zAmb={kind,cv,stop(){alive=false;cv.remove();}};
+}
+function zAmbStop(){if(zAmb){zAmb.stop();zAmb=null;}}
+function zDlgRender(){
   let el=document.getElementById("zdlg");
   const a=zArm;
-  if(!a||!a.show||tab!=="kampf"){if(el)el.remove();document.body.classList.remove("zdlgon");return;}
-  if(!el){el=document.createElement("div");el.id="zdlg";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");document.body.appendChild(el);}
+  if(!a||!a.show||tab!=="kampf"||kmode!=="magie"){if(el)el.remove();zAmbStop();document.body.classList.remove("zdlgon");return;}
+  const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===a.id);if(!sp){zArm=null;if(el)el.remove();zAmbStop();return;}
+  const lname=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",z=zbFor(sp,lname);
+  if(!el){el=document.createElement("div");el.id="zdlg";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Zauber wirken");el.innerHTML='<div class="zdinner"></div>';document.body.appendChild(el);}
   document.body.classList.add("zdlgon");
-  const req=a.req||[],res=a.res||{},done=a.done||[];
-  const steps=[...(a.gz?[{k:"aim",label:"Zielwurf",at:`data-act="zgo" data-spell="${a.id}"`}]:[]),...req];
-  let cur1=-1;steps.forEach((x,i)=>{const ok=x.k==="aim"?!!a.aimed:done.includes(x.k);if(!ok&&cur1<0)cur1=i;});
-  const fin=a.phase==="done";
-  const rows=steps.map((x,i)=>{const r=res[x.k],ok=x.k==="aim"?!!a.aimed:done.includes(x.k);
-    const st=fin||ok?"ok":i===cur1?"now":"wait";
-    return `<li class="zst ${st}"><span class="zsn">${st==="ok"?"✓":i+1}</span><div class="zsb"><div class="zsl">${esc(x.label)}</div>
-      ${r?`<div class="zsr"><b>${r.t}</b>${r.g?` <span>${esc(r.g)}</span>`:""}</div>`:ok&&!fin?'<div class="zsr hint">wird gewürfelt …</div>':""}
-      ${st==="now"&&!fin?`<button class="btn big pri zgo2" ${x.at.replace(/class="[^"]*"/,"")}>${ICON_DICE_S} ${x.k==="aim"?"Zielwurf würfeln":esc(x.label)+" würfeln"}</button>`:""}</div></li>`;}).join("");
-  el.innerHTML=`<div class="zdbox"><div class="zdh"><div><div class="lab">Zauber wirken</div><h3>${esc(a.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${fin?a.ap:atkCost(2)} AP</div></div></div>
-    ${a.kwarn&&!fin?`<div class="zwarn">${esc(a.kwarn)}</div>`:""}
-    ${steps.length?`<ol class="zsteps">${rows}</ol>`:fin?"":`<p>Dieser Zauber braucht keinen Wurf.</p><button class="btn big pri" data-act="zgo" data-spell="${a.id}">Ausführen</button>`}
-    ${fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`:`<p class="hint">${steps.length?"Mana und AP werden erst mit dem letzten Wurf abgezogen.":"Mana und AP werden beim Ausführen abgezogen."}</p>`}
-    <div class="row-actions">${fin?`<button class="btn pri" data-act="zclose">Fertig</button>`:`<button class="btn" data-act="zcancel">Abbrechen</button>`}</div></div>`;
+  const fin=a.phase==="done",req=a.req||[],res=a.res||{},done=a.done||[],gz=!!a.gz;
+  const steps=[...(gz?[{k:"aim",label:"Zielwurf",at:`data-act="zgo" data-spell="${a.id}"`}]:[]),...req];
+  const okOf=x=>x.k==="aim"?!!a.aimed:done.includes(x.k);
+  let nowI=-1;if(!fin)steps.forEach((x,i)=>{if(!okOf(x)&&nowI<0)nowI=i;});
+  const all=steps.every(okOf);
+  const rows=steps.map((x,i)=>{const r=res[x.k],ok=okOf(x),st=ok?"ok":i===nowI?"now":"wait";
+    return `<li class="zst ${st}"><span class="zsn">${ok?"✓":i+1}</span><div class="zsb"><div class="zsl">${esc(x.label)}${r?` <b class="zsv">${r.t}</b>`:ok?' <span class="hint">wird gewürfelt …</span>':""}</div>
+      ${r&&r.g?`<div class="hint">${esc(r.g)}</div>`:""}
+      ${st==="now"?`<button class="btn big pri zgo2" ${x.at.replace(/class="[^"]*"/,"")}>${ICON_DICE_S} ${x.k==="aim"?"Zielwurf würfeln":esc(x.label)+" würfeln"}</button>`:""}</div></li>`;}).join("");
+  const kz=zKonz(),isK=z?z.k:/K\*/.test(sp.details||"");
+  const kwarn=!fin&&isK&&kz&&kz.n!==sp.name?`<div class="zwarn">Du konzentrierst dich gerade auf ${esc(kz.n)}. Wenn du ${esc(sp.name)} wirkst, endet ${esc(kz.n)}.</div>`:"";
+  const sum=steps.length&&all&&Object.keys(res).length?`<div class="zsum"><span class="lab">Ergebnis</span><div>${steps.map(x=>{const r=res[x.k];return r?`${esc(x.label)}: <b>${r.t}</b>`:"";}).filter(Boolean).join(" · ")}</div></div>`:"";
+  const effs=z?z.ef:nList(sp.effekt);
+  const info=zInfoHtml(sp,lname,z).replace(/<summary>Alle Infos<\/summary><div class="zbody">/,`<summary>Details zum Zauber</summary><div class="zbody"><div class="zrow"><span class="lab">Effekte</span><div>${effs.map(e=>esc(e).replace(/\n/g,"<br>")).join("<br><br>")}</div></div>`);
+  const ap=fin?a.ap:atkCost(2);
+  el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div><div class="lab">Zauber wirken</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${ap} AP</div></div>
+    ${kwarn}
+    ${steps.length?`<ol class="zsteps">${rows}</ol>`:""}
+    ${sum}
+    ${fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>
+      <div class="row-actions"><button class="btn pri" data-act="zclose">Fertig</button></div>`
+     :all?`<div class="row-actions"><button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} Mana · ${ap} AP</button></div><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`
+     :`<p class="hint">Erst ${gz?"zielen, dann ":""}die Effekte würfeln. Danach siehst du alle Ergebnisse und tippst auf „Wirken“. Erst dann werden Mana und AP abgezogen.</p><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`}
+    ${info}</div>`;
+  if(!fin)zAmbient(zKind(z,lname),el);else zAmbStop();
 }
 /* Würfelknöpfe sind erst nach „Wirken“ aktiv */
 const zKeyOf=d=>d.act==="zprobe"?"p":d.ref?`r${d.ref}_${d.fx}`:d.o?`a${d.fx}`:`f${d.fx}`;
@@ -2002,7 +2042,7 @@ function zReqFrom(h){const out=[],seen=new Set();
     const k=zKeyOf({act:g("act"),ref:g("ref"),fx:g("fx"),o:g("o")});if(seen.has(k))return m;seen.add(k);
     out.push({k,at,label:inner.replace(/<[^>]+>/g,"").replace(/^Erfolg: |^Misserfolg: /,"").trim()});return m;});
   return out;}
-function zCanRoll(sp,gz){const a=zArm&&zArm.id===sp.id&&zArm.phase==="armed"?zArm:null;return gz?!!(a&&a.aimed):true;}
+function zCanRoll(sp,gz){return false;}
 
 /* ---------- Flächen, Dauer, Konzentration ---------- */
 const zNum=s=>parseFloat(String(s).replace(",","."));
