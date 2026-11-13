@@ -2080,7 +2080,7 @@ function zApplyMisc(o,c,fx,z){
 /* Rastergrafik für die Fläche */
 function zAoeSvg(h,self){
   const k=h.u==="km"?1000:1;let shape,ext;
-  if(h.t==="circle"){const R=(/durchmesser|kugel/i.test(h.w)?h.v/2:h.v)*k;shape={t:"c",R};ext=2*R;}
+  if(h.t==="circle"){const dia=/durchmesser|kugel/i.test(h.w);const R=(dia?h.v/2:h.v)*k;shape={t:"c",R,dia};ext=2*R+(dia?0:1);}
   else if(h.t==="sq"){const s=Math.sqrt(h.v);shape={t:"r",L:s,W:s,self:false};ext=s;}
   else if(h.t==="cone"){shape={t:"k",L:h.a*k,W:h.b*k};ext=Math.max(h.a,h.b)*k;self=true;}
   else{const L=Math.max(h.a,h.b)*k,W=Math.min(h.a,h.b)*k;shape={t:"r",L:self?L:h.a*k,W:self?W:h.b*k,self};ext=Math.max(L,W);}
@@ -2088,23 +2088,30 @@ function zAoeSvg(h,self){
   const odd=n=>Math.round(n/step)%2===1;
   // Raster in Metern: Ursprung = Mitte der Zaubernden-Zelle (bei „von dir aus“) bzw. Mitte der Fläche
   let x0,x1,y0,y1,oy=0,ox=0;
-  if(shape.t==="c"){const r=shape.R;x0=-r;x1=r;y0=-r;y1=r;ox=oy=odd(2*r)?0:step/2;}
-  else if(shape.t==="k"||(shape.t==="r"&&shape.self)){x0=-step;x1=shape.L+step*.5;y0=-shape.W/2;y1=shape.W/2;oy=odd(shape.W)?0:step/2;}
+  if(shape.t==="c"){const r=shape.R+(shape.dia?0:step/2);x0=-r;x1=r;y0=-r;y1=r;}
+  else if(shape.t==="k"){shape.yc=odd(shape.W)?0:step/2;x0=-step;x1=shape.L+step*.5;y0=-shape.W/2+shape.yc;y1=shape.W/2+shape.yc;}
+  else if(shape.t==="r"&&shape.self){x0=-step;x1=shape.L+step*.5;y0=-shape.W/2;y1=shape.W/2;oy=odd(shape.W)?0:step/2;}
   else{x0=-shape.L/2;x1=shape.L/2;y0=-shape.W/2;y1=shape.W/2;ox=odd(shape.L)?0:step/2;oy=odd(shape.W)?0:step/2;}
   const pad=step;const cx0=Math.floor((x0-pad-ox)/step),cx1=Math.ceil((x1+pad-ox)/step),cy0=Math.floor((y0-pad-oy)/step),cy1=Math.ceil((y1+pad-oy)/step);
   const cols=cx1-cx0+1,rows=cy1-cy0+1,px=Math.max(10,Math.min(22,Math.floor(260/cols))),Wp=cols*px,Hp=rows*px;
+  const cellIn=(x,y)=>{
+    if(shape.t==="c"){const lim=shape.dia?shape.R+step/4:shape.R+step/2;return Math.hypot(x,y)<=lim+1e-9;}
+    if(shape.t==="k"){const col=Math.round(x/step);const L=Math.max(1,Math.round(shape.L/step));if(col<1||col>L)return false;
+      const hw=step/2+(shape.W/2-step/2)*(L>1?(col-1)/(L-1):1);return Math.abs(y-shape.yc*(L>1?(col-1)/(L-1):1))<=hw+1e-9;}
+    return null;};
   const inside=(x,y)=>{if(shape.t==="c")return x*x+y*y<=shape.R*shape.R;
     if(shape.t==="k"){const xx=x-step/2;return xx>=0&&xx<=shape.L&&Math.abs(y)<=shape.W/2*(xx/shape.L)+1e-9;}
     if(shape.self){const xx=x-step/2;return xx>=0&&xx<=shape.L&&Math.abs(y)<=shape.W/2;}
     return Math.abs(x)<=shape.L/2&&Math.abs(y)<=shape.W/2;};
   let cells="";
   for(let i=cx0;i<=cx1;i++)for(let j=cy0;j<=cy1;j++){const mx=i*step+ox,my=j*step+oy;let hit=0;
+    const ci=cellIn(mx,my);if(ci!=null)hit=ci?25:0;else
     for(let a=0;a<5;a++)for(let b=0;b<5;b++)if(inside(mx+(a-2)*step/5,my+(b-2)*step/5))hit++;
     const X=(i-cx0)*px,Y=(j-cy0)*px;cells+=`<rect x="${X}" y="${Y}" width="${px}" height="${px}" class="${hit>=13?"on":""}"/>`;}
   const toX=x=>((x-ox)/step-cx0+.5)*px,toY=y=>((y-oy)/step-cy0+.5)*px;
   let out="";
-  if(shape.t==="c")out=`<circle cx="${toX(0)}" cy="${toY(0)}" r="${shape.R/step*px}"/>`;
-  else if(shape.t==="k")out=`<path d="M${toX(step/2)} ${toY(0)}L${toX(step/2+shape.L)} ${toY(-shape.W/2)}L${toX(step/2+shape.L)} ${toY(shape.W/2)}Z"/>`;
+  if(shape.t==="c")out=`<circle cx="${toX(0)}" cy="${toY(0)}" r="${(shape.dia?shape.R:shape.R+step/2)/step*px}"/>`;
+  else if(shape.t==="k")out=`<path d="M${toX(step/2)} ${toY(-step/2)}L${toX(step/2+shape.L)} ${toY(-shape.W/2+shape.yc)}L${toX(step/2+shape.L)} ${toY(shape.W/2+shape.yc)}L${toX(step/2)} ${toY(step/2)}Z"/>`;
   else if(shape.self)out=`<rect x="${toX(step/2)}" y="${toY(-shape.W/2)}" width="${shape.L/step*px}" height="${shape.W/step*px}"/>`;
   else out=`<rect x="${toX(-shape.L/2)}" y="${toY(-shape.W/2)}" width="${shape.L/step*px}" height="${shape.W/step*px}"/>`;
   const me=self||shape.t==="k"?`<circle class="me" cx="${toX(0)}" cy="${toY(0)}" r="${px*.32}"/><text x="${toX(0)}" y="${toY(0)+px*.95}">du</text>`
