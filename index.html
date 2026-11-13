@@ -567,6 +567,14 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .kedit{display:grid;gap:2px}.kedit .lab{font-size:.62rem}.kedit .kost{width:64px;min-height:36px;text-align:center}
 .srow .mv{display:flex;gap:6px}
 .srow .mv .btn{min-width:40px;padding:0 8px}
+.zaoeb{font-size:.82rem;margin-left:4px}
+.zaoe{display:grid;gap:4px;justify-items:start;margin:4px 0}.zaoe svg{max-width:100%;height:auto}
+.zaoe .grid rect{fill:none;stroke:var(--line);stroke-width:1}.zaoe .grid rect.on{fill:color-mix(in srgb,var(--accent) 38%,transparent)}
+.zaoe .shp *{fill:none;stroke:var(--accent);stroke-width:2}
+.zaoe .me{fill:var(--ink)}.zaoe text{font-size:9px;fill:var(--muted);text-anchor:middle;font-family:var(--body)}.zaoe .tg{stroke:var(--ink);stroke-width:2}
+.zakt{display:grid;gap:0;padding:4px 14px}.zak{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.zak:last-child{border-bottom:0}
+.ktag{font-size:.7rem;font-weight:700;color:var(--mp);background:var(--mp-soft);padding:1px 6px;border-radius:5px}
+.zwarn{font-size:.86rem;font-weight:600;color:var(--bad)}
 .zmagic{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70}
 .zflash{animation:zfl .45s ease-out forwards}.zflash.k-fire{background:rgba(255,120,40,.25)}.zflash.k-ice,.zflash.k-storm,.zflash.k-water{background:rgba(140,200,255,.25)}.zflash.k-earth{background:rgba(140,100,50,.25)}.zflash.k-air{background:rgba(230,235,240,.25)}.zflash.k-holy{background:rgba(255,215,110,.28)}.zflash.k-wild{background:rgba(110,180,90,.25)}.zflash.k-blood{background:rgba(150,0,10,.3)}.zflash.k-white{background:rgba(255,255,255,.35)}.zflash.k-arcane,.zflash.k-mix{background:rgba(150,100,255,.25)}
 @keyframes zfl{from{opacity:1}to{opacity:0}}
@@ -1114,6 +1122,7 @@ document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest
 /* ---------- Info-Knöpfe: kurze Regel-Erklärung zu einer Überschrift ---------- */
 const ICON_INFO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.1"/></svg>';
 const INFO={
+  aktiv:["Aktive Zauber",`<p>Hier landen Zauber, die länger als eine Runde wirken, und Zauber mit Konzentration.</p><p>Mit „Neue Runde“ zählt die App die Runden herunter. Zauber mit Minuten oder Stunden laufen, bis du sie beendest.</p><p>Es geht immer nur ein Konzentrationszauber gleichzeitig. Wirkst du einen neuen, endet der alte.</p>`],
   get beaufort(){return ["Beaufort-Skala",BFT_INFO()]},
   fert:["Fertigkeiten",`<p><b>Würfeln:</b> Der Würfel rechts würfelt eine Probe: W10 + Rang + Boni.</p>
     <p><b>Rang und Kreuze:</b> Ränge entstehen aus Kreuzen. Rang 1–5 braucht je ein Kreuz, Rang 6–10 je zwei, ab Rang 11 je vier. Tipp eine Fertigkeit an, um Kreuze und Boni zu ändern.</p>
@@ -1364,7 +1373,7 @@ function snap(label){
   undoStack.push({label,cid:cur.id,state:JSON.stringify({kampf:cur.kampf,lp:cur.lp,mp:cur.mp}),atk:JSON.stringify(atk),def,spell});
   if(undoStack.length>30)undoStack.shift();
 }
-const UNDO_LABEL={zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
+const UNDO_LABEL={zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
 let atk={slot:"main",split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};
 let def=null,spell=null,mag={attr:"Int",stufe:1,level:null};
@@ -1519,7 +1528,8 @@ function kampfDo(b){
     case "round":
       if(num(cur.kampf.defRes)>0&&b.dataset.sure!=="1"){confirmRound();return;}
       $("#roll").innerHTML="";
-      cur.kampf.ap=apMax();cur.kampf.att=0;cur.kampf.defc=0;cur.kampf.defRes=0;def=null;return rerender();
+      cur.kampf.ap=apMax();cur.kampf.att=0;cur.kampf.defc=0;cur.kampf.defRes=0;def=null;
+      {const gone=zRoundTick();rerender();if(gone.length)showMsg(`Abgelaufen: ${gone.join(", ")}`);}return;
     case "reserve":
       if(!w){showMsg("Leg zuerst eine Waffe an.");return;}
       if(!spendAp(defCost()))return;
@@ -1566,7 +1576,8 @@ function kampfDo(b){
       cur.kampf.defRes=num(cur.kampf.defRes)-1;renderAll();
       rollPool("Verteidigen",{groups:[{label:"Waffenfertigkeit",n:wSkill(w),s:10},{label:"KO-Bonus",n:attrDice("Ko",true),s:6}],flat:0},total=>{def=total;return {tag:`${total} Schaden negiert`};});
       return;}
-    case "zroll":case "zprobe":case "zch":case "zbft":zbAct(b);return;
+    case "zroll":case "zprobe":case "zch":case "zbft":case "zaoe":zbAct(b);return;
+    case "zend":{const L=zAkt(),i=L.findIndex(e=>e.k===b.dataset.k);if(i>=0)L.splice(i,1);queueSave(cur);return renderAll();}
     case "zst":{const {ch}=sbParse();const st=num(ch.learned[b.dataset.spell]);let cs=Math.min(num(ch.castStufe[b.dataset.spell])||st,st);
       cs=Math.max(1,Math.min(st,cs+(+b.dataset.d)));ch.castStufe[b.dataset.spell]=cs;zSaveCh(ch);return renderAll();}
     case "zcast":{
@@ -1669,7 +1680,8 @@ const zbAttr=a=>String(a||"").toUpperCase().replace(/[^A-ZÄÖÜ/]/g,"").replace
 function zbCalc(z,cs,choice){
   const slots=Math.max(0,cs-1),opts=z.st||[],oder=z.m==="ODER"&&opts.length>1;
   const per=f=>/pro W\d+/i.test(f.w);
-  const fx=z.fx.map(f=>({...f,dice:per(f)?null:zbDiceIn(f.w),okD:zbDiceIn(f.ok),noD:zbDiceIn(f.no),tdN:/^-?\d+$/.test(String(f.td))?+f.td:null,plus:0}));
+  const fx=z.fx.map(f=>({...f,dice:per(f)?null:zbDiceIn(f.w),okD:zbDiceIn(f.ok),noD:zbDiceIn(f.no),tdN:/^-?\d+$/.test(String(f.td))?+f.td:null,plus:0,sh:zShape(f.f),du:zDur(f.d),
+    di:(m=>m?{v:zNum(m[1]),u:m[2],rest:m[3]||""}:null)(String(f.f||"").match(/^([\d,]+)\s*(m|km)(\s+(?:Weite|Bewegung))?$/))}));
   let probeBonus=0;const extra=[];
   opts.forEach((o,i)=>{
     const c=oder?num(choice&&choice[i]):slots;if(c<=0)return;
@@ -1687,8 +1699,10 @@ function zbCalc(z,cs,choice){
         [tgt.dice,tgt.okD,tgt.noD].forEach(d=>{if(d&&d.dice[0].s===s)d.dice[0].n+=n;});
         if(j===0&&fl&&tgt.dice)tgt.dice.flat+=(+fl[1])*c;});
       return;}
+    if(zApplyMisc(o,c,fx,z))return;
     extra.push(c>1?`${c}× ${o}`:o);
   });
+  fx.forEach(f=>{if(f.sh)f.f=zShapeTxt(f.sh);else if(f.di)f.f=`${zFmt(f.di.v)}${f.di.u}${f.di.rest}`;if(f.du)f.d=zDurTxt(f.du);});
   fx.forEach(f=>{const m=per(f)&&f.w.match(/^(\d+)\s*(\S+)\s+pro W(\d+)/i);if(m){const src=fx.find(g=>g.dice&&g.dice.dice.some(x=>x.s===+m[3]));
     const n=src?src.dice.dice.filter(x=>x.s===+m[3]).reduce((a,x)=>a+x.n,0):0;f.w=`${n*+m[1]}${m[2]}`;f.a=f.a+` (${m[1]}${m[2]} pro W${m[3]})`;}});
   fx.forEach(f=>{if(f.dice&&/^[+-]?\d*W\d+/i.test(f.t))f.t=f.t.replace(/^([+-]?)\d*W\d+(\s*\+\s*\d+)?/i,"$1"+zbDiceTxt(f.dice));});
@@ -1740,7 +1754,8 @@ function zbFxHtml(sp,z,calc,cs){
     const bft=/beaufort/i.test(f.a);const br=bft&&zbRes[sp.id]&&zbRes[sp.id].bft;
     const shift=bft?(calc.extra.find(x=>/Einfluss/.test(x))?Math.max(0,cs-1):0):0;
     return `<div class="zfx"><div class="zft">${esc(f.t)}${val?` · ${val}`:""}${bft?ib("beaufort"):""}</div>
-      ${meta.length?`<div class="zmeta">${meta.map(esc).join(" · ")}</div>`:""}${test}
+      ${meta.length?`<div class="zmeta">${meta.map(esc).join(" · ")}${f.sh?` <button class="linkbtn zaoeb" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}">${zAoeOpen.has(sp.id+":"+i)?"Fläche ausblenden":"Fläche zeigen"}</button>`:""}</div>`:""}
+      ${f.sh&&zAoeOpen.has(sp.id+":"+i)?zAoeSvg(f.sh,z.o):""}${test}
       ${rolls.length?`<div class="zrolls">${rolls.join("")}</div>`:""}
       ${br!=null?`${bftHtml(br.v)}${shift?`<div class="zbshift"><span class="hint">Einfluss: bis ${shift} Stufe${shift>1?"n":""} verschieben</span><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="-1" ${br.v<=Math.max(1,br.base-shift)?"disabled":""}>−</button><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="1" ${br.v>=Math.min(12,br.base+shift)?"disabled":""}>+</button></div>`:""}`:""}
       ${f.n?`<div class="hint">${esc(f.n)}</div>`:""}</div>`;
@@ -1778,6 +1793,7 @@ function zbAct(b){
   if(a==="zch"){const n=(z&&z.st.length)||0,c=zbChoice(sp,ch).slice();while(c.length<n)c.push(0);
     const i=+b.dataset.i,used=c.reduce((x,y)=>x+num(y),0);c[i]=Math.max(0,num(c[i])+(+b.dataset.d));
     if(+b.dataset.d>0&&used>=cs-1)return true;ch.steigerungChoice[sp.id]=c;zSaveCh(ch);renderAll();return true;}
+  if(a==="zaoe"){const k=sp.id+":"+b.dataset.fx;zAoeOpen.has(k)?zAoeOpen.delete(k):zAoeOpen.add(k);renderAll();return true;}
   if(a==="zroll"||a==="zprobe"){
     if(!zArm||zArm.id!==sp.id)return true;
     if(zArm.phase==="armed"){const gz=z?!!z.gz:zGezielt(sp);if(gz)return true;if(!zExec(sp,zArm.cs,lname,z))return true;}}
@@ -1898,8 +1914,12 @@ function zExec(sp,cs,listName,z){
   const cost=sp.level+cs;
   if(num(cur.mp.cur)<cost){showMsg(`Nicht genug Mana für ${sp.name}: ${num(cur.mp.cur)} da, ${cost} nötig.`);return false;}
   const ap=atkCost(2);if(!spendAp(ap))return false;
-  cur.kampf.att=num(cur.kampf.att)+1;cur.mp.cur=num(cur.mp.cur)-cost;queueSave(cur);
-  zArm={id:sp.id,cs,phase:"done",cost,ap};
+  cur.kampf.att=num(cur.kampf.att)+1;cur.mp.cur=num(cur.mp.cur)-cost;
+  let note="";
+  if(z){const {ch}=sbParse();note=zTrack(sp,z,zbCalc(z,cs,zbChoice(sp,ch)),cs);}
+  else if(/K\*/.test(sp.details||"")){const L=zAkt(),old=zKonz();if(old){L.splice(L.indexOf(old),1);note=`Konzentration auf ${old.n} beendet. `;}L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:true});}
+  queueSave(cur);
+  zArm={id:sp.id,cs,phase:"done",cost,ap,note};
   try{zMagic(zKind(z,listName));}catch(e){}
   try{clink(1.5,.2);setTimeout(()=>clink(2,.14),90);}catch(e){}buzz(15);
   renderAll();return true;
@@ -1912,16 +1932,110 @@ function zCastRow(sp,st,cs,cost,gz,rolls){
   const arm=zArm&&zArm.id===sp.id?zArm:null,ap=atkCost(2);
   const stepper=`<div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${cs<=1||arm&&arm.phase==="armed"?"disabled":""} aria-label="Stufe senken">−</button><output>${cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${cs>=st||arm&&arm.phase==="armed"?"disabled":""} aria-label="Stufe erhöhen">+</button></div>`;
   if(arm&&arm.phase==="armed"){
+    const kz=zKonz(),isK=(()=>{const {db}=sbParse();const ln=db?((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name:"";const z=zbFor(sp,ln||"");return z?z.k:/K\*/.test(sp.details||"");})();
+    const kwarn=isK&&kz?`<div class="zwarn">Du konzentrierst dich gerade auf ${esc(kz.n)}. Wenn du ${esc(sp.name)} ausführst, endet ${esc(kz.n)}.</div>`:"";
     const how=gz?"Jetzt zielen. Danach würfelst du die Effekte.":rolls?"Jetzt einen Effekt würfeln oder ausführen.":"Jetzt ausführen.";
     return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}</div>
-      <div class="zarm"><div><b>Bereit: ${cost} Mana · ${ap} AP</b><div class="hint">${how} Erst dann werden Mana und AP abgezogen.</div></div>
+      <div class="zarm"><div><b>Bereit: ${cost} Mana · ${ap} AP</b><div class="hint">${how} Erst dann werden Mana und AP abgezogen.</div>${kwarn}</div>
       <div class="row-actions">${gz?`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Zielen und ausführen</button>`:`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Ausführen</button>`}<button class="btn" data-act="zcancel">Abbrechen</button></div></div>`;}
   return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}
     <button class="btn pri" data-act="zcast" data-spell="${sp.id}">Wirken: ${cost} Mana · ${ap} AP</button></div>
-    ${arm&&arm.phase==="done"?`<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP. Würfle jetzt die Effekte.</div>`:""}`;
+    ${arm&&arm.phase==="done"?`<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP. Würfle jetzt die Effekte.${arm.note?`<br><span class="zwarn">${esc(arm.note)}</span>`:""}</div>`:""}`;
 }
 /* Würfelknöpfe sind erst nach „Wirken“ aktiv */
 function zCanRoll(sp,gz){const a=zArm&&zArm.id===sp.id?zArm:null;return !!a&&(a.phase==="done"||(a.phase==="armed"&&!gz));}
+
+/* ---------- Flächen, Dauer, Konzentration ---------- */
+const zNum=s=>parseFloat(String(s).replace(",","."));
+const zFmt=n=>String(Math.round(n*100)/100).replace(".",",");
+function zShape(s){
+  s=String(s||"");if(!s||/W\d/i.test(s))return null;let m;
+  if((m=s.match(/^([\d,]+)\s*(m|km)\s*(Radius|Durchmesser|Umkreis|Kugel)/i)))return {t:"circle",v:zNum(m[1]),u:m[2],w:m[3]};
+  if((m=s.match(/^([\d,]+)\s*x\s*([\d,]+)(?:\s*x\s*([\d,]+))?\s*(m|km)(\s*Kegel)?/i)))return {t:m[5]?"cone":"rect",a:zNum(m[1]),b:zNum(m[2]),c:m[3]?zNum(m[3]):null,u:m[4]};
+  if((m=s.match(/^([\d,]+)\s*m²/)))return {t:"sq",v:zNum(m[1]),u:"m"};
+  return null;
+}
+function zShapeTxt(h){
+  if(h.t==="circle")return `${zFmt(h.v)}${h.u} ${h.w}`;
+  if(h.t==="sq")return `${zFmt(h.v)}m²`;
+  return `${zFmt(h.a)}x${zFmt(h.b)}${h.c!=null?"x"+zFmt(h.c):""}${h.u}${h.t==="cone"?" Kegel":""}`;
+}
+const zDur=d=>{const m=String(d||"").match(/^(\d+)\s*(Runden?|min|h|sek\.?|Tage?)(.*)$/i);return m?{n:+m[1],u:m[2],rest:m[3]}:null;};
+const zDurU=u=>/^runde/i.test(u)?"r":/^tag/i.test(u)?"t":u.toLowerCase().replace(".","");
+const zDurTxt=x=>/^runde/i.test(x.u)?`${x.n} Runde${x.n===1?"":"n"}${x.rest}`:/^tag/i.test(x.u)?`${x.n} Tag${x.n===1?"":"e"}${x.rest}`:`${x.n}${/^(h|min)$/i.test(x.u)?(x.u==="h"?"h":" min"):" "+x.u}${x.rest}`;
+/* Steigerungen, die Dauer, Fläche oder Weite verändern. Gibt true zurück, wenn verbraucht. */
+function zApplyMisc(o,c,fx,z){
+  let m;
+  if((m=o.match(/^\+([\d,]+)\s*(Runden?|min|h|sek\.?|Tage?)\b/i))){const u=zDurU(m[2]),f=fx.find(f=>f.du&&zDurU(f.du.u)===u);if(f){f.du.n+=zNum(m[1])*c;return true;}return false;}
+  if((m=o.match(/^\+([\d,]+)\s*(m|km)\s*(Radius|Durchmesser|Umkreis)$/i))){const f=fx.find(f=>f.sh&&f.sh.t==="circle");if(!f)return false;
+    let v=zNum(m[1])*c;const dia=x=>/durchmesser|kugel/i.test(x);if(dia(f.sh.w)&&!dia(m[3]))v*=2;if(!dia(f.sh.w)&&dia(m[3]))v/=2;f.sh.v+=v;return true;}
+  if((m=o.match(/^\+([\d,]+)\s*x\s*([\d,]+)(?:\s*x\s*([\d,]+))?\s*(m|km)(\s*Kegel)?\b/i))){const f=fx.find(f=>f.sh&&(f.sh.t==="rect"||f.sh.t==="cone"));if(!f)return false;
+    f.sh.a+=zNum(m[1])*c;f.sh.b+=zNum(m[2])*c;if(m[3]&&f.sh.c!=null)f.sh.c+=zNum(m[3])*c;return true;}
+  if((m=o.match(/^\+([\d,]+)\s*m²$/))){const f=fx.find(f=>f.sh&&f.sh.t==="sq");if(!f)return false;f.sh.v+=zNum(m[1])*c;return true;}
+  if((m=o.match(/^\+([\d,]+)\s*m(\s+Distanz)?$/i))){const v=zNum(m[1])*c;
+    const d=fx.find(f=>f.di);if(d){d.di.v+=v;return true;}
+    const r=fx.find(f=>f.sh&&f.sh.t==="rect");if(r){if(r.sh.a>=r.sh.b)r.sh.a+=v;else r.sh.b+=v;return true;}
+    const ci=fx.find(f=>f.sh&&f.sh.t==="circle");if(ci){ci.sh.v+=v;return true;}}
+  return false;
+}
+/* Rastergrafik für die Fläche */
+function zAoeSvg(h,self){
+  const k=h.u==="km"?1000:1;let shape,ext;
+  if(h.t==="circle"){const R=(/durchmesser|kugel/i.test(h.w)?h.v/2:h.v)*k;shape={t:"c",R};ext=2*R;}
+  else if(h.t==="sq"){const s=Math.sqrt(h.v);shape={t:"r",L:s,W:s,self:false};ext=s;}
+  else if(h.t==="cone"){shape={t:"k",L:h.a*k,W:h.b*k};ext=Math.max(h.a,h.b)*k;self=true;}
+  else{const L=Math.max(h.a,h.b)*k,W=Math.min(h.a,h.b)*k;shape={t:"r",L:self?L:h.a*k,W:self?W:h.b*k,self};ext=Math.max(L,W);}
+  const steps=[1,2,5,10,20,50,100,200,500,1000];const step=steps.find(s=>(ext+ (self?2:0)*s)/s<=14)||1000;
+  const odd=n=>Math.round(n/step)%2===1;
+  // Raster in Metern: Ursprung = Mitte der Zaubernden-Zelle (bei „von dir aus“) bzw. Mitte der Fläche
+  let x0,x1,y0,y1,oy=0,ox=0;
+  if(shape.t==="c"){const r=shape.R;x0=-r;x1=r;y0=-r;y1=r;ox=oy=odd(2*r)?0:step/2;}
+  else if(shape.t==="k"||(shape.t==="r"&&shape.self)){x0=-step;x1=shape.L+step*.5;y0=-shape.W/2;y1=shape.W/2;oy=odd(shape.W)?0:step/2;}
+  else{x0=-shape.L/2;x1=shape.L/2;y0=-shape.W/2;y1=shape.W/2;ox=odd(shape.L)?0:step/2;oy=odd(shape.W)?0:step/2;}
+  const pad=step;const cx0=Math.floor((x0-pad-ox)/step),cx1=Math.ceil((x1+pad-ox)/step),cy0=Math.floor((y0-pad-oy)/step),cy1=Math.ceil((y1+pad-oy)/step);
+  const cols=cx1-cx0+1,rows=cy1-cy0+1,px=Math.max(10,Math.min(22,Math.floor(260/cols))),Wp=cols*px,Hp=rows*px;
+  const inside=(x,y)=>{if(shape.t==="c")return x*x+y*y<=shape.R*shape.R;
+    if(shape.t==="k"){const xx=x-step/2;return xx>=0&&xx<=shape.L&&Math.abs(y)<=shape.W/2*(xx/shape.L)+1e-9;}
+    if(shape.self){const xx=x-step/2;return xx>=0&&xx<=shape.L&&Math.abs(y)<=shape.W/2;}
+    return Math.abs(x)<=shape.L/2&&Math.abs(y)<=shape.W/2;};
+  let cells="";
+  for(let i=cx0;i<=cx1;i++)for(let j=cy0;j<=cy1;j++){const mx=i*step+ox,my=j*step+oy;let hit=0;
+    for(let a=0;a<5;a++)for(let b=0;b<5;b++)if(inside(mx+(a-2)*step/5,my+(b-2)*step/5))hit++;
+    const X=(i-cx0)*px,Y=(j-cy0)*px;cells+=`<rect x="${X}" y="${Y}" width="${px}" height="${px}" class="${hit>=13?"on":""}"/>`;}
+  const toX=x=>((x-ox)/step-cx0+.5)*px,toY=y=>((y-oy)/step-cy0+.5)*px;
+  let out="";
+  if(shape.t==="c")out=`<circle cx="${toX(0)}" cy="${toY(0)}" r="${shape.R/step*px}"/>`;
+  else if(shape.t==="k")out=`<path d="M${toX(step/2)} ${toY(0)}L${toX(step/2+shape.L)} ${toY(-shape.W/2)}L${toX(step/2+shape.L)} ${toY(shape.W/2)}Z"/>`;
+  else if(shape.self)out=`<rect x="${toX(step/2)}" y="${toY(-shape.W/2)}" width="${shape.L/step*px}" height="${shape.W/step*px}"/>`;
+  else out=`<rect x="${toX(-shape.L/2)}" y="${toY(-shape.W/2)}" width="${shape.L/step*px}" height="${shape.W/step*px}"/>`;
+  const me=self||shape.t==="k"?`<circle class="me" cx="${toX(0)}" cy="${toY(0)}" r="${px*.32}"/><text x="${toX(0)}" y="${toY(0)+px*.95}">du</text>`
+    :`<path class="tg" d="M${toX(0)-px*.35} ${toY(0)}h${px*.7}M${toX(0)} ${toY(0)-px*.35}v${px*.7}"/>`;
+  return `<div class="zaoe"><svg viewBox="0 0 ${Wp} ${Hp+ (self||shape.t==="k"?px:0)}" width="${Wp}" role="img" aria-label="Fläche ${esc(zShapeTxt(h))} auf dem Raster">
+    <g class="grid">${cells}</g><g class="shp">${out}</g>${me}</svg>
+    <div class="hint">1 Kästchen = ${step>=1000?step/1000+" km":step+" m"} · ${self||shape.t==="k"?"geht von dir aus":"Mitte = Zielpunkt"}</div></div>`;
+}
+const zAoeOpen=new Set();
+/* aktive Zauber (Warteschlange) */
+function zAkt(){cur.kampf.zakt=Array.isArray(cur.kampf.zakt)?cur.kampf.zakt:[];return cur.kampf.zakt;}
+function zKonz(){return zAkt().find(e=>e.konz)||null;}
+function zTrack(sp,z,calc,cs){
+  const L=zAkt();let msg="";
+  let rounds=0,time="";calc.fx.forEach(f=>{if(!f.du)return;if(zDurU(f.du.u)==="r")rounds=Math.max(rounds,f.du.n);else if(!time)time=zDurTxt(f.du);});
+  if(z.k){const old=zKonz();if(old){L.splice(L.indexOf(old),1);msg=`Konzentration auf ${old.n} beendet. `;}}
+  if(z.k||rounds>1||time){L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:rounds>0?rounds:null,t:time,konz:!!z.k});}
+  return msg;
+}
+function zAktHtml(){
+  if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";
+  return `<h2>Aktive Zauber${ib("aktiv")}</h2><div class="card zakt">${L.map(e=>`<div class="zak${e.konz?" konz":""}"><div><b>${esc(e.n)}</b> <span class="hint">Stufe ${e.st}</span>${e.konz?' <span class="ktag">Konzentration</span>':""}
+    <div class="hint">${e.r!=null?`noch ${e.r} Runde${e.r===1?"":"n"}`:e.t?`läuft ${esc(e.t)}`:"solange du dich konzentrierst"}</div></div>
+    <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>`).join("")}</div>`;
+}
+function zRoundTick(){
+  const L=zAkt(),gone=[];
+  for(let i=L.length-1;i>=0;i--){const e=L[i];if(e.r==null)continue;e.r--;if(e.r<=0){gone.push(e.n);L.splice(i,1);}}
+  return gone;
+}
 
 function sbParse(){
   let db=null,ch={};
@@ -2188,7 +2302,7 @@ function poolsHtml(){
 }
 function renderKampf(){
   const w=curWeapon(),left=apLeft(),max=apMax();
-  let h=poolsHtml();
+  let h=poolsHtml()+zAktHtml();
   if(kmode==="magie")h+=zauberCardHtml();
   else if(kpage==="verteidigen")h+=kpHead()+`<div class="card kstack kpages${kSlide?" "+kSlide:""}" id="kpages">${defendInner(w)}</div>`;
   else if(kpage==="spezial")h+=kpHead()+`<div class="card kstack kpages${kSlide?" "+kSlide:""}" id="kpages">${specialInner(w)}</div>`;
