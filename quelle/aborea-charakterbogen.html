@@ -549,6 +549,16 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .kedit{display:grid;gap:2px}.kedit .lab{font-size:.62rem}.kedit .kost{width:64px;min-height:36px;text-align:center}
 .srow .mv{display:flex;gap:6px}
 .srow .mv .btn{min-width:40px;padding:0 8px}
+.zmagic{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70}
+.zflash{animation:zfl .45s ease-out forwards}.zflash.k-fire{background:rgba(255,120,40,.25)}.zflash.k-ice,.zflash.k-storm,.zflash.k-water{background:rgba(140,200,255,.25)}.zflash.k-earth{background:rgba(140,100,50,.25)}.zflash.k-air{background:rgba(230,235,240,.25)}.zflash.k-holy{background:rgba(255,215,110,.28)}.zflash.k-wild{background:rgba(110,180,90,.25)}.zflash.k-blood{background:rgba(150,0,10,.3)}.zflash.k-white{background:rgba(255,255,255,.35)}.zflash.k-arcane,.zflash.k-mix{background:rgba(150,100,255,.25)}
+@keyframes zfl{from{opacity:1}to{opacity:0}}
+body.zshake .wrap{animation:zsh .42s linear}
+@keyframes zsh{0%,100%{transform:none}20%{transform:translate(-5px,2px)}40%{transform:translate(4px,-3px)}60%{transform:translate(-3px,3px)}80%{transform:translate(2px,-1px)}}
+@media (prefers-reduced-motion:reduce){body.zshake .wrap{animation:none}}
+.zarm{display:grid;gap:8px;padding:10px 12px;border:2px solid var(--accent);border-radius:10px;background:color-mix(in srgb,var(--accent) 8%,var(--card))}
+.zarm .row-actions .btn{flex:1}
+.zdone{font-size:.88rem;font-weight:600;color:var(--ok)}
+.zroll:disabled{opacity:.4}
 .ztags{display:flex;gap:5px;flex-wrap:wrap}
 .ztags span{font-size:.74rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .zfxs{display:grid;gap:8px}
@@ -1336,7 +1346,7 @@ function snap(label){
   undoStack.push({label,cid:cur.id,state:JSON.stringify({kampf:cur.kampf,lp:cur.lp,mp:cur.mp}),atk:JSON.stringify(atk),def,spell});
   if(undoStack.length>30)undoStack.shift();
 }
-const UNDO_LABEL={sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
+const UNDO_LABEL={zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
 let atk={slot:"main",split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};
 let def=null,spell=null,mag={attr:"Int",stufe:1,level:null};
@@ -1543,14 +1553,16 @@ function kampfDo(b){
       cs=Math.max(1,Math.min(st,cs+(+b.dataset.d)));ch.castStufe[b.dataset.spell]=cs;zSaveCh(ch);return renderAll();}
     case "zcast":{
       const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return;
-      const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs;
+      const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,ap=atkCost(2);
       if(num(cur.mp.cur)<cost){showMsg(`Nicht genug Mana für ${sp.name}: ${num(cur.mp.cur)} da, ${cost} nötig.`);return;}
-      const ap=atkCost(2);if(!spendAp(ap))return;
-      cur.kampf.att=num(cur.kampf.att)+1;cur.mp.cur=num(cur.mp.cur)-cost;queueSave(cur);renderAll();
-      if(zGezielt(sp)){
-        const gs=cur.skills.find(s=>s.name==="Gezielte Sprüche");
-        rollPool(`${sp.name} zielen (−${cost} Mana)`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return {tag:"Kopf ab 40 · Körper ab 15"};});
-      } else showMsg(`${sp.name} auf Stufe ${cs} gewirkt: −${cost} Mana, −${ap} AP`);
+      if(apLeft()<ap){showMsg(`Nicht genug AP: ${apLeft()} übrig, ${ap} nötig. Tipp auf „Neue Runde“.`);return;}
+      zArm={id:sp.id,cs,phase:"armed"};return renderAll();}
+    case "zcancel":zArm=null;return renderAll();
+    case "zgo":{
+      const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp||!zArm||zArm.id!==sp.id)return;
+      const lname=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",z=zbFor(sp,lname),cs=zArm.cs,cost=sp.level+cs;
+      if(!zExec(sp,cs,lname,z))return;
+      if(z?z.gz:zGezielt(sp))zAim(sp,cost);else showMsg(`${sp.name} auf Stufe ${cs} gewirkt: −${cost} Mana, −${zArm.ap} AP`);
       return;}
     case "spsel":atk.special=b.dataset.sp;atk.spMeter="";atk.spLast="";setKpage("angriff");return;
     case "spclear":atk.special=null;return renderAll();
@@ -1743,10 +1755,14 @@ function zbAct(b){
   const a=b.dataset.act,{db,ch}=sbParse();
   const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return true;
   const lists=db.spellLists||[],lname=(lists.find(l=>l.id===sp.listId)||{}).name||"";
-  const z=zbFor(sp,lname),st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st);
+  const z=zbFor(sp,lname),st=num(ch.learned[sp.id]);let cs=Math.min(num(ch.castStufe[sp.id])||st,st);
+  if(zArm&&zArm.id===sp.id)cs=zArm.cs;
   if(a==="zch"){const n=(z&&z.st.length)||0,c=zbChoice(sp,ch).slice();while(c.length<n)c.push(0);
     const i=+b.dataset.i,used=c.reduce((x,y)=>x+num(y),0);c[i]=Math.max(0,num(c[i])+(+b.dataset.d));
     if(+b.dataset.d>0&&used>=cs-1)return true;ch.steigerungChoice[sp.id]=c;zSaveCh(ch);renderAll();return true;}
+  if(a==="zroll"||a==="zprobe"){
+    if(!zArm||zArm.id!==sp.id)return true;
+    if(zArm.phase==="armed"){const gz=z?!!z.gz:zGezielt(sp);if(gz)return true;if(!zExec(sp,zArm.cs,lname,z))return true;}}
   if(!z){ // eigener Zauber ohne Tabellendaten: Würfel aus dem Effekttext
     const e=nList(sp.effekt)[+b.dataset.fx],d=zbDiceIn(e);if(d)zbRollDice(`${sp.name}: ${e}`,d);return true;}
   if(a==="zbft"){const r=zbRes[sp.id]&&zbRes[sp.id].bft;if(!r)return true;r.v=Math.max(1,Math.min(12,r.v+(+b.dataset.d)));renderAll();return true;}
@@ -1777,6 +1793,117 @@ function zbAct(b){
     return true;}
   return false;
 }
+
+/* ---------- Zauber wirken in zwei Schritten + magischer Bildschirm-Effekt ---------- */
+let zArm=null; // {id,cs,phase:"armed"|"done"}
+function zKind(z,listName){
+  const L=zbKey(listName);
+  if(L.includes("zeichen"))return "holy";if(L.includes("wilde"))return "wild";if(L.includes("blut"))return "blood";
+  if(L.includes("weiß")||L.includes("weiss"))return "white";if(L.includes("freie"))return "arcane";
+  if(!L.includes("elementar"))return "arcane";
+  if(z&&/^(zorn der elemente|elementar)$/i.test(z.n))return "mix";
+  const t=((z&&[z.n,...z.fx.map(f=>f.t+" "+f.a)].join(" "))||"").toLowerCase();
+  if(/blitz|strom|donner|schock/.test(t))return "storm";
+  if(/eis|frost|kälte|gefror|hagel/.test(t))return "ice";
+  if(/feuer|flamm|magma|brenn|entzünd|lodern/.test(t))return "fire";
+  if(/wasser|geysir|flut|mahlstrom|kiemen/.test(t))return "water";
+  if(/wind|böe|sturm|luft/.test(t))return "air";
+  if(/erd|stein|kristall|wall|beben|festung|skulptur/.test(t))return "earth";
+  return "mix";
+}
+function zMagic(kind){
+  const old=document.querySelector(".zmagic");if(old)old.remove();
+  if(calmMotion()){const f=document.createElement("div");f.className="zmagic zflash k-"+kind;document.body.appendChild(f);setTimeout(()=>f.remove(),450);return;}
+  const cv=document.createElement("canvas");cv.className="zmagic";document.body.appendChild(cv);
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
+  const c=cv.getContext("2d");c.scale(dpr,dpr);
+  const R=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
+  const P=[],T=1500,t0=performance.now(),kinds=kind==="mix"?["fire","ice","storm","earth"]:[kind];
+  const bolts=[];
+  kinds.forEach(k=>{
+    const n=kind==="mix"?40:90;
+    for(let i=0;i<n;i++){
+      const p={k,x:R(0,W),y:H+R(0,60),vx:R(-.4,.4),vy:R(-7,-3),s:R(3,9),r:R(0,6.3),vr:R(-.1,.1),d:R(0,500),life:R(700,1300)};
+      if(k==="fire"){p.col=pick(["#ffd76a","#ff9a3a","#ff5a26","#e23a1c"]);}
+      if(k==="ice"){p.y=R(-80,H*.45);p.vy=R(1.5,4);p.vx=R(-1,1);p.col=pick(["#f2fbff","#bfe6ff","#82c6ff"]);p.s=R(4,11);}
+      if(k==="water"){p.x=W/2+R(-40,40);p.y=H*.55;const a=R(0,6.3),v=R(2,7);p.vx=Math.cos(a)*v;p.vy=Math.sin(a)*v-3;p.col=pick(["#7cc4ff","#3f8fd9","#c9e9ff"]);p.s=R(2,5);p.g=.18;}
+      if(k==="earth"){p.vy=R(-11,-6);p.vx=R(-2.5,2.5);p.g=.32;p.col=pick(["#8a6236","#a77b45","#5b3f22","#c19a63"]);p.s=R(3,8);}
+      if(k==="air"){p.x=R(-200,0);p.y=R(0,H);p.vx=R(8,15);p.vy=R(-1,1);p.col="rgba(235,240,245,.8)";p.s=R(40,110);}
+      if(k==="storm"){p.x=R(0,W);p.y=R(0,H);p.vx=R(-3,3);p.vy=R(-3,3);p.col=pick(["#e9f4ff","#9fd2ff","#fff6a8"]);p.s=R(1.5,3.5);p.life=R(200,600);}
+      if(k==="holy"){p.y=R(H*.3,H);p.vy=R(-2.5,-.8);p.col=pick(["#fff3c2","#ffd66b","#f5b93b"]);p.s=R(2,5);}
+      if(k==="wild"){p.x=R(-60,W);p.y=R(-80,H*.3);p.vx=R(1,3);p.vy=R(1,3);p.col=pick(["#6aa84f","#93c47d","#38761d","#b6d7a8"]);p.s=R(6,12);p.leaf=Math.random()<.75;if(!p.leaf){p.col="#e8ff8a";p.s=R(2,4);}}
+      if(k==="blood"){p.y=R(-120,0);p.vy=R(3,8);p.vx=R(-.3,.3);p.col=pick(["#8b0a0a","#b3121b","#5e0508"]);p.s=R(3,7);p.g=.12;}
+      if(k==="white"){const a=R(0,6.3),v=R(1,6);p.x=W/2;p.y=H/2;p.vx=Math.cos(a)*v;p.vy=Math.sin(a)*v;p.col=pick(["#ffffff","#e3f1ff","#fff7d6"]);p.s=R(2,6);}
+      if(k==="arcane"){p.a=R(0,6.3);p.rad=R(60,Math.min(W,H)*.42);p.va=R(.02,.05)*(Math.random()<.5?-1:1);p.col=pick(["#c39bff","#8f5cff","#e2ccff","#5ad1ff"]);p.s=R(2,5);}
+      P.push(p);
+    }
+    if(k==="storm")for(let i=0;i<3;i++)bolts.push({at:i*260+R(0,120),x:R(W*.15,W*.85),pts:null});
+  });
+  const bolt=(x)=>{const pts=[[x,0]];let y=0;while(y<H*R(.55,.85)){y+=R(20,50);x+=R(-35,35);pts.push([x,y]);}return pts;};
+  function star(x,y,s){c.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,r=i%2?s*.35:s;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);}c.closePath();c.fill();}
+  function frame(now){
+    const t=now-t0,fade=t>T-400?Math.max(0,(T-t)/400):Math.min(1,t/150);
+    c.clearRect(0,0,W,H);c.globalAlpha=1;
+    // Hintergrund-Schimmer
+    const bg={fire:"255,120,40",ice:"150,210,255",water:"60,140,220",earth:"140,100,50",air:"220,230,240",storm:"160,200,255",holy:"255,215,110",wild:"110,180,90",blood:"150,0,10",white:"240,248,255",arcane:"150,100,255",mix:"200,150,255"}[kind];
+    const g=kind==="blood"?c.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.75):c.createRadialGradient(W/2,kind==="holy"?0:H/2,0,W/2,H/2,Math.max(W,H)*.8);
+    if(kind==="blood"){g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,`rgba(${bg},${.55*fade})`);}else{g.addColorStop(0,`rgba(${bg},${.28*fade})`);g.addColorStop(1,"rgba(0,0,0,0)");}
+    c.fillStyle=g;c.fillRect(0,0,W,H);
+    if(kind==="holy"){c.save();c.translate(W/2,-20);c.rotate(t/3000);for(let i=0;i<12;i++){c.rotate(Math.PI/6);c.fillStyle=`rgba(255,220,120,${.12*fade})`;c.beginPath();c.moveTo(0,0);c.lineTo(-30,H*1.3);c.lineTo(30,H*1.3);c.fill();}c.restore();}
+    if(kind==="white"||kind==="water"){for(let i=0;i<3;i++){const q=((t-i*220)/900);if(q<0||q>1)continue;c.strokeStyle=kind==="white"?`rgba(255,255,255,${(1-q)*.8*fade})`:`rgba(120,190,255,${(1-q)*.7*fade})`;c.lineWidth=kind==="white"?4:3;c.beginPath();c.ellipse(W/2,kind==="water"?H*.55:H/2,q*W*.6,q*(kind==="water"?W*.2:W*.6),0,0,6.3);c.stroke();}}
+    if(kind==="arcane"){c.save();c.translate(W/2,H/2);c.rotate(t/900);const r=Math.min(W,H)*.3;c.strokeStyle=`rgba(190,150,255,${.75*fade})`;c.lineWidth=2;c.beginPath();c.arc(0,0,r,0,6.3);c.stroke();c.beginPath();c.arc(0,0,r*.78,0,6.3);c.stroke();
+      for(let i=0;i<12;i++){c.rotate(Math.PI/6);c.beginPath();c.moveTo(r*.8,-6);c.lineTo(r*.96,0);c.lineTo(r*.8,6);c.moveTo(r*.86,-9);c.lineTo(r*.86,9);c.stroke();}
+      c.rotate(-t/450);c.beginPath();for(let i=0;i<=5;i++){const a=i*4*Math.PI/5-Math.PI/2;c.lineTo(Math.cos(a)*r*.75,Math.sin(a)*r*.75);}c.stroke();c.restore();}
+    bolts.forEach(b=>{const q=t-b.at;if(q<0||q>220)return;if(!b.pts)b.pts=bolt(b.x);c.fillStyle=`rgba(220,235,255,${.35*(1-q/220)})`;c.fillRect(0,0,W,H);
+      c.strokeStyle=`rgba(240,248,255,${1-q/220})`;c.lineWidth=3;c.shadowColor="#9fd2ff";c.shadowBlur=18;c.beginPath();b.pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));c.stroke();c.shadowBlur=0;});
+    c.globalCompositeOperation=(kind==="blood"||kind==="earth")?"source-over":"lighter";
+    P.forEach(p=>{if(t<p.d)return;const age=t-p.d;if(age>p.life)return;const a=Math.max(0,1-age/p.life)*fade;
+      if(p.k==="arcane"){p.a+=p.va;p.x=W/2+Math.cos(p.a)*p.rad;p.y=H/2+Math.sin(p.a)*p.rad;}
+      else{p.x+=p.vx+(p.k==="fire"?Math.sin((age+p.r*100)/120)*.6:0);p.y+=p.vy;if(p.g)p.vy+=p.g;p.r+=p.vr;}
+      c.globalAlpha=a;c.fillStyle=p.col;c.strokeStyle=p.col;
+      if(p.k==="ice"){c.save();c.translate(p.x,p.y);c.rotate(p.r);c.beginPath();c.moveTo(0,-p.s);c.lineTo(p.s*.3,0);c.lineTo(0,p.s);c.lineTo(-p.s*.3,0);c.fill();c.restore();}
+      else if(p.k==="air"){c.lineWidth=1.5;c.beginPath();c.moveTo(p.x,p.y);c.quadraticCurveTo(p.x+p.s/2,p.y-12,p.x+p.s,p.y);c.stroke();}
+      else if(p.k==="wild"&&p.leaf){c.save();c.translate(p.x,p.y);c.rotate(p.r);c.beginPath();c.ellipse(0,0,p.s,p.s*.45,0,0,6.3);c.fill();c.restore();}
+      else if(p.k==="blood"){c.beginPath();c.arc(p.x,p.y,p.s*.6,0,6.3);c.fill();c.globalAlpha=a*.4;c.fillRect(p.x-p.s*.15,p.y-p.s*3,p.s*.3,p.s*3);}
+      else if(p.k==="white"||p.k==="holy"){star(p.x,p.y,p.s*1.4);}
+      else if(p.k==="earth"){c.fillRect(p.x,p.y,p.s,p.s*.8);}
+      else{c.beginPath();c.arc(p.x,p.y,p.k==="fire"?p.s*(1-age/p.life*.6):p.s,0,6.3);c.fill();}
+    });
+    c.globalCompositeOperation="source-over";c.globalAlpha=1;
+    if(t<T)requestAnimationFrame(frame);else cv.remove();
+  }
+  requestAnimationFrame(frame);
+  if(kind==="earth"||kind==="mix"){document.body.classList.add("zshake");setTimeout(()=>document.body.classList.remove("zshake"),420);}
+}
+/* Kosten erst beim Ausführen abziehen */
+function zExec(sp,cs,listName,z){
+  const cost=sp.level+cs;
+  if(num(cur.mp.cur)<cost){showMsg(`Nicht genug Mana für ${sp.name}: ${num(cur.mp.cur)} da, ${cost} nötig.`);return false;}
+  const ap=atkCost(2);if(!spendAp(ap))return false;
+  cur.kampf.att=num(cur.kampf.att)+1;cur.mp.cur=num(cur.mp.cur)-cost;queueSave(cur);
+  zArm={id:sp.id,cs,phase:"done",cost,ap};
+  try{zMagic(zKind(z,listName));}catch(e){}
+  try{clink(1.5,.2);setTimeout(()=>clink(2,.14),90);}catch(e){}buzz(15);
+  renderAll();return true;
+}
+function zAim(sp,cost){
+  const gs=cur.skills.find(s=>s.name==="Gezielte Sprüche");
+  rollPool(`${sp.name} zielen (−${cost} Mana)`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return {tag:"Kopf ab 40 · Körper ab 15"};});
+}
+function zCastRow(sp,st,cs,cost,gz,rolls){
+  const arm=zArm&&zArm.id===sp.id?zArm:null,ap=atkCost(2);
+  const stepper=`<div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${cs<=1||arm&&arm.phase==="armed"?"disabled":""} aria-label="Stufe senken">−</button><output>${cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${cs>=st||arm&&arm.phase==="armed"?"disabled":""} aria-label="Stufe erhöhen">+</button></div>`;
+  if(arm&&arm.phase==="armed"){
+    const how=gz?"Jetzt zielen. Danach würfelst du die Effekte.":rolls?"Jetzt einen Effekt würfeln oder ausführen.":"Jetzt ausführen.";
+    return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}</div>
+      <div class="zarm"><div><b>Bereit: ${cost} Mana · ${ap} AP</b><div class="hint">${how} Erst dann werden Mana und AP abgezogen.</div></div>
+      <div class="row-actions">${gz?`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Zielen und ausführen</button>`:`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Ausführen</button>`}<button class="btn" data-act="zcancel">Abbrechen</button></div></div>`;}
+  return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}
+    <button class="btn pri" data-act="zcast" data-spell="${sp.id}">Wirken: ${cost} Mana · ${ap} AP</button></div>
+    ${arm&&arm.phase==="done"?`<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP. Würfle jetzt die Effekte.</div>`:""}`;
+}
+/* Würfelknöpfe sind erst nach „Wirken“ aktiv */
+function zCanRoll(sp,gz){const a=zArm&&zArm.id===sp.id?zArm:null;return !!a&&(a.phase==="done"||(a.phase==="armed"&&!gz));}
 
 function sbParse(){
   let db=null,ch={};
@@ -1809,26 +1936,27 @@ function zauberCardHtml(){
   ${known.length>1?`<div class="zchips ichips${zSlide?" "+zSlide:""}" id="zlchips" data-for="zlist">${known.map(l=>`<button class="chip${l.id===act.id?" on":""}" data-zlist="${l.id}">${esc(l.name)}</button>`).join("")}</div>`:""}
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,z=zbFor(sp,act.name);
-    const castRow=`<div class="zcast"><span class="lab">Wirken auf Stufe</span>
-        <div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${cs<=1?"disabled":""} aria-label="Stufe senken">−</button><output>${cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${cs>=st?"disabled":""} aria-label="Stufe erhöhen">+</button></div>
-        <button class="btn pri" data-act="zcast" data-spell="${sp.id}">Wirken: ${cost} Mana · ${atkCost(2)} AP</button></div>`;
     const head=`<div class="zhead"><div class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</div><span class="badge">Stufe ${st}</span></div>`;
-    if(z){const calc=zbCalc(z,cs,zbChoice(sp,ch)),tags=zbTags(z);
+    const lock=h=>zCanRoll(sp,gz)?h:h.replace(/class="btn small zroll"/g,'class="btn small zroll" disabled');
+    let gz;
+    if(z){const calc=zbCalc(z,cs,zbChoice(sp,ch)),tags=zbTags(z);gz=!!z.gz;
+      const fxh=zbFxHtml(sp,z,calc,cs),prh=zbProbeHtml(sp,z,calc),rolls=/data-act="zroll"/.test(fxh)||!!prh;
       return `<div class="zspell">${head}
       ${tags.length?`<div class="ztags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
-      ${castRow}
+      ${zCastRow(sp,st,cs,cost,gz,rolls)}
       ${zbOderHtml(sp,z,calc,ch)}
-      <div class="zfxs">${zbFxHtml(sp,z,calc,cs)}</div>
+      <div class="zfxs">${lock(fxh)}</div>
       ${calc.extra.length?`<div class="zsteig">Steigerung auf Stufe ${cs}: ${esc(calc.extra.join(" · "))}</div>`:""}
-      ${zbProbeHtml(sp,z,calc)}
+      ${lock(prh)}
       ${zInfoHtml(sp,lname(sp.listId),z)}
     </div>`;}
+    gz=zGezielt(sp);
     const steig=zSteig(sp,cs,ch),eff=nList(sp.effekt);
     return `<div class="zspell">${head}
-      ${zGezielt(sp)?`<div class="hint">Gezielt: Zielwurf beim Wirken</div>`:""}
-      ${eff.length?`<div class="zeff">${eff.map((e,i)=>{const d=zbDiceIn(e);return esc(e)+(d?` <button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${ICON_DICE_S}${esc(zbDiceTxt(d))}</button>`:"");}).join("<br>")}</div>`:""}
+      ${gz?`<div class="hint">Gezielt: Zielwurf beim Ausführen</div>`:""}
+      ${zCastRow(sp,st,cs,cost,gz,eff.some(e=>zbDiceIn(e)))}
+      ${eff.length?`<div class="zeff">${lock(eff.map((e,i)=>{const d=zbDiceIn(e);return esc(e)+(d?` <button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${ICON_DICE_S}${esc(zbDiceTxt(d))}</button>`:"");}).join("<br>"))}</div>`:""}
       ${steig?`<div class="zsteig">Steigerung: ${esc(steig)}</div>`:""}
-      ${castRow}
       ${zInfoHtml(sp,lname(sp.listId))}
     </div>`;}).join("")}</div>`;
 }
