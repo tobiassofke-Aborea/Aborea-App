@@ -1500,6 +1500,7 @@ function rollPool(title,spec,onDone){
     const res=onDone?onDone(total):null;
     if(res&&res.tag){const tg=$("#rtag");tg.textContent=res.tag;tg.className="tag"+(res.cls?" "+res.cls:"");tg.hidden=false;}
     logRoll(title,total,lines.join(" · "),res&&res.tag);
+    if(zAfterRoll){const f=zAfterRoll;zAfterRoll=null;setTimeout(f,60);}
     if(tab==="kampf"&&!document.activeElement.matches("input,textarea,select"))renderAll();
     rollTimer=setTimeout(()=>{$("#roll").innerHTML=""},12000);
   }
@@ -1590,8 +1591,9 @@ function kampfDo(b){
     case "zgo":{
       const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp||!zArm||zArm.id!==sp.id)return;
       const lname=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",z=zbFor(sp,lname),cs=zArm.cs,cost=sp.level+cs;
-      if(!zExec(sp,cs,lname,z))return;
-      if(z?z.gz:zGezielt(sp))zAim(sp,cost);else showMsg(`${sp.name} auf Stufe ${cs} gewirkt: −${cost} Mana, −${zArm.ap} AP`);
+      const gz=z?!!z.gz:zGezielt(sp),req=zArm.req||[];
+      if(gz&&!zArm.aimed){zArm.aimed=true;if(!req.length)zAfterRoll=()=>zExec(sp,cs,lname,z);renderAll();zAim(sp,cost);return;}
+      if(zExec(sp,cs,lname,z))showMsg(`${sp.name} auf Stufe ${cs} gewirkt: −${cost} Mana, −${zArm.ap} AP`);
       return;}
     case "spsel":atk.special=b.dataset.sp;atk.spMeter="";atk.spLast="";setKpage("angriff");return;
     case "spclear":atk.special=null;return renderAll();
@@ -1796,7 +1798,14 @@ function zbAct(b){
   if(a==="zaoe"){const k=sp.id+":"+b.dataset.fx;zAoeOpen.has(k)?zAoeOpen.delete(k):zAoeOpen.add(k);renderAll();return true;}
   if(a==="zroll"||a==="zprobe"){
     if(!zArm||zArm.id!==sp.id)return true;
-    if(zArm.phase==="armed"){const gz=z?!!z.gz:zGezielt(sp);if(gz)return true;if(!zExec(sp,zArm.cs,lname,z))return true;}}
+    if(zArm.phase==="armed"){const gz=z?!!z.gz:zGezielt(sp);if(gz&&!zArm.aimed)return true;
+      const k=zKeyOf(b.dataset),done=zArm.done||(zArm.done=[]);if(!done.includes(k))done.push(k);
+      const req=zArm.req||[],arm=zArm;
+      if(req.every(r=>done.includes(r.k))){
+        if(num(cur.mp.cur)<sp.level+arm.cs){done.pop();showMsg(`Nicht genug Mana für ${sp.name}.`);return true;}
+        if(apLeft()<atkCost(2)){done.pop();showMsg(`Nicht genug AP: ${apLeft()} übrig, ${atkCost(2)} nötig.`);return true;}
+        zAfterRoll=()=>zExec(sp,arm.cs,lname,z);}
+      else renderAll();}}
   if(!z){ // eigener Zauber ohne Tabellendaten: Würfel aus dem Effekttext
     const e=nList(sp.effekt)[+b.dataset.fx],d=zbDiceIn(e);if(d)zbRollDice(`${sp.name}: ${e}`,d);return true;}
   if(a==="zbft"){const r=zbRes[sp.id]&&zbRes[sp.id].bft;if(!r)return true;r.v=Math.max(1,Math.min(12,r.v+(+b.dataset.d)));renderAll();return true;}
@@ -1829,13 +1838,15 @@ function zbAct(b){
 }
 
 /* ---------- Zauber wirken in zwei Schritten + magischer Bildschirm-Effekt ---------- */
-let zArm=null; // {id,cs,phase:"armed"|"done"}
+let zArm=null,zAfterRoll=null; // {id,cs,phase:"armed"|"done"}
 function zKind(z,listName){
   const L=zbKey(listName);
   if(L.includes("zeichen"))return "holy";if(L.includes("wilde"))return "wild";if(L.includes("blut"))return "blood";
   if(L.includes("weiß")||L.includes("weiss"))return "white";if(L.includes("freie"))return "arcane";
   if(!L.includes("elementar"))return "arcane";
   if(z&&/^(zorn der elemente|elementar)$/i.test(z.n))return "mix";
+  const pick=t=>/blitz|strom|donner|schock/.test(t)?"storm":/eis|frost|kälte|gefror|hagel/.test(t)?"ice":/wasser|geysir|flut|mahlstrom|kiemen/.test(t)?"water":/feuer|flamm|magma|brenn|entzünd|lodern/.test(t)?"fire":/wind|böe|sturm|luft/.test(t)?"air":/erd|stein|kristall|wall|beben|festung|skulptur/.test(t)?"earth":"";
+  const byName=pick(String(z&&z.n||"").toLowerCase());if(byName)return byName;
   const t=((z&&[z.n,...z.fx.map(f=>f.t+" "+f.a)].join(" "))||"").toLowerCase();
   if(/blitz|strom|donner|schock/.test(t))return "storm";
   if(/eis|frost|kälte|gefror|hagel/.test(t))return "ice";
@@ -1921,29 +1932,38 @@ function zExec(sp,cs,listName,z){
   queueSave(cur);
   zArm={id:sp.id,cs,phase:"done",cost,ap,note};
   try{zMagic(zKind(z,listName));}catch(e){}
-  try{clink(1.5,.2);setTimeout(()=>clink(2,.14),90);}catch(e){}buzz(15);
+  buzz([25,50,70]);
   renderAll();return true;
 }
 function zAim(sp,cost){
   const gs=cur.skills.find(s=>s.name==="Gezielte Sprüche");
-  rollPool(`${sp.name} zielen (−${cost} Mana)`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return {tag:"Kopf ab 40 · Körper ab 15"};});
+  rollPool(`${sp.name}: Zielwurf`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return {tag:"Kopf ab 40 · Körper ab 15"};});
 }
-function zCastRow(sp,st,cs,cost,gz,rolls){
+function zCastRow(sp,st,cs,cost,gz,req){
   const arm=zArm&&zArm.id===sp.id?zArm:null,ap=atkCost(2);
+  if(arm&&arm.phase==="armed")arm.req=req;
   const stepper=`<div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${cs<=1||arm&&arm.phase==="armed"?"disabled":""} aria-label="Stufe senken">−</button><output>${cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${cs>=st||arm&&arm.phase==="armed"?"disabled":""} aria-label="Stufe erhöhen">+</button></div>`;
   if(arm&&arm.phase==="armed"){
     const kz=zKonz(),isK=(()=>{const {db}=sbParse();const ln=db?((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name:"";const z=zbFor(sp,ln||"");return z?z.k:/K\*/.test(sp.details||"");})();
     const kwarn=isK&&kz?`<div class="zwarn">Du konzentrierst dich gerade auf ${esc(kz.n)}. Wenn du ${esc(sp.name)} ausführst, endet ${esc(kz.n)}.</div>`:"";
-    const how=gz?"Jetzt zielen. Danach würfelst du die Effekte.":rolls?"Jetzt einen Effekt würfeln oder ausführen.":"Jetzt ausführen.";
+    const done=arm.done||(arm.done=[]),left=req.filter(r=>!done.includes(r.k));
+    const steps=[...(gz?[{label:"Zielwurf",ok:!!arm.aimed}]:[]),...req.map(r=>({label:r.label,ok:done.includes(r.k)}))];
+    const how=steps.length?`Würfle nacheinander: ${steps.map(x=>x.ok?`<s>${esc(x.label)}</s>`:`<b>${esc(x.label)}</b>`).join(" → ")}. Mit dem letzten Wurf ist der Zauber gewirkt.`:"Tippe auf „Ausführen“.";
     return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}</div>
       <div class="zarm"><div><b>Bereit: ${cost} Mana · ${ap} AP</b><div class="hint">${how} Erst dann werden Mana und AP abgezogen.</div>${kwarn}</div>
-      <div class="row-actions">${gz?`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Zielen und ausführen</button>`:`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Ausführen</button>`}<button class="btn" data-act="zcancel">Abbrechen</button></div></div>`;}
+      <div class="row-actions">${gz&&!arm.aimed?`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Zielwurf</button>`:!req.length&&!gz?`<button class="btn pri" data-act="zgo" data-spell="${sp.id}">Ausführen</button>`:""}<button class="btn" data-act="zcancel">Abbrechen</button></div></div>`;}
   return `<div class="zcast"><span class="lab">Wirken auf Stufe</span>${stepper}
     <button class="btn pri" data-act="zcast" data-spell="${sp.id}">Wirken: ${cost} Mana · ${ap} AP</button></div>
-    ${arm&&arm.phase==="done"?`<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP. Würfle jetzt die Effekte.${arm.note?`<br><span class="zwarn">${esc(arm.note)}</span>`:""}</div>`:""}`;
+    ${arm&&arm.phase==="done"?`<div class="zdone">Gewirkt auf Stufe ${arm.cs}: −${arm.cost} Mana, −${arm.ap} AP.${arm.note?`<br><span class="zwarn">${esc(arm.note)}</span>`:""}</div>`:""}`;
 }
 /* Würfelknöpfe sind erst nach „Wirken“ aktiv */
-function zCanRoll(sp,gz){const a=zArm&&zArm.id===sp.id?zArm:null;return !!a&&(a.phase==="done"||(a.phase==="armed"&&!gz));}
+const zKeyOf=d=>d.act==="zprobe"?"p":d.ref?`r${d.ref}_${d.fx}`:d.o?`a${d.fx}`:`f${d.fx}`;
+function zReqFrom(h){const out=[],seen=new Set();
+  String(h).replace(/<button([^>]*class="btn small zroll"[^>]*)>([\s\S]*?)<\/button>/g,(m,at,inner)=>{const g=k=>(at.match(new RegExp(`data-${k}="([^"]*)"`))||[])[1];
+    const k=zKeyOf({act:g("act"),ref:g("ref"),fx:g("fx"),o:g("o")});if(seen.has(k))return m;seen.add(k);
+    out.push({k,label:inner.replace(/<[^>]+>/g,"").replace(/^Erfolg: |^Misserfolg: /,"").trim()});return m;});
+  return out;}
+function zCanRoll(sp,gz){const a=zArm&&zArm.id===sp.id?zArm:null;return !!a&&(a.phase==="done"||(a.phase==="armed"&&(!gz||a.aimed)));}
 
 /* ---------- Flächen, Dauer, Konzentration ---------- */
 const zNum=s=>parseFloat(String(s).replace(",","."));
@@ -2072,10 +2092,10 @@ function zauberCardHtml(){
     const lock=h=>zCanRoll(sp,gz)?h:h.replace(/class="btn small zroll"/g,'class="btn small zroll" disabled');
     let gz;
     if(z){const calc=zbCalc(z,cs,zbChoice(sp,ch)),tags=zbTags(z);gz=!!z.gz;
-      const fxh=zbFxHtml(sp,z,calc,cs),prh=zbProbeHtml(sp,z,calc),rolls=/data-act="zroll"/.test(fxh)||!!prh;
+      const fxh=zbFxHtml(sp,z,calc,cs),prh=zbProbeHtml(sp,z,calc),req=zReqFrom(fxh+prh);
       return `<div class="zspell">${head}
       ${tags.length?`<div class="ztags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
-      ${zCastRow(sp,st,cs,cost,gz,rolls)}
+      ${zCastRow(sp,st,cs,cost,gz,req)}
       ${zbOderHtml(sp,z,calc,ch)}
       <div class="zfxs">${lock(fxh)}</div>
       ${calc.extra.length?`<div class="zsteig">Steigerung auf Stufe ${cs}: ${esc(calc.extra.join(" · "))}</div>`:""}
@@ -2086,7 +2106,7 @@ function zauberCardHtml(){
     const steig=zSteig(sp,cs,ch),eff=nList(sp.effekt);
     return `<div class="zspell">${head}
       ${gz?`<div class="hint">Gezielt: Zielwurf beim Ausführen</div>`:""}
-      ${zCastRow(sp,st,cs,cost,gz,eff.some(e=>zbDiceIn(e)))}
+      ${zCastRow(sp,st,cs,cost,gz,zReqFrom(eff.map((e,i)=>{const d=zbDiceIn(e);return d?`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${esc(zbDiceTxt(d))}</button>`:"";}).join("")))}
       ${eff.length?`<div class="zeff">${lock(eff.map((e,i)=>{const d=zbDiceIn(e);return esc(e)+(d?` <button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${ICON_DICE_S}${esc(zbDiceTxt(d))}</button>`:"");}).join("<br>"))}</div>`:""}
       ${steig?`<div class="zsteig">Steigerung: ${esc(steig)}</div>`:""}
       ${zInfoHtml(sp,lname(sp.listId))}
