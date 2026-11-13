@@ -1632,7 +1632,9 @@ function kampfDo(b){
       e.mines.splice(i,1);e.boom=num(e.boom)+1;const last=!e.mines.length;if(last)zAkt().splice(zAkt().indexOf(e),1);queueSave(cur);renderAll();
       rollPool(`Explosiver Stein ${nr}: ${n}W10`,{groups:[{label:`${n}W10`,n,s:10}],flat:0},t=>({tag:`${t} Schaden · 1m Radius${last?" · letzter Stein":""}`}));
       try{zMagic("earth");}catch(err){}return;}
-    case "zelem":{if(!zArm||zArm.phase!=="armed")return;const el=zArm.elems||(zArm.elems=[]);el[+b.dataset.i]=b.dataset.v;return renderAll();}
+    case "zelem":{if(!zArm||zArm.phase!=="armed")return;const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===zArm.id);if(!sp)return;
+      const ln=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",si=zSumInfo(zbFor(sp,ln),zArm.cs,zbChoice(sp,ch));
+      zArm.elems=Array(si?si.bonusN:1).fill(b.dataset.v);return renderAll();}
     case "zend":{const L=zAkt(),i=L.findIndex(e=>e.k===b.dataset.k);if(i>=0)L.splice(i,1);queueSave(cur);return renderAll();}
     case "zst":{const {ch}=sbParse();const st=num(ch.learned[b.dataset.spell]);let cs=Math.min(num(ch.castStufe[b.dataset.spell])||st,st);
       cs=Math.max(1,Math.min(st,cs+(+b.dataset.d)));ch.castStufe[b.dataset.spell]=cs;zSaveCh(ch);return renderAll();}
@@ -1909,6 +1911,7 @@ function zKind(z,listName){
   if(/erd|stein|kristall|wall|beben|festung|skulptur/.test(t))return "earth";
   return "mix";
 }
+const zElemKind=a=>{const e=a&&a.elems&&a.elems[0];return e?{Feuer:"fire",Luft:"air",Erde:"earth",Wasser:"water"}[e]:null;};
 function zMagic(kind){
   const old=document.querySelector(".zmagic");if(old)old.remove();
   if(calmMotion()){const f=document.createElement("div");f.className="zmagic zflash k-"+kind;document.body.appendChild(f);setTimeout(()=>f.remove(),450);return;}
@@ -1983,8 +1986,8 @@ function zExec(sp,cs,listName,z){
   if(z){const {ch}=sbParse();note=zTrack(sp,z,zbCalc(z,cs,zbChoice(sp,ch)),cs);}
   else if(/K\*/.test(sp.details||"")){const L=zAkt(),old=zKonz();if(old){L.splice(L.indexOf(old),1);note=`Konzentration auf ${old.n} beendet. `;}L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:true});}
   queueSave(cur);
-  zArm={id:sp.id,cs,phase:"done",cost,ap,note,show:true,name:sp.name,req:zArm&&zArm.req,gz:zArm&&zArm.gz,aimed:zArm&&zArm.aimed,done:zArm&&zArm.done,res:zArm&&zArm.res};
-  try{zMagic(zKind(z,listName));}catch(e){}
+  zArm={id:sp.id,cs,phase:"done",cost,ap,note,show:true,name:sp.name,elems:zArm&&zArm.elems,req:zArm&&zArm.req,gz:zArm&&zArm.gz,aimed:zArm&&zArm.aimed,done:zArm&&zArm.done,res:zArm&&zArm.res};
+  try{zMagic(zElemKind(zArm)||zKind(z,listName));}catch(e){}
   buzz([25,50,70]);
   renderAll();return true;
 }
@@ -2073,13 +2076,14 @@ function zDlgRender(){
     ${fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>
       <div class="row-actions"><button class="btn pri" data-act="zclose">Fertig</button></div>`
      :all&&(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})()?`<div class="row-actions"><button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} Mana · ${ap} AP</button></div><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`
-     :`<p class="hint">Erst ${gz?"zielen, dann ":""}die Effekte würfeln. Danach siehst du alle Ergebnisse und tippst auf „Wirken“. Erst dann werden Mana und AP abgezogen.</p><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`}
+     :all?`<p class="hint">Wähle zuerst das Element.</p><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`:`<p class="hint">Erst ${gz?"zielen, dann ":""}die Effekte würfeln. Danach siehst du alle Ergebnisse und tippst auf „Wirken“. Erst dann werden Mana und AP abgezogen.</p><div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div>`}
     ${info}</div>`;
-  if(!fin)zAmbient(zKind(z,lname),el);else zAmbStop();
+  if(!fin)zAmbient(zElemKind(a)||zKind(z,lname),el);else zAmbStop();
 }
 function zSumDlg(sp,z,a){
   const {ch}=sbParse(),si=zSumInfo(z,a.cs,zbChoice(sp,ch),a.elems);if(!si)return "";
-  const picks=si.elem?Array.from({length:si.bonusN},(_,i)=>`<div class="zelr"><span class="lab">Elementarbonus${si.bonusN>1?" "+(i+1):""}</span><div class="chips">${Object.keys(ELEM).map(k=>`<button class="chip${(a.elems||[])[i]===k?" on":""}" data-act="zelem" data-i="${i}" data-v="${k}" ${a.phase!=="armed"?"disabled":""}>${k} <small>${ELEM[k]}</small></button>`).join("")}</div></div>`).join(""):"";
+  const cur1=(a.elems||[])[0];
+  const picks=si.elem?`<div class="zelr"><span class="lab">Element${si.bonusN>1?` <span class="hint">(Bonus ${si.bonusN}×)</span>`:""}</span><div class="chips">${Object.keys(ELEM).map(k=>`<button class="chip${cur1===k?" on":""}" data-act="zelem" data-v="${k}" ${a.phase!=="armed"?"disabled":""}>${k} <small>${ELEM[k]}${si.bonusN>1?" ×"+si.bonusN:""}</small></button>`).join("")}</div></div>`:"";
   return `<div class="zsumbox">${picks}<div><span class="lab">${si.count>1?si.count+"× ":""}${esc(si.name||"Beschwörung")}</span><div><b>${esc(zSumLine(si))}</b></div><div class="hint">Bleibt unter „Aktive Zauber“, bis es zerstört wird${si.du?" oder nach "+esc(zDurTxt(si.du)):""}. Dort führst du LP und würfelst Angriffe.</div></div></div>`;
 }
 /* Würfelknöpfe sind erst nach „Wirken“ aktiv */
