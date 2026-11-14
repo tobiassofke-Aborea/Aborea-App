@@ -563,7 +563,8 @@ body.zdlgon #roll .box{margin-top:0}
 .zsumbox{display:grid;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .zelr .chips .chip small{color:inherit;opacity:.75;font-size:.72rem;margin-left:3px}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
+.zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakth{display:flex;align-items:center;gap:6px}.zaktt{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font:inherit;color:inherit}.zaktt .chev{font-size:.8em;color:var(--accent);width:1em}.zcnt{font-family:var(--sans);font-size:.75rem;font-weight:700;background:var(--accent);color:var(--card);border-radius:999px;padding:2px 8px;line-height:1.4}
+.zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
 .zsetup{display:flex;flex-direction:column;gap:12px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .zprev ul{margin:4px 0 0;padding-left:18px}.zprev li{margin:3px 0}
 .zsetline{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
@@ -1684,6 +1685,7 @@ function kampfDo(b){
     case "zelem":{if(!zArm||zArm.phase!=="armed")return;const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===zArm.id);if(!sp)return;
       const ln=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",si=zSumInfo(zbFor(sp,ln),zArm.cs,zbChoice(sp,ch));
       zArm.elems=Array(si?si.bonusN:1).fill(b.dataset.v);return renderAll();}
+    case "zakttog":{zaktZu=!zaktZu;try{localStorage.setItem("aborea-zakt-zu",zaktZu?"1":"0");}catch(e){}return renderAll();}
     case "zcnt0":{if(cur.zCnt)delete cur.zCnt[b.dataset.spell];queueSave(cur);return renderAll();}
     case "zgeist":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.geist)return;const G=e.geist;
       if(b.dataset.op==="atk"){if(G.n<=0)return;G.n--;queueSave(cur);renderAll();if(G.dmg)zbRollDice(`${e.n}: Geist greift an`,G.dmg,t=>({tag:`${t} Schaden · der Geist verschwindet`}));return;}
@@ -2423,9 +2425,13 @@ function zTrack0(sp,z,calc,cs){
   if(z.k||rounds>1||time||later.length){L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:rounds>0?rounds:null,t:time,konz:!!z.k,later,wait});}
   return msg;
 }
+let zaktZu=(()=>{try{return localStorage.getItem("aborea-zakt-zu")==="1";}catch(e){return false;}})();
 function zAktHtml(){
   if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";
-  return `<h2>Aktive Zauber${ib("aktiv")}</h2><div class="card zakt">${L.map(e=>zAkWrap(e,(()=>{const S=e.sum;
+  const zu=zaktZu;
+  const head=`<h2 class="zakth"><button class="zaktt" data-act="zakttog" aria-expanded="${!zu}"><span class="chev" aria-hidden="true">${zu?"▸":"▾"}</span>Aktive Zauber <span class="zcnt">${L.length}</span></button>${ib("aktiv")}</h2>`;
+  if(zu)return head;
+  return `${head}<div class="card zakt">${L.map(e=>zAkWrap(e,(()=>{const S=e.sum;
     if(e.mines)return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">${esc(e.sp)} · Stufe ${e.st}</span><div class="hint">${e.mines.length} Stein${e.mines.length===1?"":"e"} scharf · Annäherung auf 1m löst aus</div></div>
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
       <div class="zrolls">${e.mines.map((x,i)=>`<button class="btn small zroll2" data-act="zmboom" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}Stein ${x.i||i+1} explodiert: ${x.d||x}W${x.s||10}</button>`).join("")}</div></div>`;
