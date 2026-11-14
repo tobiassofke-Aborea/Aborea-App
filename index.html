@@ -583,6 +583,11 @@ body.zdlgon #roll .box{margin-top:0}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakth{display:flex;align-items:center;gap:6px}.zaktt{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font:inherit;color:inherit}.zaktt .chev{font-size:.8em;color:var(--accent);width:1em}.zcnt{font-family:var(--sans);font-size:.75rem;font-weight:700;background:var(--accent);color:var(--card);border-radius:999px;padding:2px 8px;line-height:1.4}
 .zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
+.zsub{font-size:.8rem;color:var(--muted);margin-top:-2px}
+.zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
+.zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
+.zsec{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px}.zsec h4{margin:0;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.zsec p{margin:0}.zul{margin:0;padding-left:18px}.zul li{margin:2px 0}.zan{margin:0;font-size:.92rem;line-height:1.45}
 .zsetup{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .zdh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.zx{all:unset;cursor:pointer;font-size:1.6rem;line-height:1;padding:2px 8px;color:var(--muted);border-radius:8px}.zx:hover{background:var(--line)}
 .zmain{display:grid;gap:4px}.zpend{text-align:center}.zcl{justify-self:center;margin:2px auto 0;display:block}.zsel{min-width:140px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1201,6 +1206,11 @@ document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest
 /* ---------- Info-Knöpfe: kurze Regel-Erklärung zu einer Überschrift ---------- */
 const ICON_INFO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.1"/></svg>';
 const INFO={
+  zkonz:["Konzentration","<p>Der Zauber hält nur, solange du dich konzentrierst. Es geht immer nur ein Konzentrationszauber gleichzeitig: Wirkst du einen neuen, endet der alte.</p><p>Erleidest du Schaden, machst du einen GS-Test. Misslingt er, bricht der Zauber ab.</p>"],
+  zfluch:["Fluch","<p>Ein Fluch bleibt, bis er gebrochen wird. Seine Stärke ist der INT- oder CHA-Wurf beim Wirken. Brechen kann ihn nur, wer mit seinem Test höher würfelt.</p>"],
+  zgez:["Gezielt","<p>Vor den Effekten kommt ein Zielwurf. Er entscheidet, ob und wo der Zauber trifft (Kopf, Körper oder daneben).</p>"],
+  zorig:["Geht von dir aus","<p>Die Fläche beginnt bei dir: Kreise liegen mit dir in der Mitte, Kegel und Linien starten im Feld vor dir.</p>"],
+  zrea:["Reaktion","<p>Der Zauber kann als Reaktion gewirkt werden, auch außerhalb deines Zuges, z. B. wenn du angegriffen wirst.</p>"],
   aktiv:["Aktive Zauber",`<p>Hier landen Zauber, die länger als eine Runde wirken, und Zauber mit Konzentration.</p><p>Mit „Neue Runde“ zählt die App die Runden herunter. Zauber mit Minuten oder Stunden laufen, bis du sie beendest.</p><p>Es geht immer nur ein Konzentrationszauber gleichzeitig. Wirkst du einen neuen, endet der alte.</p>`],
   get beaufort(){return ["Beaufort-Skala",BFT_INFO()]},
   fert:["Fertigkeiten",`<p><b>Würfeln:</b> Der Würfel rechts würfelt eine Probe: W10 + Rang + Boni.</p>
@@ -2579,13 +2589,19 @@ function zauberCardHtml(){
         const bits=calc.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
         const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"Konzentration":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
         return compact(bits.join("<br>"),castH,tg.map(esc).join(" · "));}
-      return `<div class="zspell">${head}
-      ${tags.length?`<div class="ztags">${tags.map(t=>`<span>${esc(t)}</span>`).join("")}</div>`:""}
+      const chips=[z.rw&&!(z.o&&/^selbst$/i.test(z.rw))?`<span class="zchip">Reichweite ${esc(z.rw)}</span>`:"",z.o?`<span class="zchip">geht von dir aus${ib("zorig")}</span>`:"",z.gz?`<span class="zchip">Gezielt${/1x/.test(z.gz)?" (1x)":""}${ib("zgez")}</span>`:"",
+        z.k?`<span class="zchip k">Konzentration${ib("zkonz")}</span>`:"",z.fl?`<span class="zchip">Fluch${ib("zfluch")}</span>`:"",z.re?`<span class="zchip">Reaktion${ib("zrea")}</span>`:""].filter(Boolean).join("");
+      const sec=(t,h)=>`<section class="zsec"><h4>${t}</h4>${h}</section>`;
+      const stH=z.st.length?`<p class="hint">${z.st.length>1&&z.m==="ODER"?"Pro Stufe über 1 wählst du eins davon:":"Pro Stufe über 1 kommt alles dazu:"}</p><ul class="zul">${z.st.map(o=>`<li>${esc(o)}</li>`).join("")}</ul>`:"";
+      return `<div class="zspell zopen">${head}
+      <div class="zsub">${esc(lname(sp.listId))} · Level ${z.lv}</div>
+      ${z.de?`<p class="zdesc">${esc(z.de)}</p>`:""}
+      <div class="zchips2">${chips}</div>
+      ${sec("Effekte",`<div class="zfxs">${lock(fxh)}</div>`)}
+      ${stH?sec("Steigerung",stH):""}
+      ${prh?sec("Probe",lock(prh).replace('<div class="lab">Probe der Zaubernden</div>','')):""}
+      ${z.an?sec("Anmerkungen",`<p class="zan">${esc(z.an)}</p>`):""}
       ${zCastRow(sp,st,cs,cost,gz,req)}
-      <div class="zfxs">${lock(fxh)}</div>
-      ${calc.extra.length?`<div class="zsteig"><span class="lab">Steigerung auf Stufe ${cs}</span><ul>${calc.extra.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
-      ${lock(prh)}
-      ${zInfoHtml(sp,lname(sp.listId),z)}
     </div>`;}
     gz=zGezielt(sp);
     const steig=zSteig(sp,cs,ch),eff=nList(sp.effekt);
