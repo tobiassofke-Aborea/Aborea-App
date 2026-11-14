@@ -582,6 +582,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zelr .chips .chip small{color:inherit;opacity:.75;font-size:.72rem;margin-left:3px}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakth{display:flex;align-items:center;gap:6px}.zaktt{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font:inherit;color:inherit}.zaktt .chev{font-size:.8em;color:var(--accent);width:1em}.zcnt{font-family:var(--sans);font-size:.75rem;font-weight:700;background:var(--accent);color:var(--card);border-radius:999px;padding:2px 8px;line-height:1.4}
+.zwbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.84rem;padding:6px 8px;border-radius:8px;background:var(--bg)}.wbb .hint{display:inline}
 .zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
 .zico{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;color:var(--accent);border:1px solid var(--line);background:var(--card);margin:0 0 4px 2px}.zico.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .zh4s{text-transform:none;letter-spacing:0;font-weight:500}
@@ -1087,7 +1088,7 @@ function kritWeapon(){
   const i=cur.kampf.main!=null?cur.kampf.main:cur.kampf.off;
   return i!=null&&cur.weapons[i]?{w:cur.weapons[i],off:cur.kampf.main==null}:null;
 }
-function kritVal(w){return cur.kwManual?sum(cur.krit):wSkill(w)+num(w.krit);}
+function kritVal(w){return (cur.kwManual?sum(cur.krit):wSkill(w)+num(w.krit))+wbuf().krit;}
 function syncKrit(){
   if(!cur)return;
   if(cur.kwManual)return;const k=kritWeapon();cur.krit[0]=k?wSkill(k.w):0;cur.krit[1]=k?num(k.w.krit):0;
@@ -1492,7 +1493,7 @@ function undo(){
   if(!zArm||!zArm.show){const el=document.getElementById("zdlg");if(el)el.remove();if(typeof zAmbStop==="function")zAmbStop();}
   buzz(20);queueSave(cur);renderAll();showMsg("Rückgängig gemacht: "+u.label);
 }
-const UNDO_LABEL={zxmp:"Zusätzliches Mana",zst:"Stufe ändern",zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
+const UNDO_LABEL={zwbtog:"Waffenzauber an/aus",zxmp:"Zusätzliches Mana",zst:"Stufe ändern",zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
 let atk={slot:"main",split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};
 let def=null,spell=null,mag={attr:"Int",stufe:1,level:null};
@@ -1524,6 +1525,23 @@ function parseDice(str){
   });
   return out;
 }
+/* Zauber, die auf die eigenen Waffenangriffe wirken (Lichtbringer, Göttlicher Avatar, Blutdurst, Lichtklinge, Ruf der Märtyrer) */
+function zWb(z,calc,cs){
+  const wb={kampf:0,hit:0,dmg:0,krit:0,dice:[],auto:false,txt:[]};let any=false;
+  calc.fx.forEach(f=>{const a=String(f.a||""),t=String(f.t||""),w=String(f.w||"").trim(),isW=/^Waffe/i.test(t),n=parseFloat(w.replace(",","."))||0;
+    if(/garantierter treffer/i.test(t)){wb.auto=true;any=true;wb.txt.push("garantierter Treffer");}
+    if(/Kampfwürfel/i.test(a)&&f.dice){const k=f.dice.dice.reduce((x,d)=>x+d.n,0);wb.kampf+=k;any=true;wb.txt.push(`+${k} W10 Kampfwürfel`);return;}
+    if(f.dice&&(/Waffenschaden/i.test(a)||isW||/garantierter treffer/i.test(t))){f.dice.dice.forEach(d=>wb.dice.push({label:a||"Zauber",n:d.n,s:d.s}));wb.dmg+=f.dice.flat||0;any=true;wb.txt.push(`+${zbDiceTxt(f.dice)} ${a}`);return;}
+    if(isW&&/Treffen/i.test(a)){wb.hit+=n;any=true;wb.txt.push(`+${n} Treffen`);return;}
+    if(isW&&/Schaden/i.test(a)){wb.dmg+=n;any=true;wb.txt.push(`+${n} Schaden`);return;}
+    if((isW||/^Krit\.-Chance$/i.test(t))&&/Krit/i.test(a)){const v=/pro Zauberstufe/i.test(a)?n*cs:n;wb.krit+=v;any=true;wb.txt.push(`+${v}% Krit.`);return;}
+    if(/^Trefferzone$/i.test(t)){wb.hit+=n;any=true;wb.txt.push(`+${n} Treffen (Trefferzone)`);}
+  });
+  return any?wb:null;}
+function wbuf(){const o={kampf:0,hit:0,dmg:0,krit:0,dice:[],auto:false,list:[]};if(!cur||!cur.kampf)return o;
+  zAkt().forEach(e=>{const b=e.wb;if(!b||b.off)return;o.kampf+=b.kampf;o.hit+=b.hit;o.dmg+=b.dmg;o.krit+=b.krit;o.auto=o.auto||b.auto;b.dice.forEach(d=>o.dice.push({...d,label:`${e.sp||e.n}: ${d.label}`}));o.list.push(e);});
+  return o;}
+const wKw=w=>wSkill(w)+wbuf().kampf;
 function wSkill(w){
   if(w&&w.skill>=0&&cur.skills[w.skill])return Math.max(0,skillTotal(cur.skills[w.skill]));
   return Math.max(0,num(w&&w.rang));
@@ -1545,15 +1563,15 @@ function curWeapon(){
   const i=slotIdx(atk.slot);return i==null?null:cur.weapons[i]||null;
 }
 const isOff=()=>atk.slot==="off";
-function splitOf(w){const n=wSkill(w);let k=atk.split==null?Math.ceil(n/2):atk.split;k=Math.max(0,Math.min(n,k));return [k,n-k];}
+function splitOf(w){const n=wKw(w);let k=atk.split==null?Math.ceil(n/2):atk.split;k=Math.max(0,Math.min(n,k));return [k,n-k];}
 function attrDice(a,use){return use?Math.max(0,num(cur.attr[a].b)):0;}
 function hitGroups(w){
-  const [k]=splitOf(w),p=parseDice(w.hit);
-  return {groups:[{label:"Waffenfertigkeit",n:k,s:10},{label:"GE",n:attrDice("Ge",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))),flat:p.flat};
+  const [k]=splitOf(w),p=parseDice(w.hit),B=wbuf();
+  return {groups:[{label:"Waffenfertigkeit",n:k,s:10},{label:"GE",n:attrDice("Ge",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))),flat:p.flat+B.hit};
 }
 function dmgGroups(w){
-  const [,r]=splitOf(w),p=parseDice(w.dmg);
-  return {groups:[{label:"Waffenfertigkeit",n:r,s:10},{label:"ST",n:attrDice("St",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))),flat:p.flat};
+  const [,r]=splitOf(w),p=parseDice(w.dmg),B=wbuf();
+  return {groups:[{label:"Waffenfertigkeit",n:r,s:10},{label:"ST",n:attrDice("St",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))).concat(B.dice),flat:p.flat+B.dmg};
 }
 function poolChips(g){
   const items=g.groups.filter(x=>x.n>0).map(x=>`<span class="pc"><b>${x.n} W${x.s}</b><small>${esc(x.label)}</small></span>`);
@@ -1666,7 +1684,7 @@ function kampfDo(b){
     case "bonus":if(spendAp(2))rerender();return;
     case "apup":cur.kampf.ap=Math.min(apMax(),apLeft()+1);return rerender();
     case "slot":atk={slot:b.dataset.v,split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};return renderAll();
-    case "split":{const n=wSkill(w);atk.split=Math.max(0,Math.min(n,splitOf(w)[0]+(+b.dataset.d)));return renderAll();}
+    case "split":{const n=wKw(w);atk.split=Math.max(0,Math.min(n,splitOf(w)[0]+(+b.dataset.d)));return renderAll();}
     case "attack":{
       if(!w)return;
       const spS=atk.special?spById(atk.special):null;
@@ -1685,6 +1703,7 @@ function kampfDo(b){
       const spU=spById(atk.spUsed),ds=dmgGroups(w);if(spU)ds.flat=num(ds.flat)+spDmg(spU);
       rollPool(`${w.name||"Waffe"}: Schaden${spU?" ("+spU.n+")":""}`,ds,total=>{
         atk.dmg=total;atk.mult=(atk.zone==="kopf"?2:1)*(spU&&spU.fx&&spU.fx.mult||1);atk.phase="done";
+        zAkt().forEach(e=>{if(e.wb&&e.wb.auto&&!e.wb.off)e.wb.off=true;});queueSave(cur);
         return {tag:atk.mult>1?`×${atk.mult} = ${total*atk.mult} Schaden`:`${total} Schaden`};
       });return;}
     case "krit":{
@@ -1727,6 +1746,7 @@ function kampfDo(b){
     case "zelem":{if(!zArm||zArm.phase!=="armed")return;const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===zArm.id);if(!sp)return;
       const ln=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",si=zSumInfo(zbFor(sp,ln),zArm.cs,zbChoice(sp,ch));
       zArm.elems=Array(si?si.bonusN:1).fill(b.dataset.v);return renderAll();}
+    case "zwbtog":{const e=zAkt().find(x=>x.k===b.dataset.k);if(e&&e.wb){e.wb.off=!e.wb.off;queueSave(cur);}return renderAll();}
     case "zakttog":{zaktZu=!zaktZu;try{localStorage.setItem("aborea-zakt-zu",zaktZu?"1":"0");}catch(e){}return renderAll();}
     case "zcnt0":{if(cur.zCnt)delete cur.zCnt[b.dataset.spell];queueSave(cur);return renderAll();}
     case "zgeist":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.geist)return;const G=e.geist;
@@ -2465,9 +2485,11 @@ function zMineDlg(sp,z,a){
 }
 function zTrack(sp,z,calc,cs){
   const before=new Set(zAkt()),msg=zTrack0(sp,z,calc,cs),c=zbChoice(sp,sbParse().ch);
-  const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0;
+  const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0,wb=zWb(z,calc,cs);
+  if(wb&&!zAkt().some(e=>!before.has(e)))zAkt().push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:!!z.k});
+  if(wb){let first=true;zAkt().forEach(e=>{if(!before.has(e)&&first){e.wb=wb;first=false;}});}
   zAkt().forEach(e=>{if(!before.has(e)){e.sid=sp.id;e.ch=Array.isArray(c)?c.slice():c;if(xm)e.xmp=xm;}});return msg;}
-function zAkWrap(e,h){const d=zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
+function zAkWrap(e,h){const d=(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span>${e.wb.auto&&e.wb.off?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
 const zAkOpen=new Set();
 function zAkDet(e){try{
   const {db,ch}=sbParse();if(!db)return "";const nm=e.sp||e.n;
@@ -2849,9 +2871,10 @@ function renderKampf(){
 `;
   if(!w){h+=`<p class="hint">Keine Waffe angelegt. Leg unten bei „Waffen“ eine in die Haupt- oder Nebenhand.</p>`;}
   else{
-    const [k,r]=splitOf(w),n=wSkill(w),hg=hitGroups(w),dg=dmgGroups(w),both=cur.kampf.main!=null&&cur.kampf.off!=null;
+    const WB=wbuf();if(WB.list.length)h+=`<div class="spbanner act wbb"><div><span class="lab">Zauber auf deiner Waffe</span>${WB.list.map(e=>`<div><b>${esc(e.sp||e.n)}</b> <span class="hint">${esc(e.wb.txt.join(" · "))}${e.r!=null?` · noch ${e.r} Runde${e.r===1?"":"n"}`:""}</span></div>`).join("")}${WB.auto?`<div class="hint">Garantierter Treffer: wähle Kopf oder Körper, nicht „verfehlt“.</div>`:""}</div></div>`;
+    const [k,r]=splitOf(w),n=wKw(w),hg=hitGroups(w),dg=dmgGroups(w),both=cur.kampf.main!=null&&cur.kampf.off!=null;
     if(both)h+=`<div class="chips"><button class="chip${atk.slot==="main"?" on":""}" data-act="slot" data-v="main">Mit Haupthand</button><button class="chip${atk.slot==="off"?" on":""}" data-act="slot" data-v="off">Mit Nebenhand</button></div>`;
-    h+=n?`<div class="stepbox w10s"><div class="sh"><span class="num">1</span><b>W10 aufteilen</b><span class="hint">${n} W10 aus der Waffenfertigkeit</span></div>
+    h+=n?`<div class="stepbox w10s"><div class="sh"><span class="num">1</span><b>W10 aufteilen</b><span class="hint">${n} W10 aus der Waffenfertigkeit${WB.kampf?` (davon ${WB.kampf} durch Zauber)`:""}</span></div>
       <div class="wsl" data-wsl="${n}" role="slider" tabindex="0" aria-label="W10 zwischen Treffen und Schaden aufteilen" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${k}" aria-valuetext="Treffen ${k}, Schaden ${r}">
         <div class="wsl-top"><span class="t">Treffen <b class="wk">${k}</b></span><span class="s"><b class="wr">${r}</b> Schaden</span></div>
         <div class="wsl-track" style="grid-template-columns:repeat(${n},1fr);--p:${k/n*100}%">${Array.from({length:n},(_,i)=>`<i class="${i<k?"t":"s"}"></i>`).join("")}<span class="wsl-knob" style="left:${k/n*100}%"></span></div>
