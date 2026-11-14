@@ -1303,7 +1303,7 @@ function renderEmpty(){
     <div class="row-actions" style="justify-content:center;margin-top:16px"><button class="btn pri" id="new1">Neuer Charakter</button><button class="btn" id="ex1">Beispiel laden</button></div></div>`;
 }
 function renderAll(){
-  renderHeader();setTimeout(()=>{try{zDlgRender();}catch(e){}},0);
+  renderHeader();setTimeout(()=>{try{zDlgRender();}catch(e){}try{zObserve();}catch(e){}},0);
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false"));
   const kt=document.querySelector('nav [data-tab="kampf"]');
   if(kt){kt.innerHTML=`${kmode==="magie"?"Magie":"Kampf"}<span class="kdots"><i class="${kmode==="kampf"?"on":""}"></i><i class="${kmode==="magie"?"on":""}"></i></span>`;
@@ -2607,7 +2607,7 @@ function zauberCardHtml(){
       const oder=z.st.length>1&&z.m==="ODER";
       const stH=z.st.length?`<p>${oder?"Jede Stufe über 1 gibt <b>eine</b> Steigerung. Du wählst beim Wirken, was du nimmst:":"Jede Stufe über 1 bringt <b>alles</b> davon zusätzlich:"}</p><ul class="zul">${z.st.map(o=>`<li><b>${esc(o)}</b></li>`).join("")}</ul>
         <p class="hint">Du hast Stufe ${st} gelernt${st>1?`, also bis zu ${st-1} Steigerung${st>2?"en":""}`:", also noch keine Steigerung"}. Mana: Level ${sp.level} + Stufe.</p>`:"";
-      return `<div class="zspell zopen">${head}
+      return `<div class="zspell zopen" data-zid="${sp.id}">${head}
       <div class="zsub">${esc(lname(sp.listId))}</div>
       ${z.de?`<p class="zdesc">${esc(z.de)}</p>`:""}
       <div class="zchips2">${chips}</div>
@@ -2629,6 +2629,15 @@ function zauberCardHtml(){
       ${zInfoHtml(sp,lname(sp.listId))}
     </div>`;}).join("")}</div>`;
 }
+/* aufgeklappte Zauber klappen von selbst zu, sobald sie aus dem Bild gescrollt sind */
+const zIO=("IntersectionObserver" in window)?new IntersectionObserver(es=>{
+  let todo=[];es.forEach(en=>{const el=en.target,id=el.dataset.zid;if(en.isIntersecting||!zExp.has(id))return;
+    if(zArm&&zArm.id===id&&zArm.show)return;todo.push({id,above:en.boundingClientRect.bottom<=0,h0:el.offsetHeight});});
+  if(!todo.length)return;const y0=window.scrollY;todo.forEach(t=>zExp.delete(t.id));renderAll();
+  let dy=0;todo.forEach(t=>{if(!t.above)return;const n=document.querySelector(`.zspell[data-zexp="${t.id}"]`);if(n)dy+=t.h0-n.offsetHeight;});
+  if(dy)window.scrollTo(0,Math.max(0,y0-dy));
+},{threshold:0}):null;
+function zObserve(){if(!zIO)return;zIO.disconnect();document.querySelectorAll(".zspell.zopen[data-zid]").forEach(el=>zIO.observe(el));}
 const zOpen=new Set(),zExp=new Set(),ZDEF=/^(Runde\s*[2-9]|nach |beim )/i;
 function zTests(sp){
   const t=[sp.desc||"",...nList(sp.effekt),sp.details||""].join("\n"),out=[],re=/\b(Geistige-?\s*Stabilit[aä]t|GS|St[äa]rke|ST|St|GE|INT|CHA|KO|Wahrnehmungs?|List)-?Test\b\s*\(?\+?(-?\d+)?/gi;let m;
