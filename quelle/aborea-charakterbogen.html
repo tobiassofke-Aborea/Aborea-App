@@ -564,6 +564,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zelr .chips .chip small{color:inherit;opacity:.75;font-size:.72rem;margin-left:3px}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakth{display:flex;align-items:center;gap:6px}.zaktt{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font:inherit;color:inherit}.zaktt .chev{font-size:.8em;color:var(--accent);width:1em}.zcnt{font-family:var(--sans);font-size:.75rem;font-weight:700;background:var(--accent);color:var(--card);border-radius:999px;padding:2px 8px;line-height:1.4}
+.ztrg{margin-top:2px}.ztrg .btn{white-space:normal;text-align:left;height:auto!important;min-height:34px;padding-top:6px!important;padding-bottom:6px!important}
 .zwbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.84rem;padding:6px 8px;border-radius:8px;background:var(--bg)}.wbb .hint{display:inline}
 .zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
 .zico{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;color:var(--accent);border:1px solid var(--line);background:var(--card);margin:0 0 4px 2px}.zico.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
@@ -1521,6 +1522,8 @@ function zWb(z,calc,cs){
   });
   return any?wb:null;}
 /* Würfel, die erst beim Waffenangriff gewürfelt werden */
+/* Würfe, die später ausgelöst werden: Angreifer, Reflektion, Betreten, pro Runde, pro Nacht */
+const zTrgFx=f=>!!f.dice&&/angreif|Reflektion|beim Betreten|pro Nacht|pro Runde|jede Runde/i.test(`${f.t||""} ${f.d||""}`)&&!/Verbündete|Waffe|Geist/i.test(f.t||"")&&!ZDEF.test(f.d||"");
 const zAllyFx=f=>!!f.dice&&/Verbündete/i.test(f.t||"")&&/Angriff/i.test(f.t||"");
 const zWbFx=f=>!!f.dice&&(/Waffenschaden|Kampfwürfel/i.test(f.a||"")||/^Waffe/i.test(f.t||"")||/garantierter treffer/i.test(f.t||""));
 function wbuf(){const o={kampf:0,hit:0,dmg:0,krit:0,dice:[],auto:false,list:[]};if(!cur||!cur.kampf)return o;
@@ -1731,6 +1734,9 @@ function kampfDo(b){
     case "zelem":{if(!zArm||zArm.phase!=="armed")return;const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===zArm.id);if(!sp)return;
       const ln=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",si=zSumInfo(zbFor(sp,ln),zArm.cs,zbChoice(sp,ch));
       zArm.elems=Array(si?si.bonusN:1).fill(b.dataset.v);return renderAll();}
+    case "ztrg":{const e=zAkt().find(x=>x.k===b.dataset.k);const x=e&&e.trg&&e.trg[+b.dataset.i];if(!x)return;
+      const dbl=/gegen (.+?) doppelter Schaden/i.exec(x.n||"");
+      zbRollDice(`${e.n}: ${x.t}`,x.dice,t=>({tag:`${t} ${x.a}`.trim()+(dbl?` · gegen ${dbl[1]}: ${2*t}`:"")}));return;}
     case "zwbtog":{const e=zAkt().find(x=>x.k===b.dataset.k);if(e&&e.wb){e.wb.off=!e.wb.off;queueSave(cur);}return renderAll();}
     case "zakttog":{zaktZu=!zaktZu;try{localStorage.setItem("aborea-zakt-zu",zaktZu?"1":"0");}catch(e){}return renderAll();}
     case "zcnt0":{if(cur.zCnt)delete cur.zCnt[b.dataset.spell];queueSave(cur);return renderAll();}
@@ -2471,13 +2477,16 @@ function zMineDlg(sp,z,a){
 function zTrack(sp,z,calc,cs){
   const before=new Set(zAkt()),msg=zTrack0(sp,z,calc,cs),c=zbChoice(sp,sbParse().ch);
   const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0,wb=zWb(z,calc,cs);
+  const tg=calc.fx.filter(zTrgFx);
+  if(tg.length){let e=zAkt().find(x=>!before.has(x));if(!e){let r=0;calc.fx.forEach(f=>{if(f.du&&zDurU(f.du.u)==="r")r=Math.max(r,f.du.n);});e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:r||null,t:r?"":"bis du ihn beendest",konz:!!z.k};zAkt().push(e);}
+    e.trg=tg.map(f=>({t:String(f.t||"").replace(/\s*\(.*\)$/,""),dice:f.dice,a:f.a||"",n:f.n||""}));}
   const al=calc.fx.filter(zAllyFx);
   if(al.length){let e=zAkt().find(x=>!before.has(x));if(!e){let r=0;calc.fx.forEach(f=>{if(f.du&&zDurU(f.du.u)==="r")r=Math.max(r,f.du.n);});e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:r||null,t:"",konz:!!z.k};zAkt().push(e);}
     e.ally=al.map(f=>`+${zbDiceTxt(f.dice)} ${f.a||"Schaden"}`).join(" · ");}
   if(wb&&!zAkt().some(e=>!before.has(e)))zAkt().push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:!!z.k});
   if(wb){let first=true;zAkt().forEach(e=>{if(!before.has(e)&&first){e.wb=wb;first=false;}});}
   zAkt().forEach(e=>{if(!before.has(e)){e.sid=sp.id;e.ch=Array.isArray(c)?c.slice():c;if(xm)e.xmp=xm;}});return msg;}
-function zAkWrap(e,h){const d=(e.ally?`<div class="zwbl"><span>🤝 Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span>${e.wb.auto&&e.wb.off?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
+function zAkWrap(e,h){const d=(e.trg&&e.trg.length?`<div class="zrolls ztrg">${e.trg.map((x,i)=>`<button class="btn small zroll2" data-act="ztrg" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(x.t)}: ${esc(zbDiceTxt(x.dice))}</button>`).join("")}</div>`:"")+(e.ally?`<div class="zwbl"><span>🤝 Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span>${e.wb.auto&&e.wb.off?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
 const zAkOpen=new Set();
 function zAkDet(e){try{
   const {db,ch}=sbParse();if(!db)return "";const nm=e.sp||e.n;
@@ -2599,7 +2608,7 @@ function zauberCardHtml(){
       const fxh=zbFxHtml(sp,z,calc,cs),prh=zbProbeHtml(sp,z,calc),si0=zSumInfo(z,cs,zbChoice(sp,ch));let req=zReqFrom(fxh+prh);
       if(si0&&si0.atkI>=0)req=req.filter(r=>r.k!=="f"+si0.atkI);
       if(z.nr===19)req=req.filter(r=>r.k!=="f1");
-      calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||"")||zWbFx(f)||zAllyFx(f))req=req.filter(r=>r.k!=="f"+j);});
+      calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||"")||zWbFx(f)||zAllyFx(f)||(zTrgFx(f)&&!/jede Runde/i.test(f.t||"")))req=req.filter(r=>r.k!=="f"+j);});
       const calc1=zbCalc(z,1,null),fxh1=zbFxHtml(sp,z,calc1,1),prh1=zbProbeHtml(sp,z,calc1),cost1=sp.level+1;
       if(!open){const castH=zCastRow(sp,st,cs,cost,gz,req);
         const bits=calc1.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
