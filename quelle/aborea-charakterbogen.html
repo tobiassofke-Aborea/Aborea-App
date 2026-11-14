@@ -570,7 +570,9 @@ body.zdlgon #roll .box{margin-top:0}
 .zico{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;color:var(--accent);border:1px solid var(--line);background:var(--card);margin:0 0 4px 2px}.zico.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .zh4s{text-transform:none;letter-spacing:0;font-weight:500}
 .zlv2{font-size:.85rem;color:var(--muted);font-weight:500;margin-right:8px}.zhr .zlvl{margin-right:0}
-.ztier{display:grid;gap:6px}.ztier .chips{display:flex;flex-wrap:wrap;gap:6px}.zsumbox.bad{border-color:var(--lp)}
+.ztier{display:grid;gap:6px}.ztier .chips{display:flex;flex-wrap:wrap;gap:6px}
+.ztier .chip{border:1.5px solid var(--accent);color:var(--ink);background:var(--card);font-weight:600}.ztier .chip .hint{color:var(--muted);font-weight:500}
+.ztier .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}.ztier .chip.on .hint{color:#fff;opacity:.9}.zsumbox.bad{border-color:var(--lp)}.btn.danger,.btn.pri.danger{background:var(--lp);border-color:var(--lp);color:#fff}.btn.danger svg{color:#fff}
 .zsub{font-size:.8rem;color:var(--muted);margin-top:-2px}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
@@ -1767,7 +1769,7 @@ function kampfDo(b){
     case "zexp":{const id=b.dataset.spell;zExp.has(id)?zExp.delete(id):zExp.add(id);return renderAll();}
     case "zcancel":if(zArm&&zArm.autoT)clearTimeout(zArm.autoT);zArm=null;return renderAll();
     case "zpq":if(zArm&&!zArm.aimed&&!(zArm.done||[]).length){zArm.pq=+b.dataset.v;}return renderAll();
-    case "zpen":{const L=num(cur.level)||1;rollPool(`Strafe: 1W10 × ${L}`,{groups:[{label:"W10",n:1,s:10}],flat:0},t=>{if(zArm)zArm.pen=false;return {tag:`${t} × ${L} = ${t*L} Schaden`,cls:"bad"};});return;}
+    case "zpen":{const L=num(cur.level)||1,A=zArm;rollPool(`Strafe: 1W10 × ${L}`,{groups:[{label:"W10",n:1,s:10}],flat:0},t=>{if(A){A.pen=false;A.penR=t*L;setTimeout(()=>{try{zDlgRender();}catch(e){}},0);}return {tag:`${t} × ${L} = ${t*L} Schaden`,cls:"bad"};});return;}
     case "zauto":if(zArm){zArm.auto=true;}return renderAll();
     case "zclose":if(zArm)zArm.show=false;return renderAll();
     case "zopen":{
@@ -2246,12 +2248,13 @@ function zDlgRender(){
   const T=z&&zTiers(z.p),pq=num(a.pq)||1;
   const tierHtml=T&&!fin?(!started?`<div class="ztier"><span class="lab">Wie viele? Lege es vor dem Wurf fest</span><div class="chips">${T.map((x,i)=>`<button class="chip${pq===i+1?" on":""}" data-act="zpq" data-v="${i+1}">${esc(x.lab)} <span class="hint">ab ${x.th}</span></button>`).join("")}</div><div class="hint">Darunter: ${esc(z.p.no||"Strafe")}</div></div>`
     :`<div class="zsetline"><div><b>${esc(T[pq-1].lab)}</b> · <span class="hint">Schwelle ${T[pq-1].th}</span></div></div>`):"";
-  const penHtml=a.pen&&!fin&&/charakterstufe/i.test(z.p.no||"")?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${esc(z.p.no)}</div><button class="btn small zroll2" data-act="zpen">${ICON_DICE_S}Strafe würfeln: 1W10 × ${num(cur.level)||1}</button></div>`:"";
+  const penHtml=!fin&&z&&z.p&&/charakterstufe/i.test(z.p.no||"")&&(a.pen||a.penR!=null)?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${a.penR!=null?`<b>${a.penR} Schaden</b> <span class="hint">(${esc(z.p.no)})</span>`:esc(z.p.no)}</div></div>`:"";
   const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">🤝 Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);
   const main=fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`
     :rolling?`<button class="btn big pri" disabled>${ICON_DICE_S} Würfelt …</button>`
+    :a.pen&&penHtml?`<button class="btn big pri danger" data-act="zpen">${ICON_DICE_S} Strafe würfeln: 1W10 × ${num(cur.level)||1}</button><div class="hint zpend">Nicht geschafft: Erst die Strafe würfeln, dann wirken.</div>`
     :pend.length?`<button class="btn big pri" data-act="zauto">${ICON_DICE_S} Würfeln</button><div class="hint zpend">${esc(pend.join(", dann "))}</div>`
     :elemOk?`<button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} Mana · ${ap} AP</button>`
     :`<p class="hint">Wähle zuerst das Element.</p>`;
