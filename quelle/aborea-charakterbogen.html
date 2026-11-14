@@ -1769,7 +1769,8 @@ function kampfDo(b){
     case "zexp":{const id=b.dataset.spell;zExp.has(id)?zExp.delete(id):zExp.add(id);return renderAll();}
     case "zcancel":if(zArm&&zArm.autoT)clearTimeout(zArm.autoT);zArm=null;return renderAll();
     case "zpq":if(zArm&&!zArm.aimed&&!(zArm.done||[]).length){zArm.pq=+b.dataset.v;}return renderAll();
-    case "zpen":{const L=num(cur.level)||1,A=zArm;rollPool(`Strafe: ${L}W10`,{groups:[{label:"Charakterstufe",n:L,s:10}],flat:0},t=>{if(A){A.pen=false;A.penR=t;setTimeout(()=>{try{zDlgRender();}catch(e){}},0);}return {tag:`${t} Schaden`,cls:"bad"};});return;}
+    case "zpen":{const L=num(cur.level)||1,A=zArm;rollPool(`Strafe: ${L}W10`,{groups:[{label:"Charakterstufe",n:L,s:10}],flat:0},t=>{snap("Strafe vom Strengen Gebet");const v0=num(cur.lp.cur);cur.lp.cur=lpClamp(v0-t);queueSave(cur);if(A){A.pen=false;A.penR=t;}setTimeout(()=>{try{renderAll();}catch(e){}},0);
+        return {tag:`${t} Schaden, ohne Rüstung von deinen LP abgezogen (${v0} → ${cur.lp.cur})`,cls:"bad"};});return;}
     case "zauto":if(zArm){zArm.auto=true;}return renderAll();
     case "zclose":if(zArm)zArm.show=false;return renderAll();
     case "zopen":{
@@ -2248,7 +2249,7 @@ function zDlgRender(){
   const T=z&&zTiers(z.p),pq=num(a.pq)||1;
   const tierHtml=T&&!fin?(!started?`<div class="ztier"><span class="lab">Wie viele? Lege es vor dem Wurf fest</span><div class="chips">${T.map((x,i)=>`<button class="chip${pq===i+1?" on":""}" data-act="zpq" data-v="${i+1}">${esc(x.lab)} <span class="hint">ab ${x.th}</span></button>`).join("")}</div><div class="hint">Darunter: ${esc(z.p.no||"Strafe")}</div></div>`
     :`<div class="zsetline"><div><b>${esc(T[pq-1].lab)}</b> · <span class="hint">Schwelle ${T[pq-1].th}</span></div></div>`):"";
-  const penHtml=!fin&&z&&z.p&&/charakterstufe/i.test(z.p.no||"")&&(a.pen||a.penR!=null)?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${a.penR!=null?`<b>${a.penR} Schaden</b> <span class="hint">(${esc(z.p.no)})</span>`:esc(z.p.no)}</div></div>`:"";
+  const penHtml=!fin&&z&&z.p&&/charakterstufe/i.test(z.p.no||"")&&(a.pen||a.penR!=null)?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${a.penR!=null?`<b>${a.penR} Schaden</b> <span class="hint">· ohne Rüstung von deinen LP abgezogen</span>`:esc(z.p.no)}</div></div>`:"";
   const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">🤝 Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);
