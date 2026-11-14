@@ -1527,7 +1527,7 @@ function zWb(z,calc,cs){
 /* Würfel, die erst beim Waffenangriff gewürfelt werden */
 /* Würfe, die später ausgelöst werden: Angreifer, Reflektion, Betreten, pro Runde, pro Nacht */
 const zTrgFx=f=>!!f.dice&&/angreif|Reflektion|beim Betreten|pro Nacht|pro Runde|jede Runde/i.test(`${f.t||""} ${f.d||""}`)&&!/Verbündete|Waffe|Geist/i.test(f.t||"")&&!ZDEF.test(f.d||"");
-const zAllyFx=f=>!!f.dice&&/Verbündete/i.test(f.t||"")&&/Angriff/i.test(f.t||"");
+const zAllyFx=f=>!!f.dice&&/Verbündete/i.test(f.t||"")&&/nächste[rn]? Angriff/i.test(f.t||"");
 const zWbFx=f=>!!f.dice&&(/Waffenschaden|Kampfwürfel/i.test(f.a||"")||/^Waffe/i.test(f.t||"")||/garantierter treffer/i.test(f.t||""));
 function wbuf(){const o={kampf:0,hit:0,dmg:0,krit:0,dice:[],auto:false,list:[]};if(!cur||!cur.kampf)return o;
   zAkt().forEach(e=>{const b=e.wb;if(!b||b.off)return;o.kampf+=b.kampf;o.hit+=b.hit;o.dmg+=b.dmg;o.krit+=b.krit;o.auto=o.auto||b.auto;b.dice.forEach(d=>o.dice.push({...d,label:`${e.sp||e.n}: ${d.label}`}));o.list.push(e);});
@@ -2255,7 +2255,7 @@ function zDlgRender(){
   const tierHtml=T&&!fin?(!started?`<div class="ztier"><span class="lab">Wie viele? Lege es vor dem Wurf fest</span><div class="chips">${T.map((x,i)=>`<button class="chip${pq===i+1?" on":""}" data-act="zpq" data-v="${i+1}">${esc(x.lab)} <span class="hint">ab ${x.th}</span></button>`).join("")}</div><div class="hint">Darunter: ${esc(z.p.no||"Strafe")}</div></div>`
     :`<div class="zsetline"><div><b>${esc(T[pq-1].lab)}</b> · <span class="hint">Schwelle ${T[pq-1].th}</span></div></div>`):"";
   const penHtml=!fin&&z&&z.p&&/charakterstufe/i.test(z.p.no||"")&&(a.pen||a.penR!=null)?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${a.penR!=null?`<b>${a.penR} Schaden</b> <span class="hint">· ohne Rüstung von deinen LP abgezogen</span>`:esc(z.p.no)}</div></div>`:"";
-  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">🤝 Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
+  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);
   const main=fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`
@@ -2478,7 +2478,7 @@ function zSumInfo(z,cs,choice,elems){
   (elems||[]).forEach(e=>{if(e==="Feuer"){dmg=dmg||{dice:[],flat:0};const d=dmg.dice.find(x=>x.s===8);d?d.n++:dmg.dice.push({n:1,s:8});}
     if(e==="Luft")ap++;if(e==="Erde"&&lp!=null)lp+=10;if(e==="Wasser"){heal=heal||{dice:[{n:0,s:6}],flat:0};heal.dice[0].n++;}});
   const nm=elem?((elems&&elems.length?[...new Set(elems)].join("-"):"")+"-Elementar").replace(/^-/,""):f.t.replace(/^Beschwört (eine |einen |)/,"").replace(/^\d+\s+/,"");
-  return {i,atkI,lp,lpTxt:lpm?lpm[1]:"",ap,dmg,heal,elem,bonusN,du:calc.fx[i].du,name:nm,count:(f.t.match(/(\d+)\s+Verbündete/)||[])[1]||1};
+  return {i,atkI,lp,lpTxt:lpm?lpm[1]:"",ap,dmg,heal,elem,bonusN,du:calc.fx[i].du,name:/Ahnen/i.test(z.n||"")?"Urahne":nm,count:(f.t.match(/(\d+)\s+Verbündete/)||[])[1]||1};
 }
 function zSumLine(si){return [si.lp!=null?`${si.lp} LP`:si.lpTxt?`${si.lpTxt} LP`:"",si.ap?`${si.ap} AP`:"",si.dmg?`Angriff ${zbDiceTxt(si.dmg)}`:"",si.heal?`Heilung ${zbDiceTxt(si.heal)}`:""].filter(Boolean).join(" · ");}
 
@@ -2509,7 +2509,7 @@ function zTrack(sp,z,calc,cs){
   if(wb&&!zAkt().some(e=>!before.has(e)))zAkt().push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:!!z.k});
   if(wb){let first=true;zAkt().forEach(e=>{if(!before.has(e)&&first){e.wb=wb;first=false;}});}
   zAkt().forEach(e=>{if(!before.has(e)){e.sid=sp.id;e.ch=Array.isArray(c)?c.slice():c;if(xm)e.xmp=xm;}});return msg;}
-function zAkWrap(e,h){const d=(e.trg&&e.trg.length?`<div class="zrolls ztrg">${e.trg.map((x,i)=>`<button class="btn small zroll2" data-act="ztrg" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(x.t)}: ${esc(zbDiceTxt(x.dice))}</button>`).join("")}</div>`:"")+(e.ally?`<div class="zwbl"><span>🤝 Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span> ${(e.wb.auto&&e.wb.off)||e.wb.self?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
+function zAkWrap(e,h){const d=(e.trg&&e.trg.length?`<div class="zrolls ztrg">${e.trg.map((x,i)=>`<button class="btn small zroll2" data-act="ztrg" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(x.t)}: ${esc(zbDiceTxt(x.dice))}</button>`).join("")}</div>`:"")+(e.ally?`<div class="zwbl"><span>Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span> ${(e.wb.auto&&e.wb.off)||e.wb.self?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
 const zAkOpen=new Set();
 function zAkDet(e){try{
   const {db,ch}=sbParse();if(!db)return "";const nm=e.sp||e.n;
@@ -2556,7 +2556,7 @@ function zAktHtml(){
         ${G?`<div class="zslp"><span class="lab">Geister</span><button class="btn small" data-act="zgeist" data-k="${e.k}" data-d="-1">−1</button><b>${G.n}<small>/${G.max}</small></b><button class="btn small" data-act="zgeist" data-k="${e.k}" data-d="1">+1</button></div>
           <div class="zrolls">${G.dmg?`<button class="btn small zroll2" data-act="zgeist" data-op="atk" data-k="${e.k}" ${G.n?"":"disabled"}>${ICON_DICE_S}Geist greift an: ${esc(zbDiceTxt(G.dmg))}</button>`:""}<button class="btn small zroll2" data-act="zgeist" data-op="blk" data-k="${e.k}" ${G.n?"":"disabled"}>${ICON_DICE_S}Du wirst angegriffen: Block ${G.n*10}%</button></div>`
           :`<div class="zslp"><span class="lab">${esc(C.label)}</span><button class="btn small" data-act="zcnt" data-k="${e.k}" data-d="-1">−1 verbraucht</button><b>${C.n}<small>/${C.max}</small></b></div>`}</div>`;}
-    const dur=e.wait?`Wirkt ${esc(e.wait)}`:e.r!=null?`noch ${e.r} Runde${e.r===1?"":"n"}`:e.t?`läuft ${esc(e.t)}`:S&&!e.konz?"bis es zerstört wird":e.bau?"solange du dich konzentrierst oder bis es zerstört wird":S?"bis es zerstört wird":"solange du dich konzentrierst";
+    const dur=e.wait?`Wirkt ${esc(e.wait)}`:e.r!=null?`noch ${e.r} Runde${e.r===1?"":"n"}`:e.t?`läuft ${esc(e.t)}`:S&&!e.konz?(e.bau?"bis es zerstört wird":"bis er besiegt ist"):e.bau?"solange du dich konzentrierst oder bis es zerstört wird":S?"bis er besiegt ist":"solange du dich konzentrierst";
     if(!S)return `<div class="zak${e.konz?" konz":""}${e.later&&e.later.length?" zsumc":""}"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">Stufe ${e.st}</span>${e.konz?' <span class="ktag">Konzentration</span>':""}
     <div class="hint">${dur}</div></div><button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
     ${e.later&&e.later.length?`<div class="zrolls">${e.later.map((l,i)=>l.done?`<span class="hint">${esc(l.t)}: gewürfelt (${l.done})</span>`:`<button class="btn small zroll2" data-act="zlater" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(l.t)}: ${esc(zbDiceTxt(l.dice))}${l.f?" · "+esc(l.f):""}</button>`).join("")}</div>`:""}</div>`;
