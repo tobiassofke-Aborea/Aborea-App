@@ -567,6 +567,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
 .zico{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;color:var(--accent);border:1px solid var(--line);background:var(--card);margin:0 0 4px 2px}.zico.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .zh4s{text-transform:none;letter-spacing:0;font-weight:500}
+.zlv2{font-size:.85rem;color:var(--muted);font-weight:500}
 .zsub{font-size:.8rem;color:var(--muted);margin-top:-2px}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
@@ -2557,10 +2558,10 @@ function zauberCardHtml(){
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,z=zbFor(sp,act.name);
     const open=zExp.has(sp.id);
-    const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zst2">Stufe ${st}</span>${chev(open)}</span></button>`;
+    const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname"><span class="zlvl">Stufe ${st}</span>${esc(sp.name)}</span><span class="zhr"><span class="zlv2">Lvl ${sp.level}</span>${chev(open)}</span></button>`;
     const compact=(brief,castH,meta)=>{const a=zArm&&zArm.id===sp.id&&zArm.phase==="done"?zArm:null;
       return `<div class="zspell zc" data-zexp="${sp.id}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(sp.name)}: Details aufklappen">
-      <div class="zch"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zst2">Stufe ${st}</span>${chev(false)}</span></div>
+      <div class="zch"><span class="zname"><span class="zlvl">Stufe ${st}</span>${esc(sp.name)}</span><span class="zhr"><span class="zlv2">Lvl ${sp.level}</span>${chev(false)}</span></div>
       <div class="zbrief">${brief}</div>
       <div class="zmeta2">${meta?meta+" · ":""}ab ${sp.level+1} MP · ${atkCost(2)} AP</div>
 </div>`;};
