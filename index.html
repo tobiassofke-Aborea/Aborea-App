@@ -581,7 +581,8 @@ body.zdlgon #roll .box{margin-top:0}
 .zsumbox{display:grid;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .zelr .chips .chip small{color:inherit;opacity:.75;font-size:.72rem;margin-left:3px}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zsetup{display:flex;flex-direction:column;gap:12px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
+.zsetup{display:flex;flex-direction:column;gap:12px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .zprev ul{margin:4px 0 0;padding-left:18px}.zprev li{margin:3px 0}
 .zsetline{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .zdots{display:inline-flex;gap:3px;margin-left:4px}.zdots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--accent)}.zdots i.on{background:var(--accent)}
@@ -2408,6 +2409,18 @@ function zMineDlg(sp,z,a){
     <div class="hint">Der Schaden wird erst gewürfelt, wenn ein Stein ausgelöst wird. Die Steine findest du danach unter „Aktive Zauber“.</div></div>`;
 }
 function zTrack(sp,z,calc,cs){
+  const before=new Set(zAkt()),msg=zTrack0(sp,z,calc,cs),c=zbChoice(sp,sbParse().ch);
+  zAkt().forEach(e=>{if(!before.has(e)){e.sid=sp.id;e.ch=Array.isArray(c)?c.slice():c;}});return msg;}
+function zAkWrap(e,h){const d=zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
+const zAkOpen=new Set();
+function zAkDet(e){try{
+  const {db,ch}=sbParse();if(!db)return "";const nm=e.sp||e.n;
+  const sp=(db.spells||[]).find(x=>x.id===e.sid)||(db.spells||[]).find(x=>x.name===nm);if(!sp)return "";
+  const lname=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",z=zbFor(sp,lname);
+  const body=z?zPrevHtml(zbCalc(z,e.st,e.ch||zbChoice(sp,ch)),true)+(z.an?`<p class="hint">${esc(z.an)}</p>`:""):`<ul>${nList(sp.effekt).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  const desc=sp.desc?`<p class="hint">${esc(sp.desc)}</p>`:"";
+  return `<details class="zakd" data-k="${e.k}"${zAkOpen.has(e.k)?" open":""}><summary>Effekt</summary>${body}${desc}</details>`;}catch(err){return "";}}
+function zTrack0(sp,z,calc,cs){
   const L=zAkt();let msg="";
   let rounds=0,time="";calc.fx.forEach(f=>{if(!f.du)return;const ab=+((f.du.rest||"").match(/ab Runde (\d+)/)||[0,1])[1];if(zDurU(f.du.u)==="r")rounds=Math.max(rounds,f.du.n+ab-1);else if(!time)time=zDurTxt(f.du);});
   if(z.k){const old=zKonz();if(old){for(let i=L.length-1;i>=0;i--)if(L[i]===old||(old.g&&L[i].g===old.g))L.splice(i,1);msg=`Konzentration auf ${old.sp||old.n} beendet. `;}}
@@ -2430,7 +2443,7 @@ function zTrack(sp,z,calc,cs){
 }
 function zAktHtml(){
   if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";
-  return `<h2>Aktive Zauber${ib("aktiv")}</h2><div class="card zakt">${L.map(e=>{const S=e.sum;
+  return `<h2>Aktive Zauber${ib("aktiv")}</h2><div class="card zakt">${L.map(e=>zAkWrap(e,(()=>{const S=e.sum;
     if(e.mines)return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">${esc(e.sp)} · Stufe ${e.st}</span><div class="hint">${e.mines.length} Stein${e.mines.length===1?"":"e"} scharf · Annäherung auf 1m löst aus</div></div>
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
       <div class="zrolls">${e.mines.map((x,i)=>`<button class="btn small zroll2" data-act="zmboom" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}Stein ${x.i||i+1} explodiert: ${x.d||x}W${x.s||10}</button>`).join("")}</div></div>`;
@@ -2449,16 +2462,16 @@ function zAktHtml(){
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
       <div class="zsumv">${S.lp!=null?zLpRow(e):""}
         ${S.ap?`<div><span class="lab">AP</span> <b>${S.ap}</b></div>`:""}</div>
-      <div class="zrolls">${S.dmg?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="dmg">${ICON_DICE_S}Angriff ${esc(zbDiceTxt(S.dmg))}</button>`:""}${S.heal?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="heal">${ICON_DICE_S}Heilung ${esc(zbDiceTxt(S.heal))}</button>`:""}</div></div>`;}).join("")}</div>`;
+      <div class="zrolls">${S.dmg?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="dmg">${ICON_DICE_S}Angriff ${esc(zbDiceTxt(S.dmg))}</button>`:""}${S.heal?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="heal">${ICON_DICE_S}Heilung ${esc(zbDiceTxt(S.heal))}</button>`:""}</div></div>`;})())).join("")}</div>`;
 }
 function zBauDlg(sp,z,a){if(!z)return "";const calc=zbCalc(z,a.cs,zbChoice(sp,sbParse().ch)),bi=zBauInfo(z,calc);if(!bi)return "";
   const f=z.fx.find(zBauF),base=f?zBauLp(f):bi.lp,pl=bi.lp-base,lab=bi.n>1?(bi.part(1).startsWith("Element")?"Elemente":"Teile"):"";
   return `<div class="zsumbox"><span class="lab">Haltbarkeit</span><div><b>${bi.n>1?`${bi.n} ${lab} je ${bi.lp} LP`:`${bi.lp} LP`}</b>${pl?` <span class="hint">(${base} + ${pl} durch Steigerung)</span>`:""}</div><div class="hint">Unter „Aktive Zauber“ ziehst du Schaden ab${bi.n>1?", jedes Teil einzeln":""}.</div></div>`;}
-function zPrevHtml(calc){
+function zPrevHtml(calc,notes){
   const li=calc.fx.map(f=>{const v=f.dice?`${zbDiceTxt(f.dice)} ${f.a||""}`:f.w?`${f.w} ${f.a||""}`:"";
     const meta=[f.f,f.z,f.d].filter(Boolean).join(" · "),t=f.ta?`${f.ta}-Test${f.tdN!=null?" "+f.tdN:f.td?" "+f.td:""}`:"";
     const od=[f.okD?"Erfolg "+zbDiceTxt(f.okD):"",f.noD?"Misserfolg "+zbDiceTxt(f.noD):""].filter(Boolean).join(" / ");
-    return `<li>${esc(f.t||"")}${v?` · <b>${esc(v.trim())}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}</li>`;}).join("");
+    return `<li>${esc(f.t||"")}${v?` · <b>${esc(v.trim())}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}${notes&&f.n?`<br><span class="hint">${esc(f.n)}</span>`:""}</li>`;}).join("");
   const ex=(calc.extra||[]).map(x=>`<li>${esc(x)}</li>`).join("");
   return `<ul>${li}${ex}</ul>`;}
 function zLpRow(e){const S=e.sum,big=S.lpMax>=100,b=d=>`<button class="btn small" data-act="zlp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`;
@@ -2574,7 +2587,7 @@ function zInfoHtml(sp,listName,z){
 }
 document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("[data-zexp]");if(!c||e.target.closest("button"))return;zExp.add(c.dataset.zexp);renderAll();});
 document.addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const c=e.target.closest&&e.target.closest("[data-zexp]");if(!c||e.target!==c)return;e.preventDefault();zExp.add(c.dataset.zexp);renderAll();});
-document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("zinfo")){d.open?zOpen.add(d.dataset.zid):zOpen.delete(d.dataset.zid);}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("zinfo")){d.open?zOpen.add(d.dataset.zid):zOpen.delete(d.dataset.zid);}if(d.classList&&d.classList.contains("zakd")){d.open?zAkOpen.add(d.dataset.k):zAkOpen.delete(d.dataset.k);}},true);
 let zSlide="";
 function zSetList(id,dir){const {ch}=sbParse();if(ch.activeList===id&&dir!==0)return;ch.activeList=id;zSaveCh(ch);zSlide=dir>0?"slidel":dir<0?"slider":"";renderAll();zSlide="";}
 function zKnownIds(){const {db,ch}=sbParse();if(!db)return [];const ls=db.spellLists||[];return ls.filter(l=>(db.spells||[]).some(sp=>sp.listId===l.id&&num(ch.learned[sp.id])>0)).map(l=>l.id);}
