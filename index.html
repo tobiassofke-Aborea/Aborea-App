@@ -656,16 +656,25 @@ body.zshake .wrap{animation:zsh .42s linear}
 .ztags{display:flex;gap:5px;flex-wrap:wrap}
 .ztags span{font-size:.74rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .zfxs{display:grid;gap:8px}
-.zfx{display:grid;gap:3px;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--bg)}
+.zfx{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.zfxh{display:flex;gap:12px;align-items:flex-start}.zfxt{min-width:0;flex:1;display:grid;gap:5px}
+.zval{flex:none;min-width:64px;max-width:40%;display:grid;justify-items:center;text-align:center;padding:6px 8px;border-radius:8px;background:var(--card);border:1px solid var(--line)}
+.zval b{font-size:1.15rem;line-height:1.1;color:var(--ink)}.zval span{font-size:.72rem;color:var(--muted);line-height:1.2;margin-top:2px}
+.zpill{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--muted);margin:0 4px 4px 0}
+.zres{font-size:.86rem;padding:8px 10px;border-radius:8px;background:var(--card);border-left:3px solid var(--mp);display:grid;gap:4px}
+.zresr{display:flex;flex-wrap:wrap;gap:4px 12px}.zresr .ok{color:var(--ok,#3b7a3a)}.zresr .no{color:var(--lp)}
+.znote{font-size:.84rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
+.zsteig ul{margin:4px 0 0;padding-left:18px}.zsteig li{margin:2px 0}
+.zspell .zfxs .zrolls,.zspell .zprobe .zroll{display:none}.zplab{font-weight:600;font-size:.92rem}
 .zft{font-weight:600;font-size:.94rem;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.zmeta{font-size:.84rem;color:var(--muted)}
+.zmeta{font-size:.84rem;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center}
 .zt{font-size:.86rem}
 .zrolls{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .zroll{display:inline-flex;align-items:center;gap:6px}
 .zdi{display:inline-flex;width:16px;height:16px}.zdi svg{width:16px;height:16px}
 .zprobe{display:grid;gap:4px;justify-items:start}
 .zoder{display:grid;gap:4px}
-.zop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem}
+.zop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem}.zop>span{min-width:0;flex:1}.zop .step{flex:none}
 .zop .step output{min-width:24px;text-align:center;font-weight:700}
 .bft{display:grid;gap:3px;font-size:.86rem;padding:7px 9px;border-left:3px solid var(--accent);background:var(--panel,transparent);border-radius:4px}
 .bfth{font-weight:700}.bft .lab{display:inline;font-size:.72rem}
@@ -1900,22 +1909,33 @@ function zbFxHtml(sp,z,calc,cs){
       return `<div class="zfx"><div class="zft"><b>${ref.times>1?ref.times+"× ":""}${esc(ref.z.n)}</b> <span class="hint">Stufe ${rs}</span></div>
         <div class="zmeta">${esc(rc.fx.map(g=>g.t).filter(Boolean).join(" · "))}</div>${rolls?`<div class="zrolls">${rolls}</div>`:""}</div>`;}
     const meta=[f.f,f.z,f.d].filter(Boolean);
-    const val=f.dice?"":(f.w?`<b>${esc(f.w)}</b> ${esc(f.a)}`:"");
-    const test=f.ta?`<div class="zt">Widerstand${f.tw?" ("+esc(f.tw)+")":""}: <b>${esc(f.ta)}-Test${f.tdN!=null?" "+f.tdN:f.td?" "+esc(f.td):""}</b>${f.plus?` <span class="hint">(${f.plus>0?"+":""}${f.plus} Steigerung)</span>`:""}${(f.ok&&f.ok!=="Effekt tritt nicht ein")?`<br><span class="hint">Erfolg:</span> ${esc(f.ok)}<br><span class="hint">Misserfolg:</span> ${esc(f.no)}`:""}</div>`:"";
+    const bv=f.dice?zbDiceTxt(f.dice):f.w?String(f.w):"",ba=bv?String(f.a||""):"";
+    const badge=bv?`<div class="zval"><b>${esc(bv)}</b>${ba?`<span>${esc(ba)}</span>`:""}</div>`:"";
+    const test=f.ta?zResHtml(f):"";
     const rolls=[];
     if(f.dice)rolls.push(`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}">${ICON_DICE_S}${esc(zbDiceTxt(f.dice))} ${esc(f.a||"würfeln")}</button>`);
     if(f.okD)rolls.push(`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}" data-o="ok">${ICON_DICE_S}Erfolg: ${esc(zbDiceTxt(f.okD))}</button>`);
     if(f.noD)rolls.push(`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}" data-o="no">${ICON_DICE_S}Misserfolg: ${esc(zbDiceTxt(f.noD))}</button>`);
     const bft=/beaufort/i.test(f.a);const br=bft&&zbRes[sp.id]&&zbRes[sp.id].bft;
     const shift=bft?(calc.extra.find(x=>/Einfluss/.test(x))?Math.max(0,cs-1):0):0;
-    return `<div class="zfx"><div class="zft">${esc(f.t)}${val?` · ${val}`:""}${bft?ib("beaufort"):""}</div>
-      ${meta.length?`<div class="zmeta">${meta.map(esc).join(" · ")}${f.sh?` <button class="linkbtn zaoeb" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}">${zAoeOpen.has(sp.id+":"+i)?"ausblenden":zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau zeigen":"Fläche zeigen"}</button>`:""}</div>`:""}
+    return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt"><div class="zft">${esc(f.t)}${bft?ib("beaufort"):""}</div>
+      ${meta.length?`<div class="zmeta">${meta.map(m=>`<span class="zpill">${esc(m)}</span>`).join("")}${f.sh?` <button class="linkbtn zaoeb" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}">${zAoeOpen.has(sp.id+":"+i)?"ausblenden":zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau zeigen":"Fläche zeigen"}</button>`:""}</div>`:""}</div></div>
       ${f.sh&&zAoeOpen.has(sp.id+":"+i)?(zBauKind(z,f)?zBauSvg(zBauKind(z,f),f.sh):f.sh.t==="rect"&&f.sh.c!=null?zIsoSvg(f.sh):zAoeSvg(f.sh,z.o)):""}${test}
       ${rolls.length?`<div class="zrolls">${rolls.join("")}</div>`:""}
       ${br!=null?`${bftHtml(br.v)}${shift?`<div class="zbshift"><span class="hint">Einfluss: bis ${shift} Stufe${shift>1?"n":""} verschieben</span><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="-1" ${br.v<=Math.max(1,br.base-shift)?"disabled":""}>−</button><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="1" ${br.v>=Math.min(12,br.base+shift)?"disabled":""}>+</button></div>`:""}`:""}
-      ${f.n?`<div class="hint">${esc(f.n)}</div>`:""}</div>`;
+      ${f.n?`<div class="znote">${esc(f.n)}</div>`:""}</div>`;
   }).join("");
 }
+/* Widerstand in Alltagssprache */
+function zResHtml(f){
+  const who=String(f.tw||"Ziel"),me=/zaubernde/i.test(who);
+  const td=f.tdN!=null?String(f.tdN):String(f.td||"");
+  const diff=/^GS-Wert$/i.test(td)?"auf den eigenen GS-Wert":td?(/^\d+$/.test(td)?`Schwierigkeit ${td}`:td):"";
+  const pl=f.plus?` <span class="hint">(${f.plus>0?"durch Steigerung schwerer: +":"durch Steigerung leichter: "}${Math.abs(f.plus)})</span>`:"";
+  const say=x=>x==="Effekt tritt nicht ein"?"Effekt wirkt nicht":x==="Effekt tritt ein"?"Effekt wirkt":x;
+  const ok=f.okD?zbDiceTxt(f.okD)+" "+String(f.ok||"").replace(/^\S*W\d+\s*/,""):say(f.ok||""),no=f.noD?zbDiceTxt(f.noD)+" "+String(f.no||"").replace(/^\S*W\d+\s*/,""):say(f.no||"");
+  return `<div class="zres"><div><b>${me?"Du würfelst":esc(who)+(/^(Ziele|Feinde)$/i.test(who)?" würfeln":" würfelt")}</b> einen ${esc(f.ta)}-Test${diff?` · ${esc(diff)}`:""}${pl}</div>
+    ${ok||no?`<div class="zresr">${ok?`<span class="ok">Geschafft: ${esc(ok)}</span>`:""}${no?`<span class="no">Nicht geschafft: ${esc(no)}</span>`:""}</div>`:""}</div>`;}
 function zbProbeHtml(sp,z,calc){
   const p=z.p;if(!p)return "";
   const n2=/ab dem 2\. Wirken/i.test(p.d||""),cnt=num((cur.zCnt||{})[sp.id]);
@@ -1924,7 +1944,7 @@ function zbProbeHtml(sp,z,calc){
   let lab;
   if(gs){const v=num(cur.gs);lab=`GS-Test: W100 ≤ ${String(cur.gs||"").trim()?v+bon:"GS"}${bon?` (GS ${v} + ${bon})`:""}`;}
   else lab=`${esc(p.a)}-Test${/fluch/i.test(p.d||"")?" (Fluch)":p.d?" · "+esc(p.d):""}${bon?` · +${bon} Bonus`:""}`;
-  return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div>
+ return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div><div class="zplab">${lab}</div>
     <button class="btn small zroll" data-act="zprobe" data-spell="${sp.id}">${ICON_DICE_S}${lab}</button>
     <div class="hint">${/fluch/i.test(p.d||"")?`${/verfluchen/i.test(p.ok||"")?"Verfluchen: Dein Wurf ist die Stärke des Fluchs.<br>":""}Fluch brechen: Du würfelst, die Spielleitung kennt die Stärke des Fluchs und sagt dir, ob er bricht.`:`${p.ok?`Erfolg: ${esc(p.ok)}`:""}${p.no?`<br>Misserfolg: ${esc(p.no)}`:""}`}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
 }
@@ -2546,7 +2566,7 @@ function zauberCardHtml(){
       ${zbOderHtml(sp,z,calc,ch)}
       ${zCastRow(sp,st,cs,cost,gz,req)}
       <div class="zfxs">${lock(fxh)}</div>
-      ${calc.extra.length?`<div class="zsteig">Steigerung auf Stufe ${cs}: ${esc(calc.extra.join(" · "))}</div>`:""}
+      ${calc.extra.length?`<div class="zsteig"><span class="lab">Steigerung auf Stufe ${cs}</span><ul>${calc.extra.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
       ${lock(prh)}
       ${zInfoHtml(sp,lname(sp.listId),z)}
     </div>`;}
