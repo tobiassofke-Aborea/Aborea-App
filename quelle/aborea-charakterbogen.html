@@ -563,7 +563,10 @@ body.zdlgon #roll .box{margin-top:0}
 .zsumbox{display:grid;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 .zelr .chips .chip small{color:inherit;opacity:.75;font-size:.72rem;margin-left:3px}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zdots{display:inline-flex;gap:3px;margin-left:4px}.zdots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--accent)}.zdots i.on{background:var(--accent)}
+.zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zsetup{display:flex;flex-direction:column;gap:12px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.zprev ul{margin:4px 0 0;padding-left:18px}.zprev li{margin:3px 0}
+.zsetline{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.zdots{display:inline-flex;gap:3px;margin-left:4px}.zdots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--accent)}.zdots i.on{background:var(--accent)}
 .zbar{flex-basis:100%;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.zbar i{display:block;height:100%;background:var(--accent);transition:width .25s}.zslp.bau{flex-wrap:wrap;flex:1 1 100%;min-width:0;gap:5px}.zslp.bau .lab{flex-basis:100%}.zslp.bau .btn{flex:1 1 0;min-width:0;padding-left:4px;padding-right:4px}.zslp.bau b{flex:none;min-width:72px;font-size:1.1rem}.zslp{display:flex;align-items:center;gap:6px}.zslp b{font-size:1.25rem;font-variant-numeric:tabular-nums;min-width:52px;text-align:center}.zslp b small{font-size:.8rem;color:var(--muted)}
 .zhbtn{width:100%;background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .zhr{display:flex;align-items:center;gap:8px}
@@ -1445,7 +1448,7 @@ function undo(){
   if(!zArm||!zArm.show){const el=document.getElementById("zdlg");if(el)el.remove();if(typeof zAmbStop==="function")zAmbStop();}
   buzz(20);queueSave(cur);renderAll();showMsg("Rückgängig gemacht: "+u.label);
 }
-const UNDO_LABEL={zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
+const UNDO_LABEL={zst:"Stufe ändern",zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
 let atk={slot:"main",split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};
 let def=null,spell=null,mag={attr:"Int",stufe:1,level:null};
@@ -1689,8 +1692,17 @@ function kampfDo(b){
     case "zcnt":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.cnt)return;e.cnt.n=Math.max(0,Math.min(e.cnt.max,e.cnt.n+(+b.dataset.d)));
       if(e.cnt.n<=0){zAkt().splice(zAkt().indexOf(e),1);queueSave(cur);renderAll();showMsg(`${e.n}: aufgebraucht.`);return;}queueSave(cur);return renderAll();}
     case "zend":{const L=zAkt(),i=L.findIndex(e=>e.k===b.dataset.k);if(i>=0)L.splice(i,1);queueSave(cur);return renderAll();}
-    case "zst":{const {ch}=sbParse();const st=num(ch.learned[b.dataset.spell]);let cs=Math.min(num(ch.castStufe[b.dataset.spell])||st,st);
-      cs=Math.max(1,Math.min(st,cs+(+b.dataset.d)));ch.castStufe[b.dataset.spell]=cs;zSaveCh(ch);return renderAll();}
+    case "zst":{const {db,ch}=sbParse();const id=b.dataset.spell,st=num(ch.learned[id]);let cs=Math.min(num(ch.castStufe[id])||st,st);
+      cs=Math.max(1,Math.min(st,cs+(+b.dataset.d)));
+      const arm=zArm&&zArm.id===id&&zArm.phase==="armed"?zArm:null;
+      if(arm){if(arm.aimed||(arm.done||[]).length)return;const sp=(db.spells||[]).find(x=>x.id===id);
+        if(num(cur.mp.cur)<sp.level+cs){showMsg(`Nicht genug Mana für Stufe ${cs}: ${num(cur.mp.cur)} da, ${sp.level+cs} nötig.`);return;}
+        arm.cs=cs;arm.cost=sp.level+cs;}
+      ch.castStufe[id]=cs;
+      const c=ch.steigerungChoice&&ch.steigerungChoice[id];if(Array.isArray(c)){let over=c.reduce((x,y)=>x+num(y),0)-(cs-1);for(let i=c.length-1;i>=0&&over>0;i--){const t=Math.min(num(c[i]),over);c[i]=num(c[i])-t;over-=t;}}
+      zSaveCh(ch);return renderAll();}
+    case "zsetok":if(zArm){zArm.setOk=true;}return renderAll();
+    case "zsetedit":if(zArm&&!zArm.aimed&&!(zArm.done||[]).length){zArm.setOk=false;}return renderAll();
     case "zexp":{const id=b.dataset.spell;zExp.has(id)?zExp.delete(id):zExp.add(id);return renderAll();}
     case "zcancel":zArm=null;return renderAll();
     case "zclose":if(zArm)zArm.show=false;return renderAll();
@@ -2131,8 +2143,22 @@ function zDlgRender(){
   const effs=z?z.ef:nList(sp.effekt);
   const info=zInfoHtml(sp,lname,z).replace(/<summary>Alle Infos<\/summary><div class="zbody">/,`<summary>Details zum Zauber</summary><div class="zbody"><div class="zrow"><span class="lab">Effekte</span><div>${effs.map(e=>esc(e).replace(/\n/g,"<br>")).join("<br><br>")}</div></div>`);
   const ap=fin?a.ap:atkCost(2);
+  const stL=num(ch.learned[sp.id]),calc0=z?zbCalc(z,a.cs,zbChoice(sp,ch)):null,hasOder=!!(calc0&&calc0.oder&&calc0.slots>0);
+  const needSet=!fin&&(stL>1||hasOder),started=!!a.aimed||done.length>0,inSet=needSet&&!a.setOk&&!started;
+  const chUsed=hasOder?z.st.reduce((x,_,i)=>x+num(zbChoice(sp,ch)[i]),0):0,chLeft=hasOder?calc0.slots-chUsed:0;
+  const stTxt=calc0?(hasOder?z.st.map((o,i)=>{const n=num(zbChoice(sp,ch)[i]);return n?`${n}× ${o}`:"";}).filter(Boolean).join(", "):a.cs>1&&z.st.length?`${a.cs-1}× (${z.st.join(", ")})`:""):"";
+  const setHtml=!needSet?"":inSet?`<div class="zsetup"><div class="lab">Schritt 1: Stufe${calc0&&z.st.length?" und Steigerung":""}</div>
+      <div class="zcast"><span class="lab">Wirken auf Stufe</span><div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${a.cs<=1?"disabled":""} aria-label="Stufe senken">−</button><output>${a.cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${a.cs>=stL?"disabled":""} aria-label="Stufe erhöhen">+</button></div><span class="hint">von ${stL} · ${a.cost} Mana</span></div>
+      ${hasOder?zbOderHtml(sp,z,calc0,ch):calc0&&a.cs>1&&z.st.length?`<div class="hint">Steigerung (${a.cs-1}×): ${esc(z.st.join(", "))}</div>`:""}
+      ${calc0?`<div class="zprev"><span class="lab">So wirkt der Zauber</span>${zPrevHtml(calc0)}</div>`:""}
+      ${chLeft>0?`<p class="zwarn">Noch ${chLeft} Steigerung${chLeft>1?"en":""} frei.</p>`:""}
+      <div class="row-actions"><button class="btn big pri" data-act="zsetok">Weiter${(gz||req.length)?" zum Würfeln":""}</button></div>
+      <div class="row-actions"><button class="btn" data-act="zcancel">Abbrechen</button></div></div>`
+    :`<div class="zsetline"><div><b>Stufe ${a.cs}</b>${stTxt?` · <span class="hint">${esc(stTxt)}</span>`:""}</div>${started?"":`<button class="linkbtn" data-act="zsetedit">ändern</button>`}</div>`;
+  if(inSet){el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div><div class="lab">Zauber wirken</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${ap} AP</div></div>${kwarn}${setHtml}</div>`;
+    zAmbient(zElemKind(a)||zKind(z,lname),el);return;}
   el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div><div class="lab">Zauber wirken</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${ap} AP</div></div>
-    ${kwarn}
+    ${kwarn}${setHtml}
     ${zSumDlg(sp,z,a)}${zMineDlg(sp,z,a)}${zBauDlg(sp,z,a)}${z&&z.fx.some(f=>ZDEF.test(f.d||""))?`<div class="zsumbox"><span class="lab">Wirkt später</span><div>${z.fx.filter(f=>ZDEF.test(f.d||"")).map(f=>`${esc(f.t)} <span class="hint">${esc(f.d)}</span>`).join("<br>")}</div><div class="hint">Gewürfelt wird erst dann, unter „Aktive Zauber“.</div></div>`:""}
     ${steps.length?`<ol class="zsteps">${rows}</ol>`:""}
     ${sum}
@@ -2413,6 +2439,13 @@ function zAktHtml(){
 function zBauDlg(sp,z,a){if(!z)return "";const calc=zbCalc(z,a.cs,zbChoice(sp,sbParse().ch)),bi=zBauInfo(z,calc);if(!bi)return "";
   const f=z.fx.find(zBauF),base=f?zBauLp(f):bi.lp,pl=bi.lp-base,lab=bi.n>1?(bi.part(1).startsWith("Element")?"Elemente":"Teile"):"";
   return `<div class="zsumbox"><span class="lab">Haltbarkeit</span><div><b>${bi.n>1?`${bi.n} ${lab} je ${bi.lp} LP`:`${bi.lp} LP`}</b>${pl?` <span class="hint">(${base} + ${pl} durch Steigerung)</span>`:""}</div><div class="hint">Unter „Aktive Zauber“ ziehst du Schaden ab${bi.n>1?", jedes Teil einzeln":""}.</div></div>`;}
+function zPrevHtml(calc){
+  const li=calc.fx.map(f=>{const v=f.dice?`${zbDiceTxt(f.dice)} ${f.a||""}`:f.w?`${f.w} ${f.a||""}`:"";
+    const meta=[f.f,f.z,f.d].filter(Boolean).join(" · "),t=f.ta?`${f.ta}-Test${f.tdN!=null?" "+f.tdN:f.td?" "+f.td:""}`:"";
+    const od=[f.okD?"Erfolg "+zbDiceTxt(f.okD):"",f.noD?"Misserfolg "+zbDiceTxt(f.noD):""].filter(Boolean).join(" / ");
+    return `<li>${esc(f.t||"")}${v?` · <b>${esc(v.trim())}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}</li>`;}).join("");
+  const ex=(calc.extra||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+  return `<ul>${li}${ex}</ul>`;}
 function zLpRow(e){const S=e.sum,big=S.lpMax>=100,b=d=>`<button class="btn small" data-act="zlp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`;
   const pct=Math.max(0,Math.min(100,S.lp/Math.max(1,S.lpMax)*100));
   return `<div class="zslp${e.bau?" bau":""}"><span class="lab">${e.bau?"Haltbarkeit":"LP"}</span>${(big?[-10,-5,-1]:[-5,-1]).map(b).join("")}<b>${S.lp}<small>/${S.lpMax}</small></b>${b(1)}${big?b(10):""}</div>${e.bau?`<div class="zbar"><i style="width:${pct}%"></i></div>`:""}`;}
