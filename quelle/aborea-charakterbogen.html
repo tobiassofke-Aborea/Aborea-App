@@ -395,11 +395,9 @@ select{width:100%;min-height:42px;background:var(--bg);border:1px solid var(--li
 #apbar .in{max-width:560px;margin:0 auto;padding:8px 12px;display:grid;gap:8px}
 #apbar .aprow{display:flex;align-items:center;gap:10px}
 #apbar .btnrow{display:flex;gap:6px}
-#apundow:empty{display:none}
-#apbar .apundo{width:100%;display:flex;align-items:center;gap:8px;text-align:left;justify-content:flex-start;font-weight:600;background:transparent;border-style:dashed}
-#apbar .apundo .ui{font-size:1.1rem;line-height:1}
-#apbar .apundo .ut{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#apbar .apundo small{color:var(--muted);font-weight:500}
+#apundow{display:flex;flex:none}
+#apbar .btn.apundo{flex:none;width:44px;padding-left:0;padding-right:0;font-size:1.2rem;line-height:1}
+#apbar .apundo:disabled{opacity:.35}
 #apbar .cnt{display:grid;flex:1;min-width:0;padding-left:10px;border-left:1px solid var(--line)}
 #apbar .cnt .lab{font-size:.62rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #apbar .cnt b{font-size:1.35rem;line-height:1.05;font-variant-numeric:tabular-nums}
@@ -1283,7 +1281,7 @@ function renderAll(){
       <div class="pips" aria-hidden="true">${Array.from({length:Math.max(max,left)},(_,i)=>`<i class="${i<left?"on":""}"></i>`).join("")}</div></div>
       <div class="cnt"><span class="lab">Angriffe</span><b>${na}</b><small>nächster ${atkCost(2)} AP</small></div>
       <div class="cnt${num(cur.kampf.defRes)?" on":""}"><span class="lab">Vert. bereit</span><b>${num(cur.kampf.defRes)}</b><small>nächste ${defCost()} AP</small></div></div>
-      <div class="btnrow"><button class="btn small" data-act="move">Bewegen −1</button><button class="btn small" data-act="bonus">Bonus −2</button><button class="btn small pri" data-act="round">Neue Runde</button></div><div id="apundow">${undoBtnHtml()}</div></div>`;}
+      <div class="btnrow"><button class="btn small" data-act="move">Bewegen −1</button><button class="btn small" data-act="bonus">Bonus −2</button><span id="apundow">${undoBtnHtml()}</span><button class="btn small pri" data-act="round">Neue Runde</button></div></div>`;}
   if(!cur){app.innerHTML=renderEmpty();return;}
   app.innerHTML=tab==="attr"?renderAttr():tab==="bogen"?renderBogen():tab==="kampf"?renderKampf():tab==="regeln"?renderRegeln():renderSkills();
   markAgain();
@@ -1423,8 +1421,12 @@ function undoDiff(u){
     const p=[],d=(a,b,l)=>{const x=num(b)-num(a);if(x)p.push(`${x>0?"+":"−"}${Math.abs(x)} ${l}`);};
     d(ap0,ap1,"AP");d(st.lp&&st.lp.cur,cur.lp.cur,"LP");if(hasMana())d(st.mp&&st.mp.cur,cur.mp.cur,"Mana");return p.join(", ");}catch(e){return "";}
 }
-function undoBtnHtml(){const u=undoTop();if(!u)return "";const d=undoDiff(u);
-  return `<button class="btn small apundo" id="apundo" aria-label="Rückgängig: ${esc(u.label)}${d?" ("+esc(d)+")":""}"><span class="ui">↶</span><span class="ut">Rückgängig: <b>${esc(u.label)}</b>${d?` <small>${esc(d)}</small>`:""}</span></button>`;}
+function undoBtnHtml(){const u=undoTop();
+  return `<button class="btn small apundo" id="apundo" ${u?"":"disabled"} aria-label="Letzte Aktion rückgängig machen" title="Rückgängig">↶</button>`;}
+function undoAsk(){const u=undoTop();if(!u)return;const d=undoDiff(u);clearTimeout(rollTimer);
+  $("#roll").innerHTML=`<div class="box rb" role="alertdialog"><div class="info"><div class="what">Rückgängig machen?</div>
+    <div class="calc"><b>${esc(u.label)}</b>${d?`<br>${esc(d)} wird zurückgesetzt`:""}</div></div>
+    <div class="row-actions"><button class="btn small pri" id="undook">Ja, rückgängig</button><button class="btn small" id="rollx">Abbrechen</button></div></div>`;}
 function undoBtnSync(){const w=$("#apundow");if(w)w.innerHTML=undoBtnHtml();}
 function undo(){
   const u=undoStack.pop();if(!u)return;
@@ -2891,7 +2893,8 @@ document.addEventListener("click",e=>{
   if(b.id==="loadc"){const c=chars.find(x=>x.id===selId());if(c){confirmDel=false;setCur(c);charSel=c.id;renderAll();showMsg(`${c.name||"Charakter"} geladen.`);}return;}
   if(b.dataset.pick){confirmDel=false;setCur(chars.find(c=>c.id===b.dataset.pick));renderAll();return;}
   if(!cur)return;
-  if(b.id==="apundo"){undo();return;}
+  if(b.id==="apundo"){undoAsk();return;}
+  if(b.id==="undook"){undo();return;}
   if(b.dataset.act){kampfAct(b);return;}
   if(b.dataset.roll){if(curRoll&&curRoll.waiting&&curRoll.key===b.dataset.roll){rollAgain();return;}rollKey(b.dataset.roll);return;}
   if((b.dataset.q||b.dataset.full||b.dataset.pool)&&!(armorActive()&&(b.dataset.q==="lp"&&+b.dataset.v<0||b.dataset.pool==="lp"&&+b.dataset.dir<0)))snap((b.dataset.q||b.dataset.full||b.dataset.pool)==="lp"?"Lebenspunkte":"Mana");
