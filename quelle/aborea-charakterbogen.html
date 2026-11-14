@@ -2226,7 +2226,7 @@ function zDlgRender(){
   const rows=steps.map((x,i)=>{const r=res[x.k],ok=okOf(x),st=ok?"ok":i===nowI?"now":"wait";
     return `<li class="zst ${st}"><span class="zsn">${ok?"✓":i+1}</span><div class="zsb"><div class="zsl">${esc(x.label)}${r?` <b class="zsv">${r.t}</b>`:ok?' <span class="hint">wird gewürfelt …</span>':""}</div>
       ${r&&r.g&&r.g.trim()!==`${r.t} ${x.label.replace(/^\S*W\d+\s*/,"")}`.trim()?`<div class="hint">${esc(r.g)}</div>`:""}
-      ${st==="now"?`<button class="zgo2" hidden ${x.at.replace(/class="[^"]*"/,"")}>${esc(x.label)}</button>`:""}</div></li>`;}).join("");
+      ${st==="now"&&!steps.some(y=>okOf(y)&&!res[y.k])?`<button class="btn pri zgo2" ${x.at.replace(/class="[^"]*"/,"")}>${ICON_DICE_S} ${x.k==="aim"?"Zielwurf würfeln":esc(x.label)+" würfeln"}</button>`:""}</div></li>`;}).join("");
   const kz=zKonz(),isK=z?z.k:/K\*/.test(sp.details||"");
   const kzn=kz&&(kz.sp||kz.n),kwarn=!fin&&isK&&kz&&kzn!==sp.name?`<div class="zwarn">Du konzentrierst dich gerade auf ${esc(kzn)}. Wenn du ${esc(sp.name)} wirkst, endet ${esc(kzn)}.</div>`:"";
   const dmgR=steps.filter(x=>res[x.k]&&/schaden/i.test(x.label)&&!/rüstung|heilung/i.test(x.label)).map(x=>num(res[x.k].t));
@@ -2256,14 +2256,14 @@ function zDlgRender(){
   const main=fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`
     :rolling?`<button class="btn big pri" disabled>${ICON_DICE_S} Würfelt …</button>`
     :a.pen&&penHtml?`<button class="btn big pri danger" data-act="zpen">${ICON_DICE_S} Strafe würfeln: ${num(cur.level)||1}W10</button><div class="hint zpend">Nicht geschafft: Erst die Strafe würfeln, dann wirken.</div>`
-    :pend.length?`<button class="btn big pri" data-act="zauto">${ICON_DICE_S} Würfeln</button><div class="hint zpend">${esc(pend.join(", dann "))}</div>`
+    :pend.length?`<p class="hint zpend">Würfle oben Schritt für Schritt, dann kannst du wirken.</p>`
     :elemOk?`<button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} Mana · ${ap} AP</button>`
     :`<p class="hint">Wähle zuerst das Element.</p>`;
   const dsum=dmgR.length>1?`<div class="zdsum">Schaden gesamt: <b>${dmgR.reduce((p,q)=>p+q,0)}</b></div>`:"";
   el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div class="zdh"><div><div class="lab">${fin?"Gewirkt":"Zauber wirken"}</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${ap} AP</div></div><button class="zx" data-act="${fin?"zclose":"zcancel"}" aria-label="${fin?"Schließen":"Abbrechen"}">×</button></div>
     ${kwarn}${setHtml}${tierHtml}${prev}${penHtml}
     ${zSumDlg(sp,z,a)}${zMineDlg(sp,z,a)}${z&&z.fx.some(f=>ZDEF.test(f.d||""))?`<div class="zsumbox"><span class="lab">Wirkt später</span><div>${z.fx.filter(f=>ZDEF.test(f.d||"")).map(f=>`${esc(f.t)} <span class="hint">${esc(f.d)}</span>`).join("<br>")}</div><div class="hint">Gewürfelt wird erst dann, unter „Aktive Zauber“.</div></div>`:""}
-    ${started&&steps.length?`<ol class="zsteps">${rows}</ol>`:steps.length?`<div hidden>${rows}</div>`:""}
+    ${steps.length?`<ol class="zsteps">${rows}</ol>`:""}
     ${dsum}
     <div class="zmain">${main}</div>
     ${!fin?`<button class="linkbtn zcl" data-act="zcancel">Abbrechen</button>`:""}
