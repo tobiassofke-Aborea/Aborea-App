@@ -577,7 +577,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
 .zsec{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px}.zsec h4{margin:0;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.zsec p{margin:0}.zhint{margin:0;font-size:.82rem;line-height:1.45;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}.zul{margin:0;padding-left:18px}.zul li{margin:2px 0}.zan{margin:0;font-size:.92rem;line-height:1.45}
+.zsec p{margin:0}.ztl{margin:4px 0 0;font-weight:400}.ztl li{margin:2px 0}.zhint{margin:0;font-size:.82rem;line-height:1.45;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}.zul{margin:0;padding-left:18px}.zul li{margin:2px 0}.zan{margin:0;font-size:.92rem;line-height:1.45}
 .zsetup{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .zdh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.zx{all:unset;cursor:pointer;font-size:1.6rem;line-height:1;padding:2px 8px;color:var(--muted);border-radius:8px}.zx:hover{background:var(--line)}
 .zmain{display:grid;gap:4px}.zpend{text-align:center}.zcl{justify-self:center;margin:2px auto 0;display:block}.zsel{min-width:140px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1959,7 +1959,7 @@ function zbFxHtml(sp,z,calc,cs){
     const bft=/beaufort/i.test(f.a);const br=bft&&zbRes[sp.id]&&zbRes[sp.id].bft;
     const shift=bft?(calc.extra.find(x=>/Einfluss/.test(x))?Math.max(0,cs-1):0):0;
     const tSame=bv&&String(f.t||"").replace(/\s+/g," ").trim().toLowerCase()===`${bv} ${ba}`.trim().toLowerCase();
-    return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt">${tSame&&!bft?"":`<div class="zft">${esc(f.t)}${bft?ib("beaufort"):""}</div>`}
+    return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt">${tSame&&!bft?"":`<div class="zft">${zFxT(f.t)}${bft?ib("beaufort"):""}</div>`}
       ${meta.length?`<div class="zmeta">${meta.map(m=>`<span class="zpill">${esc(m)}</span>`).join("")}${f.sh?`<button class="zaoeb zico${zAoeOpen.has(sp.id+":"+i)?" on":""}" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}" aria-label="${zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau":"Fläche"} ${zAoeOpen.has(sp.id+":"+i)?"ausblenden":"zeigen"}" title="${zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau":"Fläche"} zeigen">${ICON_AREA}</button>`:""}</div>`:""}</div></div>
       ${f.sh&&zAoeOpen.has(sp.id+":"+i)?(zBauKind(z,f)?zBauSvg(zBauKind(z,f),f.sh):f.sh.t==="rect"&&f.sh.c!=null?zIsoSvg(f.sh):zAoeSvg(f.sh,z.o)):""}${test}
       ${rolls.length?`<div class="zrolls">${rolls.join("")}</div>`:""}
@@ -2329,6 +2329,7 @@ function zApplyMisc(o,c,fx,z){
   if((m=o.match(/^\+([\d,]+)\s*x\s*([\d,]+)(?:\s*x\s*([\d,]+))?\s*(m|km)(\s*Kegel)?\b/i))){const F=fx.filter(f=>f.sh&&(f.sh.t==="rect"||f.sh.t==="cone"));if(!F.length)return false;
     F.forEach(f=>{f.sh.a+=zNum(m[1])*c;f.sh.b+=zNum(m[2])*c;if(m[3]&&f.sh.c!=null)f.sh.c+=zNum(m[3])*c;});return true;}
   if((m=o.match(/^\+(\d+)\s+(?:weitere\s+)?(?:[\dx,]+m\s+)?(Wallelement|Erweiterung)/i))){const f=fx.find(f=>f.sh&&f.sh.t==="rect"&&f.sh.c!=null);if(!f)return false;f.sh.n=(f.sh.n||1)+(+m[1])*c;return true;}
+  if((m=o.match(/^\+(\d+)\s*LP auf alle Grenzen$/i))){const v=+m[1]*c;let hit=false;fx.forEach(f=>{if(/höchstens \d+ LP/i.test(f.t||"")){f.t=f.t.replace(/höchstens (\d+) LP/gi,(x,n)=>`höchstens ${+n+v} LP`);hit=true;}});return hit;}
   if((m=o.match(/^\+(\d+)\s*LP$/i))){const f=fx.find(zBauF);if(!f)return false;f.lpPlus=(f.lpPlus||0)+(+m[1])*c;return true;}
   if((m=o.match(/^\+([\d,]+)\s*m²$/))){const f=fx.find(f=>f.sh&&f.sh.t==="sq");if(!f)return false;f.sh.v+=zNum(m[1])*c;return true;}
   if((m=o.match(/^\+(\d+) Bonus \(Verbündete\) und [−-](\d+) Malus \(Feinde\)$/))){const F=fx.filter(f=>/alle Würfe/.test(f.a)&&/^[+-]?\d+$/.test(f.w));if(F.length<2)return false;
@@ -2570,12 +2571,15 @@ function zAktHtml(){
 function zBauDlg(sp,z,a){if(!z)return "";const calc=zbCalc(z,a.cs,zbChoice(sp,sbParse().ch),num(a.xmp)),bi=zBauInfo(z,calc);if(!bi)return "";
   const f=z.fx.find(zBauF),base=f?zBauLp(f):bi.lp,pl=bi.lp-base,lab=bi.n>1?(bi.part(1).startsWith("Element")?"Elemente":"Teile"):"";
   return `<div class="zsumbox"><span class="lab">Haltbarkeit</span><div><b>${bi.n>1?`${bi.n} ${lab} je ${bi.lp} LP`:`${bi.lp} LP`}</b>${pl?` <span class="hint">(${base} + ${pl} durch Steigerung${num(a.xmp)?" und zusätzliches Mana":""})</span>`:""}</div><div class="hint">Unter „Aktive Zauber“ ziehst du Schaden ab${bi.n>1?", jedes Teil einzeln":""}.</div></div>`;}
+/* Stufen wie „höchstens 60 LP = 1 min taub; …“ als Liste */
+function zFxT(t){t=String(t||"");const m=t.match(/^(.*?):\s*(höchstens \d+ LP\s*=.*)$/i);if(!m)return esc(t);
+  return `${esc(m[1])}:<ul class="zul ztl">${m[2].split(/;\s*/).map(x=>{const y=x.match(/höchstens (\d+) LP\s*=\s*(.*)/i);return y?`<li><b>bis ${y[1]} LP</b>: ${esc(y[2])}</li>`:`<li>${esc(x)}</li>`;}).join("")}</ul>`;}
 function zPrevHtml(calc,notes){
   const li=calc.fx.map(f=>{const v=f.dice?`${zbDiceTxt(f.dice)} ${f.a||""}`:f.w?`${f.w} ${f.a||""}`:"";
     const meta=[f.f,f.z,f.d].filter(Boolean).join(" · "),t=f.ta?`${f.ta}-Test${f.tdN!=null?" "+f.tdN:f.td?" "+f.td:""}`:"";
     const od=[f.okD?"Erfolg "+zbDiceTxt(f.okD):"",f.noD?"Misserfolg "+zbDiceTxt(f.noD):""].filter(Boolean).join(" / ");
     const vt=v.trim(),same=vt&&String(f.t||"").replace(/\s+/g," ").trim().toLowerCase()===vt.replace(/\s+/g," ").toLowerCase();
-    return `<li>${same?"":esc(f.t||"")}${vt?`${same?"":" · "}<b>${esc(vt)}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}${notes&&f.n?`<br><span class="hint">${esc(f.n)}</span>`:""}</li>`;}).join("");
+    return `<li>${same?"":zFxT(f.t)}${vt?`${same?"":" · "}<b>${esc(vt)}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}${notes&&f.n?`<br><span class="hint">${esc(f.n)}</span>`:""}</li>`;}).join("");
   const ex=(calc.extra||[]).filter(x=>!(/-Test [+-]\d+/.test(x)&&calc.fx.some(f=>f.plus))).map(x=>`<li>${esc(x)}</li>`).join("");
   return `<ul>${li}${ex}</ul>`;}
 function zLpRow(e){const S=e.sum,big=S.lpMax>=100,b=d=>`<button class="btn small" data-act="zlp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`;
