@@ -570,6 +570,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zico{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;color:var(--accent);border:1px solid var(--line);background:var(--card);margin:0 0 4px 2px}.zico.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .zh4s{text-transform:none;letter-spacing:0;font-weight:500}
 .zlv2{font-size:.85rem;color:var(--muted);font-weight:500;margin-right:8px}.zhr .zlvl{margin-right:0}
+.ztier{display:grid;gap:6px}.ztier .chips{display:flex;flex-wrap:wrap;gap:6px}.zsumbox.bad{border-color:var(--lp)}
 .zsub{font-size:.8rem;color:var(--muted);margin-top:-2px}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
@@ -1765,6 +1766,8 @@ function kampfDo(b){
     case "zsetedit":if(zArm&&!zArm.aimed&&!(zArm.done||[]).length){zArm.setOk=false;}return renderAll();
     case "zexp":{const id=b.dataset.spell;zExp.has(id)?zExp.delete(id):zExp.add(id);return renderAll();}
     case "zcancel":if(zArm&&zArm.autoT)clearTimeout(zArm.autoT);zArm=null;return renderAll();
+    case "zpq":if(zArm&&!zArm.aimed&&!(zArm.done||[]).length){zArm.pq=+b.dataset.v;}return renderAll();
+    case "zpen":{const L=num(cur.level)||1;rollPool(`Strafe: 1W10 × ${L}`,{groups:[{label:"W10",n:1,s:10}],flat:0},t=>{if(zArm)zArm.pen=false;return {tag:`${t} × ${L} = ${t*L} Schaden`,cls:"bad"};});return;}
     case "zauto":if(zArm){zArm.auto=true;}return renderAll();
     case "zclose":if(zArm)zArm.show=false;return renderAll();
     case "zopen":{
@@ -1971,6 +1974,9 @@ function zResHtml(f){
   const ok=f.okD?zbDiceTxt(f.okD)+" "+String(f.ok||"").replace(/^\S*W\d+\s*/,""):say(f.ok||""),no=f.noD?zbDiceTxt(f.noD)+" "+String(f.no||"").replace(/^\S*W\d+\s*/,""):say(f.no||"");
   return `<div class="zres"><div><b>${me?"Du würfelst":esc(who)+(/^(Ziele|Feinde)$/i.test(who)?" würfeln":" würfelt")}</b> einen ${esc(f.ta)}-Test${diff?` · ${esc(diff)}`:""}${pl}</div>
     ${ok||no?`<div class="zresr">${ok?`<span class="ok">Geschafft: ${esc(ok)}</span>`:""}${no?`<span class="no">Nicht geschafft: ${esc(no)}</span>`:""}</div>`:""}</div>`;}
+function zTiers(p){if(!p||!/^\d+(\s*\/\s*\d+)+$/.test(String(p.d||"").trim()))return null;
+  const th=String(p.d).split("/").map(x=>+x),labs={};String(p.ok||"").split(",").forEach(x=>{const m=x.match(/(\d+)\s*=\s*(.+)/);if(m)labs[+m[1]]=m[2].trim();});
+  return th.map((t,i)=>({th:t,lab:labs[t]||`Stufe ${i+1}`}));}
 function zbProbeHtml(sp,z,calc){
   const p=z.p;if(!p)return "";
   const n2=/ab dem 2\. Wirken/i.test(p.d||""),cnt=num((cur.zCnt||{})[sp.id]);
@@ -1981,7 +1987,7 @@ function zbProbeHtml(sp,z,calc){
   else lab=`${esc(p.a)}-Test${/fluch/i.test(p.d||"")?" (Fluch)":p.d?" · "+esc(p.d):""}${bon?` · +${bon} Bonus`:""}`;
  return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div><div class="zplab">${lab}</div>
     <button class="btn small zroll" data-act="zprobe" data-spell="${sp.id}">${ICON_DICE_S}${lab}</button>
-    <div class="hint">${/fluch/i.test(p.d||"")?`${/verfluchen/i.test(p.ok||"")?"Verfluchen: Dein Wurf ist die Stärke des Fluchs.<br>":""}Fluch brechen: Du würfelst, die Spielleitung kennt die Stärke des Fluchs und sagt dir, ob er bricht.`:`${p.ok?`Erfolg: ${esc(p.ok)}`:""}${p.no?`<br>Misserfolg: ${esc(p.no)}`:""}`}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
+    <div class="hint">${zTiers(p)?`<ul class="zul">${zTiers(p).map(x=>`<li><b>${esc(x.lab)}</b>: ab ${x.th}</li>`).join("")}</ul>Vor dem Wurf legst du fest, wie viele du stellst. Erreichst du die Schwelle nicht: <b>${esc(p.no||"Strafe")}</b>`:/fluch/i.test(p.d||"")?`${/verfluchen/i.test(p.ok||"")?"Verfluchen: Dein Wurf ist die Stärke des Fluchs.<br>":""}Fluch brechen: Du würfelst, die Spielleitung kennt die Stärke des Fluchs und sagt dir, ob er bricht.`:`${p.ok?`Erfolg: ${esc(p.ok)}`:""}${p.no?`<br>Misserfolg: ${esc(p.no)}`:""}`}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
 }
 function zbOderHtml(sp,z,calc,ch){
   if(!calc.oder||calc.slots<=0)return "";
@@ -2022,7 +2028,11 @@ function zbAct(b){
         t=>t<=g?{tag:`Geschafft (${t} ≤ ${g}): ${p.ok||""}`,cls:"ok"}:{tag:`Nicht geschafft (${t} > ${g}): ${p.no||""}`,cls:"bad"});return true;}
     const A=zbAttr(p.a),key=A==="CHA"?"Cha":A==="INT"?"Int":(num(cur.attr.Cha.b)>num(cur.attr.Int.b)?"Cha":"Int");
     const n=num(cur.attr[key].b),groups=n>0?[{label:key==="Cha"?"CHA":"INT",n,s:6}]:[{label:"Plus",n:1,s:6},{label:"Minus",n:1-n,s:6,neg:true}];
-    const th=String(p.d||"").match(/^\d+(\s*\/\s*\d+)*$/)?String(p.d).split("/").map(x=>+x):null;
+    const th=String(p.d||"").match(/^\d+(\s*\/\s*\d+)*$/)?String(p.d).split("/").map(x=>+x):null,T=zTiers(p);
+    if(T&&zArm&&zArm.id===sp.id){const x=T[Math.max(0,Math.min(T.length-1,num(zArm.pq||1)-1))];
+      rollPool(`${sp.name}: ${key==="Cha"?"CHA":"INT"}-Test (${x.lab}, ab ${x.th})`,{groups,flat:bon,flatLabel:"Bonus"},t=>{
+        if(t>=x.th){if(zArm)zArm.pen=false;return {tag:`Geschafft (${t} ≥ ${x.th}): ${x.lab}`,cls:"ok"};}
+        if(zArm)zArm.pen=true;return {tag:`Nicht geschafft (${t} < ${x.th}): ${p.no||"Strafe"}`,cls:"bad"};});return true;}
     rollPool(`${sp.name}: ${key==="Cha"?"CHA":"INT"}-Test`,{groups,flat:bon,flatLabel:"Bonus"},t=>{
       if(th){const hit=th.filter(x=>t>=x);if(th.length===1)return hit.length?{tag:`Geschafft (${t} ≥ ${th[0]})${p.ok?": "+p.ok:""}`,cls:"ok"}:{tag:`Nicht geschafft (${t} < ${th[0]})${p.no?": "+p.no:""}`,cls:"bad"};
         return hit.length?{tag:`${t}: Schwelle ${hit[hit.length-1]} erreicht (${p.ok})`,cls:"ok"}:{tag:`${t}: keine Schwelle erreicht. ${p.no||""}`,cls:"bad"};}
@@ -2233,6 +2243,10 @@ function zDlgRender(){
       ${mo?`<div class="zcast zxmp"><span class="lab">Extra-Mana</span><div class="step"><button data-act="zxmp" data-d="-1" ${xmp<=0?"disabled":""} aria-label="weniger Mana">−</button><output>${xmp}</output><button data-act="zxmp" data-d="1" aria-label="mehr Mana">+</button></div><span class="hint">je MP ${esc(mo.str)}</span></div>`:""}
       ${chLeft>0?`<p class="zwarn">Noch ${chLeft} Steigerung${chLeft>1?"en":""} frei.</p>`:""}</div>`
     :(!fin&&(stTxt||xmp))?`<div class="zsetline"><div><b>Stufe ${a.cs}</b>${stTxt?` · <span class="hint">${esc(stTxt)}</span>`:""}${xmp?` · <span class="hint">+${xmp} Mana</span>`:""}</div></div>`:"";
+  const T=z&&zTiers(z.p),pq=num(a.pq)||1;
+  const tierHtml=T&&!fin?(!started?`<div class="ztier"><span class="lab">Wie viele? Lege es vor dem Wurf fest</span><div class="chips">${T.map((x,i)=>`<button class="chip${pq===i+1?" on":""}" data-act="zpq" data-v="${i+1}">${esc(x.lab)} <span class="hint">ab ${x.th}</span></button>`).join("")}</div><div class="hint">Darunter: ${esc(z.p.no||"Strafe")}</div></div>`
+    :`<div class="zsetline"><div><b>${esc(T[pq-1].lab)}</b> · <span class="hint">Schwelle ${T[pq-1].th}</span></div></div>`):"";
+  const penHtml=a.pen&&!fin&&/charakterstufe/i.test(z.p.no||"")?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${esc(z.p.no)}</div><button class="btn small zroll2" data-act="zpen">${ICON_DICE_S}Strafe würfeln: 1W10 × ${num(cur.level)||1}</button></div>`:"";
   const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">🤝 Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);
@@ -2243,7 +2257,7 @@ function zDlgRender(){
     :`<p class="hint">Wähle zuerst das Element.</p>`;
   const dsum=dmgR.length>1?`<div class="zdsum">Schaden gesamt: <b>${dmgR.reduce((p,q)=>p+q,0)}</b></div>`:"";
   el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div class="zdh"><div><div class="lab">${fin?"Gewirkt":"Zauber wirken"}</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} Mana · ${ap} AP</div></div><button class="zx" data-act="${fin?"zclose":"zcancel"}" aria-label="${fin?"Schließen":"Abbrechen"}">×</button></div>
-    ${kwarn}${setHtml}${prev}
+    ${kwarn}${setHtml}${tierHtml}${prev}${penHtml}
     ${zSumDlg(sp,z,a)}${zMineDlg(sp,z,a)}${z&&z.fx.some(f=>ZDEF.test(f.d||""))?`<div class="zsumbox"><span class="lab">Wirkt später</span><div>${z.fx.filter(f=>ZDEF.test(f.d||"")).map(f=>`${esc(f.t)} <span class="hint">${esc(f.d)}</span>`).join("<br>")}</div><div class="hint">Gewürfelt wird erst dann, unter „Aktive Zauber“.</div></div>`:""}
     ${started&&steps.length?`<ol class="zsteps">${rows}</ol>`:steps.length?`<div hidden>${rows}</div>`:""}
     ${dsum}
