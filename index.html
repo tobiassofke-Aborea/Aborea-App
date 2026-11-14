@@ -2578,9 +2578,9 @@ function zauberCardHtml(){
     const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zst2">Stufe ${st}</span>${chev(open)}</span></button>`;
     const compact=(brief,castH,meta)=>{const a=zArm&&zArm.id===sp.id&&zArm.phase==="done"?zArm:null;
       return `<div class="zspell zc" data-zexp="${sp.id}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(sp.name)}: Details aufklappen">
-      <div class="zch"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><button class="btn small pri zqb" data-act="zopen" data-spell="${sp.id}" aria-label="${esc(sp.name)} auswählen, ${cost} Mana, ${atkCost(2)} AP">Auswählen</button></div>
-      <div class="zmeta2"><span class="zstf">Stufe ${st}</span> · ab ${sp.level+1} MP · ${atkCost(2)} AP${meta?" · "+meta:""}</div>
+      <div class="zch"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zst2">Stufe ${st}</span>${chev(false)}</span></div>
       <div class="zbrief">${brief}</div>
+      <div class="zmeta2">${meta?meta+" · ":""}ab ${sp.level+1} MP · ${atkCost(2)} AP</div>
 </div>`;};
     const lock=h=>zCanRoll(sp,gz)?h:h.replace(/class="btn small zroll"/g,'class="btn small zroll" disabled');
     let gz;
