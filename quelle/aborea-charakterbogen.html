@@ -1520,6 +1520,8 @@ function zWb(z,calc,cs){
     if(/^Trefferzone$/i.test(t)){wb.hit+=n;any=true;wb.txt.push(`+${n} Treffen (Trefferzone)`);}
   });
   return any?wb:null;}
+/* Würfel, die erst beim Waffenangriff gewürfelt werden */
+const zWbFx=f=>!!f.dice&&(/Waffenschaden|Kampfwürfel/i.test(f.a||"")||/^Waffe/i.test(f.t||"")||/garantierter treffer/i.test(f.t||""));
 function wbuf(){const o={kampf:0,hit:0,dmg:0,krit:0,dice:[],auto:false,list:[]};if(!cur||!cur.kampf)return o;
   zAkt().forEach(e=>{const b=e.wb;if(!b||b.off)return;o.kampf+=b.kampf;o.hit+=b.hit;o.dmg+=b.dmg;o.krit+=b.krit;o.auto=o.auto||b.auto;b.dice.forEach(d=>o.dice.push({...d,label:`${e.sp||e.n}: ${d.label}`}));o.list.push(e);});
   return o;}
@@ -2224,7 +2226,7 @@ function zDlgRender(){
       ${mo?`<div class="zcast zxmp"><span class="lab">Extra-Mana</span><div class="step"><button data-act="zxmp" data-d="-1" ${xmp<=0?"disabled":""} aria-label="weniger Mana">−</button><output>${xmp}</output><button data-act="zxmp" data-d="1" aria-label="mehr Mana">+</button></div><span class="hint">je MP ${esc(mo.str)}</span></div>`:""}
       ${chLeft>0?`<p class="zwarn">Noch ${chLeft} Steigerung${chLeft>1?"en":""} frei.</p>`:""}</div>`
     :(!fin&&(stTxt||xmp))?`<div class="zsetline"><div><b>Stufe ${a.cs}</b>${stTxt?` · <span class="hint">${esc(stTxt)}</span>`:""}${xmp?` · <span class="hint">+${xmp} Mana</span>`:""}</div></div>`:"";
-  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}</div>`:"";
+  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);
   const main=fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} Mana, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`
@@ -2593,7 +2595,7 @@ function zauberCardHtml(){
       const fxh=zbFxHtml(sp,z,calc,cs),prh=zbProbeHtml(sp,z,calc),si0=zSumInfo(z,cs,zbChoice(sp,ch));let req=zReqFrom(fxh+prh);
       if(si0&&si0.atkI>=0)req=req.filter(r=>r.k!=="f"+si0.atkI);
       if(z.nr===19)req=req.filter(r=>r.k!=="f1");
-      calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||""))req=req.filter(r=>r.k!=="f"+j);});
+      calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||"")||zWbFx(f))req=req.filter(r=>r.k!=="f"+j);});
       const calc1=zbCalc(z,1,null),fxh1=zbFxHtml(sp,z,calc1,1),prh1=zbProbeHtml(sp,z,calc1),cost1=sp.level+1;
       if(!open){const castH=zCastRow(sp,st,cs,cost,gz,req);
         const bits=calc1.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
