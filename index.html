@@ -1919,10 +1919,10 @@ function zbProbeHtml(sp,z,calc){
   const gs=/^GS/i.test(p.a),bon=calc.probeBonus;
   let lab;
   if(gs){const v=num(cur.gs);lab=`GS-Test: W100 ≤ ${String(cur.gs||"").trim()?v+bon:"GS"}${bon?` (GS ${v} + ${bon})`:""}`;}
-  else lab=`${esc(p.a)}-Test${p.d?" · "+esc(p.d):""}${bon?` · +${bon} Bonus`:""}`;
+  else lab=`${esc(p.a)}-Test${/fluch/i.test(p.d||"")?" (Fluch)":p.d?" · "+esc(p.d):""}${bon?` · +${bon} Bonus`:""}`;
   return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div>
     <button class="btn small zroll" data-act="zprobe" data-spell="${sp.id}">${ICON_DICE_S}${lab}</button>
-    <div class="hint">${p.ok?`Erfolg: ${esc(p.ok)}`:""}${p.no?`<br>Misserfolg: ${esc(p.no)}`:""}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
+    <div class="hint">${/fluch/i.test(p.d||"")?`${/verfluchen/i.test(p.ok||"")?"Verfluchen: Dein Wurf ist die Stärke des Fluchs.<br>":""}Fluch brechen: Du würfelst, die Spielleitung kennt die Stärke des Fluchs und sagt dir, ob er bricht.`:`${p.ok?`Erfolg: ${esc(p.ok)}`:""}${p.no?`<br>Misserfolg: ${esc(p.no)}`:""}`}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
 }
 function zbOderHtml(sp,z,calc,ch){
   if(!calc.oder||calc.slots<=0)return "";
@@ -1967,6 +1967,7 @@ function zbAct(b){
     rollPool(`${sp.name}: ${key==="Cha"?"CHA":"INT"}-Test`,{groups,flat:bon,flatLabel:"Bonus"},t=>{
       if(th){const hit=th.filter(x=>t>=x);if(th.length===1)return hit.length?{tag:`Geschafft (${t} ≥ ${th[0]})${p.ok?": "+p.ok:""}`,cls:"ok"}:{tag:`Nicht geschafft (${t} < ${th[0]})${p.no?": "+p.no:""}`,cls:"bad"};
         return hit.length?{tag:`${t}: Schwelle ${hit[hit.length-1]} erreicht (${p.ok})`,cls:"ok"}:{tag:`${t}: keine Schwelle erreicht. ${p.no||""}`,cls:"bad"};}
+      if(/fluch/i.test(p.d||""))return {tag:`${t}${/verfluchen/i.test(p.ok||"")?` · Verfluchen: Stärke des Fluchs ${t}`:""} · Ob ein Fluch bricht, sagt die Spielleitung`};
       return {tag:`${t}${p.d?" · "+p.d:""}${p.ok?" · "+p.ok:""}`};});
     return true;}
   if(a==="zroll"){
