@@ -639,7 +639,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zaoe .grid rect{fill:none;stroke:var(--line);stroke-width:1}.zaoe .grid rect.on{fill:color-mix(in srgb,var(--accent) 38%,transparent)}
 .zaoe .shp *{fill:none;stroke:var(--accent);stroke-width:2}
 .zaoe .me{fill:var(--ink)}.zaoe text{font-size:9px;fill:var(--muted);text-anchor:middle;font-family:var(--body)}.zaoe .tg{stroke:var(--ink);stroke-width:2}
-.zakt{display:grid;gap:0;padding:4px 14px}.zak{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.zak:last-child{border-bottom:0}
+.zakt{display:grid;gap:0;padding:4px 14px}.zak{display:grid;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);min-width:0}.zak>*{min-width:0}.zslp .btn{white-space:nowrap}.zslp{flex-wrap:wrap}.zak:last-child{border-bottom:0}
 .ktag{font-size:.7rem;font-weight:700;color:var(--mp);background:var(--mp-soft);padding:1px 6px;border-radius:5px}
 .zwarn{font-size:.86rem;font-weight:600;color:var(--bad)}
 .zmagic{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70}
@@ -2451,9 +2451,9 @@ function zAktHtml(){
       const dots=(n,m)=>`<span class="zdots" aria-hidden="true">${Array.from({length:m},(_,i)=>`<i class="${i<n?"on":""}"></i>`).join("")}</span>`;
       return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">Stufe ${e.st}</span>${e.konz?' <span class="ktag">Konzentration</span>':""}<div class="hint">${dur}</div></div>
         <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
-        ${G?`<div class="zslp"><span class="lab">Geister</span><button class="btn small" data-act="zgeist" data-k="${e.k}" data-d="-1">−1</button><b>${G.n}<small>/${G.max}</small></b><button class="btn small" data-act="zgeist" data-k="${e.k}" data-d="1">+1</button>${dots(G.n,G.max)}</div>
+        ${G?`<div class="zslp"><span class="lab">Geister</span><button class="btn small" data-act="zgeist" data-k="${e.k}" data-d="-1">−1</button><b>${G.n}<small>/${G.max}</small></b><button class="btn small" data-act="zgeist" data-k="${e.k}" data-d="1">+1</button></div>
           <div class="zrolls">${G.dmg?`<button class="btn small zroll2" data-act="zgeist" data-op="atk" data-k="${e.k}" ${G.n?"":"disabled"}>${ICON_DICE_S}Geist greift an: ${esc(zbDiceTxt(G.dmg))}</button>`:""}<button class="btn small zroll2" data-act="zgeist" data-op="blk" data-k="${e.k}" ${G.n?"":"disabled"}>${ICON_DICE_S}Du wirst angegriffen: Block ${G.n*10}%</button></div>`
-          :`<div class="zslp"><span class="lab">${esc(C.label)}</span><button class="btn small" data-act="zcnt" data-k="${e.k}" data-d="-1">−1 verbraucht</button><b>${C.n}<small>/${C.max}</small></b>${dots(C.n,C.max)}</div>`}</div>`;}
+          :`<div class="zslp"><span class="lab">${esc(C.label)}</span><button class="btn small" data-act="zcnt" data-k="${e.k}" data-d="-1">−1 verbraucht</button><b>${C.n}<small>/${C.max}</small></b></div>`}</div>`;}
     const dur=e.wait?`Wirkt ${esc(e.wait)}`:e.r!=null?`noch ${e.r} Runde${e.r===1?"":"n"}`:e.t?`läuft ${esc(e.t)}`:S&&!e.konz?"bis es zerstört wird":e.bau?"solange du dich konzentrierst oder bis es zerstört wird":S?"bis es zerstört wird":"solange du dich konzentrierst";
     if(!S)return `<div class="zak${e.konz?" konz":""}${e.later&&e.later.length?" zsumc":""}"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">Stufe ${e.st}</span>${e.konz?' <span class="ktag">Konzentration</span>':""}
     <div class="hint">${dur}</div></div><button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
