@@ -565,6 +565,8 @@ body.zdlgon #roll .box{margin-top:0}
 .zsumc{display:grid!important;gap:8px}.zsumh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .zsumv{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.zakth{display:flex;align-items:center;gap:6px}.zaktt{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font:inherit;color:inherit}.zaktt .chev{font-size:.8em;color:var(--accent);width:1em}.zcnt{font-family:var(--sans);font-size:.75rem;font-weight:700;background:var(--accent);color:var(--card);border-radius:999px;padding:2px 8px;line-height:1.4}
 .zakd{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}.zakd summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.9rem;padding:4px 0}.zakd ul{margin:4px 0 6px;padding-left:18px}.zakd li{margin:3px 0}.zakd p{margin:4px 0}
+.zico{all:unset;cursor:pointer;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;color:var(--accent);border:1px solid var(--line);background:var(--card);margin:0 0 4px 2px}.zico.on{background:var(--accent);color:var(--card);border-color:var(--accent)}
+.zh4s{text-transform:none;letter-spacing:0;font-weight:500}
 .zsub{font-size:.8rem;color:var(--muted);margin-top:-2px}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
@@ -1824,6 +1826,7 @@ function magieCardHtml(){return `  <h2>Magie</h2><div class="card kstack">
     <button class="btn small" data-act="rest">1 Stunde Rast: Mana regenerieren</button>
     <p class="note">Magische Angriffe ignorieren in der Regel Rüstung.</p>
   </div>`;}
+const ICON_AREA='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/></svg>';
 const ICON_DICE_S='<span class="zdi">'+DIE6+'</span>';
 /* ---------- Zauberdaten aus der Zaubertabelle: Würfeln pro Zauber ---------- */
 let ZB=null;
@@ -1919,8 +1922,9 @@ function zbFxHtml(sp,z,calc,cs){
     if(f.noD)rolls.push(`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-fx="${i}" data-o="no">${ICON_DICE_S}Misserfolg: ${esc(zbDiceTxt(f.noD))}</button>`);
     const bft=/beaufort/i.test(f.a);const br=bft&&zbRes[sp.id]&&zbRes[sp.id].bft;
     const shift=bft?(calc.extra.find(x=>/Einfluss/.test(x))?Math.max(0,cs-1):0):0;
-    return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt"><div class="zft">${esc(f.t)}${bft?ib("beaufort"):""}</div>
-      ${meta.length?`<div class="zmeta">${meta.map(m=>`<span class="zpill">${esc(m)}</span>`).join("")}${f.sh?` <button class="linkbtn zaoeb" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}">${zAoeOpen.has(sp.id+":"+i)?"ausblenden":zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau zeigen":"Fläche zeigen"}</button>`:""}</div>`:""}</div></div>
+    const tSame=bv&&String(f.t||"").replace(/\s+/g," ").trim().toLowerCase()===`${bv} ${ba}`.trim().toLowerCase();
+    return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt">${tSame&&!bft?"":`<div class="zft">${esc(f.t)}${bft?ib("beaufort"):""}</div>`}
+      ${meta.length?`<div class="zmeta">${meta.map(m=>`<span class="zpill">${esc(m)}</span>`).join("")}${f.sh?`<button class="zaoeb zico${zAoeOpen.has(sp.id+":"+i)?" on":""}" data-act="zaoe" data-spell="${sp.id}" data-fx="${i}" aria-expanded="${zAoeOpen.has(sp.id+":"+i)}" aria-label="${zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau":"Fläche"} ${zAoeOpen.has(sp.id+":"+i)?"ausblenden":"zeigen"}" title="${zBauKind(z,f)||f.sh.t==="rect"&&f.sh.c!=null?"Aufbau":"Fläche"} zeigen">${ICON_AREA}</button>`:""}</div>`:""}</div></div>
       ${f.sh&&zAoeOpen.has(sp.id+":"+i)?(zBauKind(z,f)?zBauSvg(zBauKind(z,f),f.sh):f.sh.t==="rect"&&f.sh.c!=null?zIsoSvg(f.sh):zAoeSvg(f.sh,z.o)):""}${test}
       ${rolls.length?`<div class="zrolls">${rolls.join("")}</div>`:""}
       ${br!=null?`${bftHtml(br.v)}${shift?`<div class="zbshift"><span class="hint">Einfluss: bis ${shift} Stufe${shift>1?"n":""} verschieben</span><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="-1" ${br.v<=Math.max(1,br.base-shift)?"disabled":""}>−</button><button class="btn small" data-act="zbft" data-spell="${sp.id}" data-d="1" ${br.v>=Math.min(12,br.base+shift)?"disabled":""}>+</button></div>`:""}`:""}
@@ -2124,7 +2128,7 @@ function zCastRow(sp,st,cs,cost,gz,req){
   if(arm&&arm.phase==="armed"){arm.req=req;arm.gz=gz;}
   const busy=arm&&arm.phase==="armed";
   const stepper=`<div class="step"><button data-act="zst" data-spell="${sp.id}" data-d="-1" ${cs<=1||busy?"disabled":""} aria-label="Stufe senken">−</button><output>${cs}</output><button data-act="zst" data-spell="${sp.id}" data-d="1" ${cs>=st||busy?"disabled":""} aria-label="Stufe erhöhen">+</button></div>`;
-  return `<div class="zcast"><button class="btn pri zsel" data-act="zopen" data-spell="${sp.id}">Auswählen</button><span class="hint">ab ${cost} Mana · ${ap} AP</span></div>`;
+  return `<div class="zcast"><button class="btn pri zsel" data-act="zopen" data-spell="${sp.id}">Auswählen</button><span class="hint">ab ${sp.level+1} Mana · ${ap} AP</span></div>`;
 }
 /* Fenster zum Wirken: Schritt für Schritt würfeln, Ergebnis ansehen, dann wirken */
 let zAmb=null;
@@ -2557,7 +2561,7 @@ function zauberCardHtml(){
     const compact=(brief,castH,meta)=>{const a=zArm&&zArm.id===sp.id&&zArm.phase==="done"?zArm:null;
       return `<div class="zspell zc" data-zexp="${sp.id}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(sp.name)}: Details aufklappen">
       <div class="zch"><span class="zname"><span class="zlvl">Lvl ${sp.level}</span>${esc(sp.name)}</span><button class="btn small pri zqb" data-act="zopen" data-spell="${sp.id}" aria-label="${esc(sp.name)} auswählen, ${cost} Mana, ${atkCost(2)} AP">Auswählen</button></div>
-      <div class="zmeta2"><span class="zstf">Stufe ${st}</span> · ${cost} MP · ${atkCost(2)} AP${meta?" · "+meta:""}</div>
+      <div class="zmeta2"><span class="zstf">Stufe ${st}</span> · ab ${sp.level+1} MP · ${atkCost(2)} AP${meta?" · "+meta:""}</div>
       <div class="zbrief">${brief}</div>
 </div>`;};
     const lock=h=>zCanRoll(sp,gz)?h:h.replace(/class="btn small zroll"/g,'class="btn small zroll" disabled');
@@ -2567,21 +2571,24 @@ function zauberCardHtml(){
       if(si0&&si0.atkI>=0)req=req.filter(r=>r.k!=="f"+si0.atkI);
       if(z.nr===19)req=req.filter(r=>r.k!=="f1");
       calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||""))req=req.filter(r=>r.k!=="f"+j);});
+      const calc1=zbCalc(z,1,null),fxh1=zbFxHtml(sp,z,calc1,1),prh1=zbProbeHtml(sp,z,calc1),cost1=sp.level+1;
       if(!open){const castH=zCastRow(sp,st,cs,cost,gz,req);
-        const bits=calc.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
+        const bits=calc1.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
         const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"Konzentration":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
         return compact(bits.join("<br>"),castH,tg.map(esc).join(" · "));}
       const chips=[z.rw&&!(z.o&&/^selbst$/i.test(z.rw))?`<span class="zchip">Reichweite ${esc(z.rw)}</span>`:"",z.o?`<span class="zchip">geht von dir aus${ib("zorig")}</span>`:"",z.gz?`<span class="zchip">Gezielt${/1x/.test(z.gz)?" (1x)":""}${ib("zgez")}</span>`:"",
         z.k?`<span class="zchip k">Konzentration${ib("zkonz")}</span>`:"",z.fl?`<span class="zchip">Fluch${ib("zfluch")}</span>`:"",z.re?`<span class="zchip">Reaktion${ib("zrea")}</span>`:""].filter(Boolean).join("");
       const sec=(t,h)=>`<section class="zsec"><h4>${t}</h4>${h}</section>`;
-      const stH=z.st.length?`<p class="hint">${z.st.length>1&&z.m==="ODER"?"Pro Stufe über 1 wählst du eins davon:":"Pro Stufe über 1 kommt alles dazu:"}</p><ul class="zul">${z.st.map(o=>`<li>${esc(o)}</li>`).join("")}</ul>`:"";
+      const oder=z.st.length>1&&z.m==="ODER";
+      const stH=z.st.length?`<p>${oder?"Jede Stufe über 1 gibt <b>eine</b> Steigerung. Du wählst beim Wirken, was du nimmst:":"Jede Stufe über 1 bringt <b>alles</b> davon zusätzlich:"}</p><ul class="zul">${z.st.map(o=>`<li><b>${esc(o)}</b></li>`).join("")}</ul>
+        <p class="hint">Du hast Stufe ${st} gelernt${st>1?`, also bis zu ${st-1} Steigerung${st>2?"en":""}`:", also noch keine Steigerung"}. Mana: Level ${sp.level} + Stufe.</p>`:"";
       return `<div class="zspell zopen">${head}
-      <div class="zsub">${esc(lname(sp.listId))} · Level ${z.lv}</div>
+      <div class="zsub">${esc(lname(sp.listId))}</div>
       ${z.de?`<p class="zdesc">${esc(z.de)}</p>`:""}
       <div class="zchips2">${chips}</div>
-      ${sec("Effekte",`<div class="zfxs">${lock(fxh)}</div>`)}
+      ${sec(`Effekte <span class="zh4s">auf Stufe 1</span>`,`<div class="zfxs">${lock(fxh1)}</div>`)}
       ${stH?sec("Steigerung",stH):""}
-      ${prh?sec("Probe",lock(prh).replace('<div class="lab">Probe der Zaubernden</div>','')):""}
+      ${prh1?sec("Probe",lock(prh1).replace('<div class="lab">Probe der Zaubernden</div>','')):""}
       ${z.an?sec("Anmerkungen",`<p class="zan">${esc(z.an)}</p>`):""}
       ${zCastRow(sp,st,cs,cost,gz,req)}
     </div>`;}
