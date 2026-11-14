@@ -2208,7 +2208,7 @@ const zBauRe=/(?:^|\||=)\s*(\d+)\s*LP\s*$/;
 const zBauF=f=>!/AP/.test(f.w+f.t)&&(/^\d+\s*LP$/.test(String(f.w).trim())||zBauRe.test(String(f.t)));
 function zBauLp(f){const w=String(f.w).trim().match(/^(\d+)\s*LP$/);return w?+w[1]:+(String(f.t).match(zBauRe)||[0,0])[1];}
 function zBauInfo(z,calc){const f=calc.fx.find(zBauF);if(!f)return null;
-  const n=f.sh&&f.sh.n||1,st=(z.st||[]).join(" ");
+  const st=(z.st||[]).join(" "),n=/Wallelement|Erweiterung/i.test(st)&&f.sh&&f.sh.n||1;
   const part=/Wallelement/i.test(st)?i=>`Element ${i+1}`:/Erweiterung/i.test(st)?i=>i?`Erweiterung ${i}`:"Grundbau":()=>"";
   return {lp:zBauLp(f),n,part};}
 /* Steigerungen, die Dauer, Fläche oder Weite verändern. Gibt true zurück, wenn verbraucht. */
@@ -2217,6 +2217,7 @@ function zApplyMisc(o,c,fx,z){
   if((m=o.match(/^\+([\d,]+)\s*(Runden?|min|h|sek\.?|Tage?)\b/i))){const u=zDurU(m[2]),f=fx.find(f=>f.du&&zDurU(f.du.u)===u);if(f){f.du.n+=zNum(m[1])*c;return true;}return false;}
   if((m=o.match(/^\+([\d,]+)\s*(m|km)\s*(Radius|Durchmesser|Umkreis)$/i))){const f=fx.find(f=>f.sh&&f.sh.t==="circle");if(!f)return false;
     let v=zNum(m[1])*c*(m[2]===f.sh.u?1:m[2]==="km"?1000:.001);const dia=x=>/durchmesser|kugel/i.test(x);if(dia(f.sh.w)&&!dia(m[3]))v*=2;if(!dia(f.sh.w)&&dia(m[3]))v/=2;f.sh.v+=v;return true;}
+  if((m=o.match(/^\+([\d,]+)\s*x\s*([\d,]+)\s*m$/i))){const f=fx.find(f=>f.sh&&f.sh.t==="rect"&&f.sh.c==null&&zBauF(f));if(f){f.sh.n=(f.sh.n||1)+c;return true;}}
   if((m=o.match(/^\+([\d,]+)\s*x\s*([\d,]+)(?:\s*x\s*([\d,]+))?\s*(m|km)(\s*Kegel)?\b/i))){const F=fx.filter(f=>f.sh&&(f.sh.t==="rect"||f.sh.t==="cone"));if(!F.length)return false;
     F.forEach(f=>{f.sh.a+=zNum(m[1])*c;f.sh.b+=zNum(m[2])*c;if(m[3]&&f.sh.c!=null)f.sh.c+=zNum(m[3])*c;});return true;}
   if((m=o.match(/^\+(\d+)\s+(?:weitere\s+)?(?:[\dx,]+m\s+)?(Wallelement|Erweiterung)/i))){const f=fx.find(f=>f.sh&&f.sh.t==="rect"&&f.sh.c!=null);if(!f)return false;f.sh.n=(f.sh.n||1)+(+m[1])*c;return true;}
@@ -2253,15 +2254,12 @@ function zIsoSvg(h){
     blocks+=`<polygon class="fl" points="${pts([[x0,T,0],[x1,T,0],[x1,T,H],[x0,T,H]])}"/>`+ // vorne (zum Betrachter: y=T)
       `<polygon class="fr" points="${pts([[x1,0,0],[x1,T,0],[x1,T,H],[x1,0,H]])}"/>`+
       `<polygon class="ft" points="${pts([[x0,0,H],[x1,0,H],[x1,T,H],[x0,T,H]])}"/>`;}
-  // Person zum Größenvergleich (1,8m)
-  const [px,py]=P(W+1.2,0,0),[,hy]=P(W+1.2,0,1.8);
-  const person=`<g class="pers"><line x1="${px}" y1="${py}" x2="${px}" y2="${hy+sc*.3}"/><circle cx="${px}" cy="${hy+sc*.15}" r="${Math.max(2.5,sc*.15)}"/></g>`;
   const [bx,by]=P(W/2,T,0),[hx,hy2]=P(0,T,H/2),[tx,ty]=P(W,T/2,0);
   const f=v=>zFmt(v/k)+h.u;
   const lab=`<text x="${bx}" y="${by+13}">B ${n>1?n+"×":""}${f(B)}</text><text x="${hx-6}" y="${hy2}" text-anchor="end">H ${f(H)}</text><text x="${tx+6}" y="${ty+12}" text-anchor="start">T ${f(T)}</text>`;
   return `<div class="zaoe ziso"><svg viewBox="${minX} ${minY} ${maxX-minX} ${maxY-minY}" width="${Math.round(maxX-minX)}" role="img" aria-label="Aufbau ${n>1?n+" Elemente ":""}Breite ${f(B)}, Höhe ${f(H)}, Tiefe ${f(T)}">
-    <g>${g}</g>${blocks}${person}${lab}</svg>
-    <div class="hint">${n>1?`${n} Elemente nebeneinander · `:""}Maße: Breite × Höhe × Tiefe · Figur = 1,8 m</div></div>`;
+    <g>${g}</g>${blocks}${lab}</svg>
+    <div class="hint">${n>1?`${n} Elemente nebeneinander · `:""}Maße: Breite × Höhe × Tiefe</div></div>`;
 }
 /* Gebäude statt Wall: Festung, Tempel, Schild */
 function zBauKind(z,f){if(!z||!f||!f.sh||!zBauF(f))return null;const t=(z.n||"")+" "+(f.t||"");
@@ -2293,23 +2291,21 @@ function zBauSvg(kind,h){
     polys.push(["ft",[[0,T/2,H+roof],[W,T/2,H+roof],[W,T,H],[0,T,H]]]);
     polys.push(["fr",[[W,0,H],[W,T,H],[W,T/2,H+roof]]]);
     note=`Grundfläche ${zFmt(h.v)}m² · Höhe nur zur Anschauung`;}
-  else{const z0=.8;polys.push(["shs",[[0,0,0],[W,0,0],[W,T+.4,0],[0,T+.4,0]]]);polys.push(["sh",[[0,T,z0],[W,T,z0],[W,T,z0+H],[0,T,z0+H]]]);
-    note=`Leuchtende Barriere ${zFmt(h.a)}x${zFmt(h.b)}m · kann auch schweben`;}
+  else{const z0=.8;polys.push(["shs",[[0,0,0],[W,0,0],[W,T+.4,0],[0,T+.4,0]]]);for(let i=0;i<n;i++)polys.push(["sh",[[i*B,T,z0],[(i+1)*B,T,z0],[(i+1)*B,T,z0+H],[i*B,T,z0+H]]]);
+    note=`${n>1?`${n} Platten à `:"Leuchtende Barriere "}${zFmt(h.a)}x${zFmt(h.b)}m · ${n>1?"frei aneinander setzbar, ":""}kann auch schweben`;}
   const pts=a=>a.map(([x,y,z])=>P(x,y,z)).map(([u,v])=>`${u.toFixed(1)},${v.toFixed(1)}`).join(" ");
   let dome="";const all=polys.flatMap(p=>p[1].map(q=>P(...q)));
-const px0=W+1.2,[px,py]=P(px0,0,0),[,hy]=P(px0,0,1.8);all.push([px,py],[px,hy]);
   const pad=14,minX=Math.min(...all.map(p=>p[0]))-pad-34,maxX=Math.max(...all.map(p=>p[0]))+pad,minY=Math.min(...all.map(p=>p[1]))-pad,maxY=Math.max(...all.map(p=>p[1]))+pad+12;
   let g="";const step=W+T>30?Math.pow(10,Math.floor(Math.log10((W+T)/6))):1,gx=Math.ceil(W)+1,gy=Math.ceil(T)+1;
   for(let x=-1;x<=gx+1e-3;x+=step)g+=`<polyline class="gl" points="${pts([[x,-1,0],[x,gy,0]])}"/>`;
   for(let y=-1;y<=gy+1e-3;y+=step)g+=`<polyline class="gl" points="${pts([[-1,y,0],[gx,y,0]])}"/>`;
   const shapes=polys.map(([c,a])=>`<polygon class="${c}" points="${pts(a)}"/>`).join("");
-  const person=`<g class="pers"><line x1="${px}" y1="${py}" x2="${px}" y2="${hy+sc*.3}"/><circle cx="${px}" cy="${hy+sc*.15}" r="${Math.max(2.5,sc*.15)}"/></g>`;
   const f=v=>zFmt(v/k)+(h.u||"m"),[bx,by]=P(W/2,T,0),[hx,hy2]=P(0,T,H/2),[tx,ty]=P(W,T/2,0);
   const lab=kind==="tempel"?`<text x="${bx}" y="${by+15}">${f(B)}</text><text x="${tx+8}" y="${ty+14}" text-anchor="start">${f(T)}</text>`
     :`<text x="${bx}" y="${by+13}">B ${n>1?n+"×":""}${f(B)}</text><text x="${hx-6}" y="${hy2}" text-anchor="end">H ${f(H)}</text>${kind==="haus"?`<text x="${tx+6}" y="${ty+12}" text-anchor="start">T ${f(T)}</text>`:""}`;
   const name=kind==="haus"?"Festung":kind==="tempel"?"Tempel":"Barriere";
   return `<div class="zaoe ziso zbau ${kind}"><svg viewBox="${minX} ${minY} ${maxX-minX} ${maxY-minY}" width="${Math.round(maxX-minX)}" role="img" aria-label="${name}, ${esc(note)}">
-    <g>${g}</g>${shapes}${dome}${person}${lab}</svg><div class="hint">${note} · Figur = 1,8 m</div></div>`;
+    <g>${g}</g>${shapes}${dome}${lab}</svg><div class="hint">${note}</div></div>`;
 }
 /* Rastergrafik für die Fläche */
 function zAoeSvg(h,self){
