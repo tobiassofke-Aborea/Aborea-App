@@ -2028,7 +2028,10 @@ function zbAct(b){
       if(!String(cur.gs||"").trim()){showMsg("Trag zuerst deine Geistige Stabilität (GS) ein.");return true;}
       const g=num(cur.gs)+bon;
       rollPool(`${sp.name}: GS-Test (≤ ${g})`,{groups:[{label:"Zehner",n:1,s:10,tens:true},{label:"Einer",n:1,s:10,ones:true}],flat:0,d100:true},
-        t=>t<=g?{tag:`Geschafft (${t} ≤ ${g}): ${p.ok||""}`,cls:"ok"}:{tag:`Nicht geschafft (${t} > ${g}): ${p.no||""}`,cls:"bad"});return true;}
+        t=>{if(t<=g)return {tag:`Geschafft (${t} ≤ ${g}): ${p.ok||""}`,cls:"ok"};
+          const m=String(p.no||"").match(/[−-]\s*(\d+)\s*GS/);if(m){snap("GS-Verlust");const g0=num(cur.gs);cur.gs=Math.max(0,g0-(+m[1]));queueSave(cur);setTimeout(()=>{try{renderHeader();}catch(e){}},0);
+            return {tag:`Nicht geschafft (${t} > ${g}): ${p.no} · GS ${g0} → ${cur.gs}`,cls:"bad"};}
+          return {tag:`Nicht geschafft (${t} > ${g}): ${p.no||""}`,cls:"bad"};});return true;}
     const A=zbAttr(p.a),key=A==="CHA"?"Cha":A==="INT"?"Int":(num(cur.attr.Cha.b)>num(cur.attr.Int.b)?"Cha":"Int");
     const n=num(cur.attr[key].b),groups=n>0?[{label:key==="Cha"?"CHA":"INT",n,s:6}]:[{label:"Plus",n:1,s:6},{label:"Minus",n:1-n,s:6,neg:true}];
     const th=String(p.d||"").match(/^\d+(\s*\/\s*\d+)*$/)?String(p.d).split("/").map(x=>+x):null,T=zTiers(p);
@@ -2052,6 +2055,8 @@ function zbAct(b){
     zbRollDice(`${zz.n}${zz!==z?" ("+z.n+")":""}: ${what} · Stufe ${s}`,d,t=>{
       if(bft){const v=Math.max(1,Math.min(12,t));zbRes[sp.id]={bft:{v,base:v}};return {tag:`Windstärke ${v}: ${BFT[v][0]}`};}
       const dbl=/gegen (.+?) doppelter Schaden/i.exec(f.n||"");
+      if(/^GS$/i.test(f.a||"")&&/Zaubernde/i.test(f.t||"")&&String(cur.gs||"").trim()){snap("GS-Verlust");const g0=num(cur.gs);cur.gs=Math.max(0,g0-Math.abs(t));queueSave(cur);setTimeout(()=>{try{renderHeader();}catch(e){}},0);
+        return {tag:`−${Math.abs(t)} GS, von deiner GS abgezogen (${g0} → ${cur.gs})`,cls:"bad"};}
       return {tag:`${t} ${f.a||""}`.trim()+(dbl?` · gegen ${dbl[1]}: ${2*t}`:"")};});
     return true;}
   return false;
@@ -2494,7 +2499,7 @@ function zMineDlg(sp,z,a){
 }
 function zTrack(sp,z,calc,cs){
   const before=new Set(zAkt()),msg=zTrack0(sp,z,calc,cs),c=zbChoice(sp,sbParse().ch);
-  const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0,wb=zWb(z,calc,cs);
+  const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0,wb=zWb(z,calc,cs);if(wb)wb.self=/^selbst$/i.test(String(z.rw||"").trim())||!!z.o;
   const tg=calc.fx.filter(zTrgFx);
   if(tg.length){let e=zAkt().find(x=>!before.has(x));if(!e){let r=0;calc.fx.forEach(f=>{if(f.du&&zDurU(f.du.u)==="r")r=Math.max(r,f.du.n);});e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:r||null,t:r?"":"bis du ihn beendest",konz:!!z.k};zAkt().push(e);}
     e.trg=tg.map(f=>({t:String(f.t||"").replace(/\s*\(.*\)$/,""),dice:f.dice,a:f.a||"",n:f.n||""}));}
@@ -2504,7 +2509,7 @@ function zTrack(sp,z,calc,cs){
   if(wb&&!zAkt().some(e=>!before.has(e)))zAkt().push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:!!z.k});
   if(wb){let first=true;zAkt().forEach(e=>{if(!before.has(e)&&first){e.wb=wb;first=false;}});}
   zAkt().forEach(e=>{if(!before.has(e)){e.sid=sp.id;e.ch=Array.isArray(c)?c.slice():c;if(xm)e.xmp=xm;}});return msg;}
-function zAkWrap(e,h){const d=(e.trg&&e.trg.length?`<div class="zrolls ztrg">${e.trg.map((x,i)=>`<button class="btn small zroll2" data-act="ztrg" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(x.t)}: ${esc(zbDiceTxt(x.dice))}</button>`).join("")}</div>`:"")+(e.ally?`<div class="zwbl"><span>🤝 Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span>${e.wb.auto&&e.wb.off?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
+function zAkWrap(e,h){const d=(e.trg&&e.trg.length?`<div class="zrolls ztrg">${e.trg.map((x,i)=>`<button class="btn small zroll2" data-act="ztrg" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(x.t)}: ${esc(zbDiceTxt(x.dice))}</button>`).join("")}</div>`:"")+(e.ally?`<div class="zwbl"><span>🤝 Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span> ${(e.wb.auto&&e.wb.off)||e.wb.self?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
 const zAkOpen=new Set();
 function zAkDet(e){try{
   const {db,ch}=sbParse();if(!db)return "";const nm=e.sp||e.n;
