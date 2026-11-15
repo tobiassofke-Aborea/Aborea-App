@@ -1600,7 +1600,7 @@ function rollPool(title,spec,onDone){
   const lab=(it,v)=>it.tens?String((v%10)*10).padStart(2,"0"):it.ones?String(v%10):String(v);
   groups.forEach(g=>{for(let i=0;i<g.n;i++){const v=d(g.s);g.vals.push(v);items.push({s:g.s,v,neg:!!g.neg,tens:!!g.tens,ones:!!g.ones});}});
   let total=items.reduce((a,x)=>a+(x.neg?-x.v:x.v),0)+num(spec.flat);
-  if(spec.d100){const tn=items.find(x=>x.tens).v%10,on=items.find(x=>x.ones).v%10;total=tn*10+on||100;}
+  if(spec.d100){const tn=items.find(x=>x.tens).v%10,on=items.find(x=>x.ones).v%10;total=(tn*10+on||100)+items.filter(x=>!x.tens&&!x.ones).reduce((a,x)=>a+(x.neg?-x.v:x.v),0)+num(spec.flat);}
   $("#roll").innerHTML=`<div class="box rb" role="status"><div class="track" id="track"></div>
     <div class="brow"><div class="info"><div class="what">${esc(title)}</div><div class="calc" id="rcalc" hidden></div><span class="tag" id="rtag" hidden></span></div>
     <div class="res wait" id="rres">…</div><button class="x rhbtn" data-rhopen aria-label="Würfel-Verlauf">${ICON_HIST}</button><button class="x" id="rollx" aria-label="Schließen">×</button></div></div>`;
@@ -1641,7 +1641,7 @@ function rollPool(title,spec,onDone){
   function finish(){
     if(run!==runId)return;
     const r=$("#rres");r.textContent=total;r.classList.remove("wait");r.classList.add("pop");
-    const lines=spec.d100?[`W100: ${lab({tens:1},groups[0].vals[0])} + ${lab({ones:1},groups[1].vals[0])} = ${total}`,...groups.filter(g=>!g.tens&&!g.ones).map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`)]:groups.map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`);
+    const lines=spec.d100?[`W100: ${lab({tens:1},groups[0].vals[0])} + ${lab({ones:1},groups[1].vals[0])} = ${(groups[0].vals[0]%10)*10+groups[1].vals[0]%10||100}`,...groups.filter(g=>!g.tens&&!g.ones).map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`)]:groups.map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`);
     if(spec.flat)lines.push(spec.flatLabel?spec.flatLabel+" "+num(spec.flat):"Bonus "+sgn(num(spec.flat)));
     const c=$("#rcalc");c.textContent=lines.join(" · ");c.hidden=false;
     const res=onDone?onDone(total,groups):null;
@@ -2002,11 +2002,11 @@ function zResHtml(f){
 function zTiers(p){if(!p||!/^\d+(\s*\/\s*\d+)+$/.test(String(p.d||"").trim()))return null;
   const th=String(p.d).split("/").map(x=>+x),labs={};String(p.ok||"").split(",").forEach(x=>{const m=x.match(/(\d+)\s*=\s*(.+)/);if(m)labs[+m[1]]=m[2].trim();});
   return th.map((t,i)=>({th:t,lab:labs[t]||`Stufe ${i+1}`}));}
-/* GS-Test mit INT-/CHA-Wurf: der Wurf erhöht den GS-Wert, unter den die W100 fallen muss */
+/* GS-Test mit INT-/CHA-Wurf: der Wurf (und ein Bonus) wird von der W100 abgezogen, das Ergebnis muss ≤ GS sein */
 function zGsAttr(p){const m=String(p&&p.a||"").match(/\+\s*(INT|CHA)(?:-?\s*\/\s*(INT|CHA))?-?\s*-?Wurf/i);if(!m)return null;
   const opts=[m[1],m[2]].filter(Boolean).map(x=>x.toUpperCase()==="CHA"?"Cha":"Int");
   const key=opts.length>1?(num(cur.attr.Cha.b)>=num(cur.attr.Int.b)?"Cha":"Int"):opts[0],n=num(cur.attr[key].b),lab=key==="Cha"?"CHA":"INT";
-  return {key,lab,groups:n>0?[{label:lab,n,s:6}]:[{label:lab+" Plus",n:1,s:6},{label:lab+" Minus",n:1-n,s:6,neg:true}]};}
+  return {key,lab,groups:n>0?[{label:lab,n,s:6,neg:true}]:[{label:lab+" Plus",n:1,s:6,neg:true},{label:lab+" Minus",n:1-n,s:6}]};}
 /* Folgen des Tests, die sich direkt auf den Charakter auswirken */
 function zProbeFx(txt){const out=[];txt=String(txt||"");
   const g=txt.match(/[−-]?\s*(\d+)\s*GS-Schaden/i)||txt.match(/[−-]\s*(\d+)\s*GS\b/);
@@ -2024,7 +2024,7 @@ function zbProbeHtml(sp,z,calc){
   if(n2&&!cnt)return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div><div class="hint">Erstes Wirken: kein ${esc(p.a)}-Test nötig. Ab dem zweiten Wirken: ${esc(p.no||"")} bei Misserfolg.</div></div>`;
   const gs=/^GS/i.test(p.a),bon=calc.probeBonus;
   let lab;
-  if(gs){const v=num(cur.gs),aw=zGsAttr(p);lab=aw?`GS-Test: W100 ≤ GS + ${aw.lab}-Wurf${bon?` + ${bon} Bonus`:""}`:`GS-Test: W100 ≤ ${String(cur.gs||"").trim()?v+bon:"GS"}${bon?` (GS ${v} + ${bon})`:""}`;}
+  if(gs){const v=num(cur.gs),aw=zGsAttr(p);lab=`GS-Test: W100${aw?` − ${aw.lab}-Wurf`:""}${bon?` − ${bon} Bonus`:""} ≤ GS`;}
   else lab=`${esc(p.a)}-Test${/fluch/i.test(p.d||"")?" (Fluch)":p.d?" · "+esc(p.d):""}${bon?` · +${bon} Bonus`:""}`;
  return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div><div class="zplab">${lab}</div>
     <button class="btn small zroll" data-act="zprobe" data-spell="${sp.id}">${ICON_DICE_S}${lab}</button>
@@ -2064,10 +2064,10 @@ function zbAct(b){
   if(a==="zprobe"){const p=z.p,calc=zbCalc(z,cs,zbChoice(sp,ch)),bon=calc.probeBonus;
     if(/^GS/i.test(p.a)){
       if(!String(cur.gs||"").trim()){showMsg("Trag zuerst deine Geistige Stabilität (GS) ein.");return true;}
-      const g0=num(cur.gs)+bon,aw=zGsAttr(p),A=zArm&&zArm.id===sp.id?zArm:null;
-      rollPool(`${sp.name}: GS-Test`,{groups:[{label:"Zehner",n:1,s:10,tens:true},{label:"Einer",n:1,s:10,ones:true},...(aw?aw.groups:[])],flat:0,d100:true},
-        (t,G)=>{const w=aw?G.filter(x=>!x.tens&&!x.ones).reduce((s,x)=>s+x.vals.reduce((u,v)=>u+(x.neg?-v:v),0),0):0,g=g0+w;
-          const ok=t<=g,how=`${t} ${ok?"≤":">"} ${g}${aw?` (GS ${num(cur.gs)}${bon?` + ${bon}`:""} + ${aw.lab} ${w})`:""}`,txt=ok?p.ok:p.no;
+      const gs=num(cur.gs),aw=zGsAttr(p),A=zArm&&zArm.id===sp.id?zArm:null;
+      rollPool(`${sp.name}: GS-Test`,{groups:[{label:"Zehner",n:1,s:10,tens:true},{label:"Einer",n:1,s:10,ones:true},...(aw?aw.groups:[])],flat:-bon,flatLabel:"Bonus",d100:true},
+        (t,G)=>{const d=((G.find(x=>x.tens).vals[0]%10)*10+G.find(x=>x.ones).vals[0]%10)||100,w=aw?G.filter(x=>!x.tens&&!x.ones).reduce((s,x)=>s+x.vals.reduce((u,v)=>u+(x.neg?v:-v),0),0):0;
+          const ok=t<=gs,how=`W100 ${d}${aw?` − ${aw.lab} ${w}`:""}${bon?` − Bonus ${bon}`:""} = ${t} ${ok?"≤":">"} GS ${gs}`,txt=ok?p.ok:p.no;
           if(/GS-Schaden|[−-]\s*\d+\s*GS\b|Entzieht dem Zaubernden/i.test(txt||""))snap("GS-Test");const fx=zProbeFx(txt);if(A)A.pres={ok,fx,how};
           return {tag:`${ok?"Geschafft":"Nicht geschafft"} (${how}): ${txt||""}${fx.length?" · "+fx.join(" · "):""}`,cls:ok?"ok":"bad"};});return true;}
     const A=zbAttr(p.a),key=A==="CHA"?"Cha":A==="INT"?"Int":(num(cur.attr.Cha.b)>num(cur.attr.Int.b)?"Cha":"Int");
@@ -2208,7 +2208,7 @@ function zExec(sp,cs,listName,z){
 }
 function zAim(sp,cost){
   const gs=cur.skills.find(s=>s.name==="Gezielte Sprüche");
-  rollPool(`${sp.name}: Zielwurf`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return {tag:"Kopf ab 40 · Körper ab 15"};});
+  rollPool(`${sp.name}: Zielwurf`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return zIsBlood(sp)?null:{tag:"Kopf ab 40 · Körper ab 15"};});
 }
 function zAfford(sp,cs){const cost=sp.level+cs,ap=atkCost(2);
   if(num(cur.mp.cur)<cost&&!(zIsBlood(sp)&&num(cur.lp.cur)>=cost)){showMsg(`Nicht genug Mana für ${sp.name}: ${num(cur.mp.cur)} da, ${cost} nötig.`);return false;}
