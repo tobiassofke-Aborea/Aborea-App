@@ -770,7 +770,7 @@ textarea.wnote{min-height:64px;font-family:var(--body);font-size:.95rem}
 #hitnow{background:var(--ok);border-color:var(--ok);color:var(--card)}
 .armor.drain{border-color:var(--lp);color:var(--lp);box-shadow:0 0 0 3px color-mix(in srgb,var(--lp) 20%,transparent)}
 .armor.drain b{color:var(--lp)}
-.pcomp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px 0}
+.pcomp{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:4px 12px 6px;cursor:pointer}.pcomp .ctop{min-height:28px}.pcomp .cval{font-size:1.2rem}.pcomp .cbar{padding:7px 0;margin:-4px 0 -4px}.pcomp .crow{gap:2px}.pcomp .crow .cl{padding:4px 0}
 .pcmain{flex:1;min-width:0;display:grid;gap:8px;position:relative}
 .crow .cl{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .crow{display:grid;gap:4px;min-width:0}
@@ -2918,7 +2918,7 @@ function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.
     <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
 function poolsHtml(){
   const one=k=>poolsCompact[k]
-    ?`<div class="card pcomp ${k}" data-poolcard="${k}"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div><button class="pfold" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${chev(false)}</button></div>`
+    ?`<div class="card pcomp ${k}" data-poolcard="${k}" data-ptarea="${k}" title="Tippen zum Ausklappen"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div></div>`
     :pool(k,k==="lp"?"Lebenspunkte":"Manapunkte");
   return one("lp")+(hasMana()?`<div style="height:${poolsCompact.lp&&poolsCompact.mp?8:12}px"></div>`+one("mp"):"");
 }
@@ -3142,6 +3142,7 @@ function changePool(key,delta){
 }
 document.addEventListener("click",e=>{
   if(e.target.closest("#track")&&curRoll&&curRoll.waiting){rollAgain();return;}
+  {const pa=e.target.closest("[data-ptarea]");if(pa&&!e.target.closest("button,.cbar,input,.hitbox,a")){const k=pa.dataset.ptarea;poolsCompact[k]=false;try{localStorage.setItem("aborea-compact",JSON.stringify(poolsCompact))}catch(x){}renderAll();return;}}
   const b=e.target.closest("button");
   if(!b)return;
   if(b.dataset.tab==="kampf"){
