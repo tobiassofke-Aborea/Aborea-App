@@ -684,7 +684,7 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zinfo[open] summary::before{transform:rotate(90deg)}
 .zbody{display:grid;gap:8px;padding:4px 0 6px;font-size:.92rem}
 .zrow{display:grid;gap:2px}
-.zhd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.zhd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.zbook{display:inline-grid;place-items:center;width:30px;height:30px;margin-left:8px;vertical-align:middle;border-radius:8px;border:1px solid var(--mp);background:var(--mp-soft);color:var(--mp);cursor:pointer;padding:0}.zbook svg{width:17px;height:17px}
 .zdots{display:flex;gap:6px}
 .zdots button{width:9px;height:9px;padding:0;border-radius:50%;border:0;background:var(--accent);opacity:.3;cursor:pointer}
 .zdots button.on{opacity:1}
@@ -2651,7 +2651,7 @@ function zauberCardHtml(){
   const act=known.find(l=>l.id===ch.activeList)||known[0];
   const shown=learned.filter(sp=>sp.listId===act.id).sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
   const ki=known.indexOf(act);
-  return `<div class="zhd"><h2>${esc(act.name)}${ib("magie")}</h2>${known.length>1?`<div class="zdots">${known.map((l,i)=>`<button data-zlist="${l.id}" class="${i===ki?"on":""}" aria-label="${esc(l.name)}"></button>`).join("")}</div>`:""}</div>
+  return `<div class="zhd"><h2>${esc(act.name)}<button class="zbook" data-zbook="${act.id}" aria-label="${esc(act.name)} in der Zauberbibliothek öffnen" title="Zauberbibliothek">${ICON_BOOK}</button>${ib("magie")}</h2>${known.length>1?`<div class="zdots">${known.map((l,i)=>`<button data-zlist="${l.id}" class="${i===ki?"on":""}" aria-label="${esc(l.name)}"></button>`).join("")}</div>`:""}</div>
   ${known.length>1?`<div class="zchips ichips${zSlide?" "+zSlide:""}" id="zlchips" data-for="zlist">${known.map(l=>`<button class="chip${l.id===act.id?" on":""}" data-zlist="${l.id}">${esc(l.name)}</button>`).join("")}</div>`:""}
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,z=zbFor(sp,act.name);
@@ -2661,7 +2661,7 @@ function zauberCardHtml(){
       return `<div class="zspell zc" data-zexp="${sp.id}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(sp.name)}: Details aufklappen">
       <div class="zch"><span class="zname"><span class="zlv2">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zlvl">Stufe ${st}</span>${chev(false)}</span></div>
       <div class="zbrief">${brief}</div>
-      <div class="zmeta2">${meta?meta+" · ":""}ab ${sp.level+1} MP · ${atkCost(2)} AP</div>
+      <div class="zmeta2">${meta?meta+" · ":""}ab ${sp.level+1} ${zIsBlood(sp)?"MP/LP":"MP"} · ${atkCost(2)} AP</div>
 </div>`;};
     const lock=h=>zCanRoll(sp,gz)?h:h.replace(/class="btn small zroll"/g,'class="btn small zroll" disabled');
     let gz;
@@ -3167,6 +3167,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.spart!=null){closeOvMenu();setSpArt(b.dataset.spart||null);if(kpage!=="spezial")setKpage("spezial");else renderAll();return;}
   if(b.dataset.zlist){const ids=zKnownIds(),{ch}=sbParse();const d=ids.indexOf(b.dataset.zlist)-ids.indexOf(ch.activeList||ids[0]);zSetList(b.dataset.zlist,d>0?1:d<0?-1:0);return;}
   if(b.dataset.skopen!=null){const k=+b.dataset.skopen;skOpen=skOpen===k?-1:k;renderAll();return;}
+  if(b.dataset.zbook){const id=b.dataset.zbook,{ch}=sbParse();ch.pointsListSelect=id;ch.activeList=id;ch.__openAdmin=1;zSaveCh(ch);sbCharId=null;ovOpen("book");return;}
   if(b.dataset.sbopen!=null){const sk=cur.skills[+b.dataset.sbopen];const id=sk&&sbListIds()[sk.name];
     if(id){const {ch}=sbParse();ch.pointsListSelect=id;ch.activeList=id;ch.__openAdmin=1;zSaveCh(ch);}
     sbCharId=null;ovOpen("book");return;}
