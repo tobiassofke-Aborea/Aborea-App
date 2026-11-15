@@ -595,7 +595,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
 .zsec{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px}.zsec h4{margin:0;font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.zsec p{margin:0}.ztl{margin:4px 0 0;font-weight:400}.ztl li{margin:2px 0}.zhint{margin:0;font-size:.82rem;line-height:1.45;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}.zul{margin:0;padding-left:18px}.zul li{margin:2px 0}.zan{margin:0;font-size:.92rem;line-height:1.45}
+.zsec p{margin:0}.zstl{line-height:1.6}.zstl .lab{margin-right:4px}.zj{color:var(--muted);font-style:italic;margin:0 2px}.ztl{margin:4px 0 0;font-weight:400}.ztl li{margin:2px 0}.zhint{margin:0;font-size:.82rem;line-height:1.45;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}.zul{margin:0;padding-left:18px}.zul li{margin:2px 0}.zan{margin:0;font-size:.92rem;line-height:1.45}
 .zsetup{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
 .zdh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}.zx{all:unset;cursor:pointer;font-size:1.6rem;line-height:1;padding:2px 8px;color:var(--muted);border-radius:8px}.zx:hover{background:var(--line)}
 .zmain{display:grid;gap:4px}.zpend{text-align:center}.zcl{justify-self:center;margin:2px auto 0;display:block}.zsel{min-width:140px}.zsetup .zcast{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -2664,8 +2664,8 @@ function zauberCardHtml(){
         z.k?`<span class="zchip k">Konzentration${ib("zkonz")}</span>`:"",z.fl?`<span class="zchip">Fluch${ib("zfluch")}</span>`:"",z.re?`<span class="zchip">Reaktion${ib("zrea")}</span>`:""].filter(Boolean).join("");
       const sec=(t,h)=>`<section class="zsec"><h4>${t}</h4>${h}</section>`;
       const oder=z.st.length>1&&z.m==="ODER";
-      const stH=z.st.length?`<p>${oder?"Jede Stufe über 1 gibt <b>eine</b> Steigerung. Du wählst beim Wirken, was du nimmst:":"Jede Stufe über 1 bringt <b>alles</b> davon zusätzlich:"}</p><ul class="zul">${z.st.map(o=>`<li><b>${esc(o)}</b></li>`).join("")}</ul>
-        <p class="hint">Du hast Stufe ${st} gelernt${st>1?`, also bis zu ${st-1} Steigerung${st>2?"en":""}`:", also noch keine Steigerung"}. Mana: Level ${sp.level} + Stufe.</p>`:"";
+      const stH=z.st.length?`<p class="zstl"><span class="lab">Pro Stufe</span> ${z.st.map(o=>`<b>${esc(o)}</b>`).join(` <span class="zj">${oder?"oder":"und"}</span> `)}</p>
+        <p class="hint">Gelernt: Stufe ${st}${st>1?` · bis zu ${st-1} Steigerung${st>2?"en":""}`:""}</p>`:"";
       return `<div class="zspell zopen" data-zid="${sp.id}">${head}
       <div class="zsub">${esc(lname(sp.listId))}</div>
       ${z.de?`<p class="zdesc">${esc(z.de)}</p>`:""}
