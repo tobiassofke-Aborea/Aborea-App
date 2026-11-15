@@ -1501,7 +1501,10 @@ function undo(){
 const UNDO_LABEL={zwbtog:"Waffenzauber an/aus",zxmp:"Zusätzliches Mana",zst:"Stufe ändern",zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",apup:"+1 AP",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",spell:"Spruch",mana:"Mana abziehen",rest:"Rast",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
 let atk={slot:"main",split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};
-let def=null,spell=null,mag={attr:"Int",stufe:1,level:null};
+let def=null,spell=null,mag={attr:null,stufe:1,level:null};
+/* Magie-Attribut: kommt vom Beruf (Barde, Priester, Schamane: CHA; sonst INT), ohne bekannten Beruf das höhere */
+function zMagAttr(){const B=typeof BERUF!=="undefined"&&cur&&BERUF[cur.beruf];if(B&&B.mp)return B.mp;return num(cur.attr.Cha.b)>num(cur.attr.Int.b)?"Cha":"Int";}
+const magAttr=()=>mag.attr||zMagAttr();
 function migrate(c){
   if(!Array.isArray(c.weapons))c.weapons=[];
   if(!c.kampf)c.kampf={ap:null};
@@ -1819,7 +1822,7 @@ function kampfDo(b){
     case "spell":{
       if(!spendAp(atkCost(2)))return;cur.kampf.att=num(cur.kampf.att)+1;renderAll();
       const gs=cur.skills.find(s=>s.name==="Gezielte Sprüche");
-      rollPool("Gezielter Spruch",{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{
+      rollPool("Gezielter Spruch",{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(magAttr()==="Int"?"INT":"CHA"),n:attrDice(magAttr(),true),s:6}],flat:0},total=>{
         spell={total};return {tag:"Kopf ab 40 · Körper ab 15"};});
       return;}
     case "mana":{
@@ -1875,7 +1878,7 @@ function slotLine(slot,label){
 }
 function magieCardHtml(){return `  <h2>Magie</h2><div class="card kstack">
     <div><div class="lab">Gezielter Spruch</div>
-      <div class="chips"><button class="chip${mag.attr==="Int"?" on":""}" data-act="mattr" data-v="Int">mit INT</button><button class="chip${mag.attr==="Cha"?" on":""}" data-act="mattr" data-v="Cha">mit CHA</button></div></div>
+      <div class="chips"><button class="chip${magAttr()==="Int"?" on":""}" data-act="mattr" data-v="Int">mit INT</button><button class="chip${magAttr()==="Cha"?" on":""}" data-act="mattr" data-v="Cha">mit CHA</button></div></div>
     <button class="btn big" data-act="spell">Spruch zielen: ${ord(num(cur.kampf.att)+1)} Angriff, ${atkCost(2)} AP</button>
     ${spell?`<div class="result"><div class="rl">Zielwurf: <b class="big">${spell.total}</b></div><div class="hint">Kopf ab 40, Körper ab 15</div></div>`:""}
     <div class="mana"><label class="fld"><span class="lab">Stufe Zauber</span><input type="number" inputmode="numeric" id="m-stufe" value="${esc(mag.stufe)}"></label>
@@ -2005,7 +2008,7 @@ function zTiers(p){if(!p||!/^\d+(\s*\/\s*\d+)+$/.test(String(p.d||"").trim()))re
 /* GS-Test mit INT-/CHA-Wurf: der Wurf (und ein Bonus) wird von der W100 abgezogen, das Ergebnis muss ≤ GS sein */
 function zGsAttr(p){const m=String(p&&p.a||"").match(/\+\s*(INT|CHA)(?:-?\s*\/\s*(INT|CHA))?-?\s*-?Wurf/i);if(!m)return null;
   const opts=[m[1],m[2]].filter(Boolean).map(x=>x.toUpperCase()==="CHA"?"Cha":"Int");
-  const key=opts.length>1?(num(cur.attr.Cha.b)>=num(cur.attr.Int.b)?"Cha":"Int"):opts[0],n=num(cur.attr[key].b),lab=key==="Cha"?"CHA":"INT";
+  const key=opts.length>1?magAttr():opts[0],n=num(cur.attr[key].b),lab=key==="Cha"?"CHA":"INT";
   return {key,lab,groups:n>0?[{label:lab,n,s:6,neg:true}]:[{label:lab+" Plus",n:1,s:6,neg:true},{label:lab+" Minus",n:1-n,s:6}]};}
 /* Folgen des Tests, die sich direkt auf den Charakter auswirken */
 function zProbeFx(txt){const out=[];txt=String(txt||"");
@@ -2070,7 +2073,7 @@ function zbAct(b){
           const ok=t<=gs,how=`W100 ${d}${aw?` − ${aw.lab} ${w}`:""}${bon?` − Bonus ${bon}`:""} = ${t} ${ok?"≤":">"} GS ${gs}`,txt=ok?p.ok:p.no;
           if(/GS-Schaden|[−-]\s*\d+\s*GS\b|Entzieht dem Zaubernden/i.test(txt||""))snap("GS-Test");const fx=zProbeFx(txt);if(A)A.pres={ok,fx,how};
           return {tag:`${ok?"Geschafft":"Nicht geschafft"} (${how}): ${txt||""}${fx.length?" · "+fx.join(" · "):""}`,cls:ok?"ok":"bad"};});return true;}
-    const A=zbAttr(p.a),key=A==="CHA"?"Cha":A==="INT"?"Int":(num(cur.attr.Cha.b)>num(cur.attr.Int.b)?"Cha":"Int");
+    const A=zbAttr(p.a),key=A==="CHA"?"Cha":A==="INT"?"Int":magAttr();
     const n=num(cur.attr[key].b),groups=n>0?[{label:key==="Cha"?"CHA":"INT",n,s:6}]:[{label:"Plus",n:1,s:6},{label:"Minus",n:1-n,s:6,neg:true}];
     const th=String(p.d||"").match(/^\d+(\s*\/\s*\d+)*$/)?String(p.d).split("/").map(x=>+x):null,T=zTiers(p);
     if(T&&zArm&&zArm.id===sp.id){const x=T[Math.max(0,Math.min(T.length-1,num(zArm.pq||1)-1))];
@@ -2208,7 +2211,7 @@ function zExec(sp,cs,listName,z){
 }
 function zAim(sp,cost){
   const gs=cur.skills.find(s=>s.name==="Gezielte Sprüche");
-  rollPool(`${sp.name}: Zielwurf`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(mag.attr==="Int"?"INT":"CHA"),n:attrDice(mag.attr,true),s:6}],flat:0},total=>{spell={total};return zIsBlood(sp)?null:{tag:"Kopf ab 40 · Körper ab 15"};});
+  rollPool(`${sp.name}: Zielwurf`,{groups:[{label:"Gezielte Sprüche",n:gs?Math.max(0,skillTotal(gs)):0,s:10},{label:(magAttr()==="Int"?"INT":"CHA"),n:attrDice(magAttr(),true),s:6}],flat:0},total=>{spell={total};return zIsBlood(sp)?null:{tag:"Kopf ab 40 · Körper ab 15"};});
 }
 function zAfford(sp,cs){const cost=sp.level+cs,ap=atkCost(2);
   if(num(cur.mp.cur)<cost&&!(zIsBlood(sp)&&num(cur.lp.cur)>=cost)){showMsg(`Nicht genug Mana für ${sp.name}: ${num(cur.mp.cur)} da, ${cost} nötig.`);return false;}
