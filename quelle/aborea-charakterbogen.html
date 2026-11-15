@@ -684,7 +684,7 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zinfo[open] summary::before{transform:rotate(90deg)}
 .zbody{display:grid;gap:8px;padding:4px 0 6px;font-size:.92rem}
 .zrow{display:grid;gap:2px}
-.zhd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.zbook{display:inline-grid;place-items:center;width:30px;height:30px;margin-left:8px;vertical-align:middle;border-radius:8px;border:1px solid var(--mp);background:var(--mp-soft);color:var(--mp);cursor:pointer;padding:0}.zbook svg{width:17px;height:17px}
+.zhd{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.zbook svg{width:18px;height:18px}.zlrow{display:flex;align-items:flex-start;gap:4px}.zlrow .zchips{flex:1;min-width:0}.zlrow .zbook{flex:none;margin:4px 0 0;width:34px;height:34px}
 .zdots{display:flex;gap:6px}
 .zdots button{width:9px;height:9px;padding:0;border-radius:50%;border:0;background:var(--accent);opacity:.3;cursor:pointer}
 .zdots button.on{opacity:1}
@@ -2651,8 +2651,9 @@ function zauberCardHtml(){
   const act=known.find(l=>l.id===ch.activeList)||known[0];
   const shown=learned.filter(sp=>sp.listId===act.id).sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
   const ki=known.indexOf(act);
-  return `<div class="zhd"><h2>${esc(act.name)}<button class="zbook" data-zbook="${act.id}" aria-label="${esc(act.name)} in der Zauberbibliothek öffnen" title="Zauberbibliothek">${ICON_BOOK}</button>${ib("magie")}</h2>${known.length>1?`<div class="zdots">${known.map((l,i)=>`<button data-zlist="${l.id}" class="${i===ki?"on":""}" aria-label="${esc(l.name)}"></button>`).join("")}</div>`:""}</div>
-  ${known.length>1?`<div class="zchips ichips${zSlide?" "+zSlide:""}" id="zlchips" data-for="zlist">${known.map(l=>`<button class="chip${l.id===act.id?" on":""}" data-zlist="${l.id}">${esc(l.name)}</button>`).join("")}</div>`:""}
+  const zbk=`<button class="ib zbook" data-zbook="${act.id}" aria-label="${esc(act.name)} in der Zauberbibliothek öffnen" title="Zauberbibliothek">${ICON_BOOK}</button>`;
+  return `<div class="zhd"><h2>${esc(act.name)}${known.length>1?"":zbk}${ib("magie")}</h2>${known.length>1?`<div class="zdots">${known.map((l,i)=>`<button data-zlist="${l.id}" class="${i===ki?"on":""}" aria-label="${esc(l.name)}"></button>`).join("")}</div>`:""}</div>
+  ${known.length>1?`<div class="zlrow"><div class="zchips ichips${zSlide?" "+zSlide:""}" id="zlchips" data-for="zlist">${known.map(l=>`<button class="chip${l.id===act.id?" on":""}" data-zlist="${l.id}">${esc(l.name)}</button>`).join("")}</div>${zbk}</div>`:""}
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,z=zbFor(sp,act.name);
     const open=zExp.has(sp.id);
