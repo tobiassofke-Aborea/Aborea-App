@@ -638,7 +638,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zaoe .grid rect{fill:none;stroke:var(--line);stroke-width:1}.zaoe .grid rect.on{fill:color-mix(in srgb,var(--accent) 38%,transparent)}
 .zaoe .shp *{fill:none;stroke:var(--accent);stroke-width:2}
 .zaoe .me{fill:var(--ink)}.zaoe text{font-size:9px;fill:var(--muted);text-anchor:middle;font-family:var(--body)}.zaoe .tg{stroke:var(--ink);stroke-width:2}
-.zakt.card{display:grid;gap:8px;padding:0;background:none;border:0}.zak{display:grid;gap:6px;padding:8px 12px 6px;min-width:0;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}.zak:has(.ktag){border-left-color:var(--mp)}.zak .zsumh b{font-size:1rem}.zak .btn.small{min-height:0;height:34px;padding-top:0;padding-bottom:0}.zak .zslp{gap:6px}.zak .zbar{height:5px}.zak .zsumh .btn{padding-top:6px;padding-bottom:6px}.zak .zakd{margin-top:2px;padding-top:2px}.zak .zakd summary{padding:2px 0}.zak>*{min-width:0}.zslp .btn{white-space:nowrap}.zslp{flex-wrap:wrap}
+.zgrp{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin:2px 0 -4px 2px}.zakt.card{display:grid;gap:8px;padding:0;background:none;border:0}.zak{display:grid;gap:6px;padding:8px 12px 6px;min-width:0;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}.zak:has(.ktag){border-left-color:var(--mp)}.zak .zsumh b{font-size:1rem}.zak .btn.small{min-height:0;height:34px;padding-top:0;padding-bottom:0}.zak .zslp{gap:6px}.zak .zbar{height:5px}.zak .zsumh .btn{padding-top:6px;padding-bottom:6px}.zak .zakd{margin-top:2px;padding-top:2px}.zak .zakd summary{padding:2px 0}.zak>*{min-width:0}.zslp .btn{white-space:nowrap}.zslp{flex-wrap:wrap}
 .ktag{font-size:.7rem;font-weight:700;color:var(--mp);background:var(--mp-soft);padding:1px 6px;border-radius:5px}
 .zwarn{font-size:.86rem;font-weight:600;color:var(--bad)}
 .zmagic{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70}
@@ -2682,12 +2682,14 @@ function zTrack0(sp,z,calc,cs){
   return msg;
 }
 let zaktZu=(()=>{try{return localStorage.getItem("aborea-zakt-zu")==="1";}catch(e){return false;}})();
+/* Aktive Zauber: erst was nach Runden abläuft, dann Dauerhaftes (Flüche, Artefakte, Zeitdauer) */
+function zGrp(L){const T=L.filter(e=>e.r!=null),P=L.filter(e=>e.r==null);if(!T.length||!P.length)return [...T,...P];return [{hd:"Temporär"},...T,{hd:"Dauerhaft"},...P];}
 function zAktHtml(){
   if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";
   const zu=zaktZu;
   const head=`<h2 class="zakth"><button class="zaktt" data-act="zakttog" aria-expanded="${!zu}"><span class="chev" aria-hidden="true">${zu?"▸":"▾"}</span>Aktive Zauber <span class="zcnt">${L.length}</span></button>${ib("aktiv")}</h2>`;
   if(zu)return head;
-  return `${head}<div class="card zakt">${L.map(e=>zAkWrap(e,(()=>{const S=e.sum;
+  return `${head}<div class="card zakt">${zGrp(L).map(e=>e.hd!=null?`<div class="zgrp">${e.hd}</div>`:zAkWrap(e,(()=>{const S=e.sum;
     if(e.mines)return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">${esc(e.sp)} · Stufe ${e.st}</span><div class="hint">${e.mines.length} Stein${e.mines.length===1?"":"e"} scharf · Annäherung auf 1m löst aus</div></div>
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
       <div class="zrolls">${e.mines.map((x,i)=>`<button class="btn small zroll2" data-act="zmboom" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}Stein ${x.i||i+1} explodiert: ${x.d||x}W${x.s||10}</button>`).join("")}</div></div>`;
