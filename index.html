@@ -591,7 +591,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zocb{display:flex;gap:8px;margin-top:6px}.zocb .btn{flex:1}
 .ztier{display:grid;gap:6px}.ztier .chips{display:flex;flex-wrap:wrap;gap:6px}
 .ztier .chip{border:1.5px solid var(--accent);color:var(--ink);background:var(--card);font-weight:600}.ztier .chip .hint{color:var(--muted);font-weight:500}
-.ztier .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}.ztier .chip.on .hint{color:#fff;opacity:.9}.zsumbox.bad{border-color:var(--lp)}.tmpb{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:.72rem;font-weight:700;vertical-align:middle;background:color-mix(in srgb,currentColor 14%,transparent)}.zrune{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.zrune select{flex:1;min-width:0;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:inherit;font:inherit}.zrisk{display:grid;gap:6px;margin-top:8px}.zrisk>div{padding:7px 10px;border-radius:8px;border-left:3px solid;line-height:1.35}.zrisk .lab{display:block;margin-bottom:2px}.zrisk .ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,transparent)}.zrisk .no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 9%,transparent)}.zsumbox.good{border-color:var(--ok,#3a9a5b)}.btn.danger,.btn.pri.danger{background:var(--lp);border-color:var(--lp);color:#fff}.btn.danger svg{color:#fff}
+.ztier .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}.ztier .chip.on .hint{color:#fff;opacity:.9}.zsumbox.bad{border-color:var(--lp)}.ptmp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}.ptmp .lab{margin-right:auto}.ptmp b{min-width:24px;text-align:center}.tmpb{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:.72rem;font-weight:700;vertical-align:middle;background:color-mix(in srgb,currentColor 14%,transparent)}.zrune{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.zrune select{flex:1;min-width:0;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:inherit;font:inherit}.zrisk{display:grid;gap:6px;margin-top:8px}.zrisk>div{padding:7px 10px;border-radius:8px;border-left:3px solid;line-height:1.35}.zrisk .lab{display:block;margin-bottom:2px}.zrisk .ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,transparent)}.zrisk .no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 9%,transparent)}.zsumbox.good{border-color:var(--ok,#3a9a5b)}.btn.danger,.btn.pri.danger{background:var(--lp);border-color:var(--lp);color:#fff}.btn.danger svg{color:#fff}
 .zsub{font-size:.8rem;color:var(--muted);margin-top:-2px}
 .zdesc{margin:2px 0 0;font-size:1rem;line-height:1.5;color:var(--ink)}
 .zchips2{display:flex;flex-wrap:wrap;gap:6px}.zchip{display:inline-flex;align-items:center;gap:2px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}.zchip.k{border-color:var(--mp);color:var(--mp)}.zchip .ib{width:22px;height:22px;margin:-4px -6px -4px 0}
@@ -1006,7 +1006,8 @@ function pool(key,label){
       <button class="btn small" data-q="${key}" data-v="-5">−5</button><button class="btn small" data-q="${key}" data-v="-1">−1</button>
       <button class="btn small" data-q="${key}" data-v="1">+1</button><button class="btn small" data-q="${key}" data-v="5">+5</button>
       <button class="btn small" data-full="${key}">Voll</button>
-    </div></div>
+    </div>
+    <div class="ptmp"><span class="lab">Temporär</span><button class="btn small" data-tmpq="${key}" data-v="-1" ${tmpOf(key)?"":"disabled"} aria-label="1 temporär weniger">−1</button><b id="${key}-tmpn">${tmpOf(key)}</b><button class="btn small" data-tmpq="${key}" data-v="1" aria-label="1 temporär mehr">+1</button><button class="btn small" data-tmpq="${key}" data-v="amt">+ Wert</button><button class="btn small" data-tmpq="${key}" data-v="0" ${tmpOf(key)?"":"disabled"}>Leeren</button></div></div>
     <div class="wheel" id="${key}-wheel" data-wheel="${key}" role="slider" tabindex="0" aria-label="${label} am Rad drehen" aria-valuemin="${key==="lp"?-num(p.max):0}" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="drum" id="${key}-drum"></div><div class="band"></div></div>
     <button class="pfold" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${chev(true)}</button>
   </div>`;
@@ -3331,6 +3332,10 @@ document.addEventListener("click",e=>{
   if(b.dataset.roll){if(curRoll&&curRoll.waiting&&curRoll.key===b.dataset.roll){rollAgain();return;}rollKey(b.dataset.roll);return;}
   if((b.dataset.q||b.dataset.full||b.dataset.pool)&&!(armorActive()&&(b.dataset.q==="lp"&&+b.dataset.v<0||b.dataset.pool==="lp"&&+b.dataset.dir<0)))snap((b.dataset.q||b.dataset.full||b.dataset.pool)==="lp"?"Lebenspunkte":"Mana");
   if(b.dataset.q){changePool(b.dataset.q,+b.dataset.v);return;}
+  if(b.dataset.tmpq){const k=b.dataset.tmpq,v=b.dataset.v;let n;
+    if(v==="amt"){const i=$("#"+k+"-amt");n=Math.abs(num(i&&i.value));if(!n){showMsg("Trag zuerst einen Wert ins Feld ein.");if(i)i.focus();return;}if(i)i.value="";}
+    else n=v==="0"?-tmpOf(k):+v;
+    snap("Temporäre "+(k==="lp"?"LP":"Mana"));tmpAdd(k,n);queueSave(cur);renderAll();return;}
   if(b.dataset.full){const p=cur[b.dataset.full];p.cur=num(p.max);refreshComputed();queueSave(cur);return;}
   if(b.id==="hitnow"){hitApply();return;}
   if(b.id==="hitcancel"){hitCancel();return;}
