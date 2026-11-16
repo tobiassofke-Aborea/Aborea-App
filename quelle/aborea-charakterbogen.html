@@ -420,7 +420,7 @@ body.kampf .wrap{padding-bottom:250px}
 .delta{font-weight:700;font-size:1.2rem;font-variant-numeric:tabular-nums}
 .delta.up{color:var(--ok)} .delta.down{color:var(--bad)}
 .pbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
-.pbar i{display:block;height:100%;border-radius:4px}
+.pbar i{display:block;height:100%;border-radius:4px}.pbar.lpz{position:relative;background:linear-gradient(90deg,color-mix(in srgb,var(--lp) 14%,var(--line)) 0 20%,var(--line) 20% 100%)}.pbar.lpz i{position:absolute;top:0}.pbar.lpz i.neg{background:repeating-linear-gradient(135deg,#3a1110 0 4px,#6b1d1a 4px 8px)}.pbar .pz{position:absolute;top:-2px;bottom:-2px;width:2px;margin-left:-1px;background:var(--muted);opacity:.55;z-index:1}
 .lp .pbar i{background:var(--lp)} .mp .pbar i{background:var(--mp)}
 .prow{grid-template-columns:minmax(0,1fr) 58px minmax(0,1fr);gap:6px}
 .prow .btn{line-height:1.1;white-space:normal}
@@ -978,7 +978,7 @@ function pool(key,label){
     <div class="top"><span><button class="lab ptl" data-ptog="${key}" aria-expanded="true" aria-label="${label} einklappen">${label}</button>${ib(key==="lp"?"lp":"mp")}</span><button class="linkbtn pfull" data-full="${key}">Auffüllen</button></div>
     <div class="valrow"><div class="val" id="${key}-val">${num(p.cur)}<small> / ${num(p.max)}</small>${tmpHtml(key)}</div><span class="delta" id="${key}-delta"></span>${key==="lp"?armorBtnHtml():""}</div>
     ${key==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}
-    <div class="pbar"><i id="${key}-bar" style="width:${pct}%"></i></div>
+    ${barHtml(key,num(p.cur),key+"-bar")}
     <div class="prow">
       <button class="btn minus" data-pool="${key}" data-dir="-1"><span class="sg">− </span>${minus}</button>
       <input type="number" inputmode="numeric" id="${key}-amt" placeholder="Wert" aria-label="Betrag">
@@ -1335,8 +1335,8 @@ function refreshComputed(){
   renderHeader();
   ["lp","mp"].forEach(k=>{const p=cur[k],v=$("#"+k+"-val");if(!v)return;
     v.innerHTML=`${num(p.cur)}<small> / ${num(p.max)}</small>${tmpHtml(k)}`;
-    const pct=Math.max(0,Math.min(100,num(p.cur)/Math.max(1,num(p.max))*100))+"%";
-    $("#"+k+"-bar").style.width=pct;{const kn=document.querySelector('[data-cbar="'+k+'"] .cknob');if(kn)kn.style.left=pct;const cb=kn&&kn.parentElement;if(cb){cb.setAttribute("aria-valuenow",num(p.cur));cb.setAttribute("aria-valuemax",num(p.max));}}
+    const pct=barPos(k,num(p.cur))+"%";
+    barSet($("#"+k+"-bar"),k,num(p.cur));{const kn=document.querySelector('[data-cbar="'+k+'"] .cknob');if(kn)kn.style.left=pct;const cb=kn&&kn.parentElement;if(cb){cb.setAttribute("aria-valuenow",num(p.cur));cb.setAttribute("aria-valuemax",num(p.max));}}
     const wl=$("#"+k+"-wheel");if(wl){wl.setAttribute("aria-valuenow",num(p.cur));wl.setAttribute("aria-valuemax",num(p.max));}
     if(!wh||wh.key!==k)drawWheel(k,num(p.cur));});
   {const ib=$("#inibox");if(ib)ib.innerHTML=iniHtml();}
@@ -1787,7 +1787,7 @@ function kampfDo(b){
       rollPool(`${A.name}: Fluchstärke (${lab}-Wurf)`,{groups:n>0?[{label:lab,n,s:6}]:[{label:"Plus",n:1,s:6},{label:"Minus",n:1-n,s:6,neg:true}],flat:0},t=>{A.fst=t;setTimeout(()=>{try{renderAll();}catch(e){}},0);return {tag:`Fluchstärke ${t}`};});return;}
     case "zbleed":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.bleed)return;e.bleed.n=Math.max(0,e.bleed.n+(+b.dataset.d));queueSave(cur);return renderAll();}
     case "zbleedr":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.bleed||!e.bleed.n)return;const B=e.bleed;
-      rollPool(`${e.n}: Blutung`,{groups:[{label:"Treffer",n:B.n,s:10}],flat:0},t=>({tag:`Das Ziel verliert ${t} LP`}));return;}
+      rollPool(`${e.n}: Blutung`,{groups:[{label:"Treffer",n:B.n,s:10}],flat:0},t=>{if(e.self){snap("Blutung");const l0=num(cur.lp.cur);lpLose(t);queueSave(cur);setTimeout(()=>{try{renderAll();}catch(x){}},0);return {tag:`Du verlierst ${t} LP (${l0} → ${cur.lp.cur})`,cls:"bad"};}return {tag:`Das Ziel verliert ${t} LP`};});return;}
     case "zbag":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.bag)return;const n=Math.min(e.bag.lp,+b.dataset.d);if(n<=0)return;snap("Blutbeutel");
       const l0=num(cur.lp.cur),room=Math.max(0,num(cur.lp.max)-l0),got=Math.min(room,n);e.bag.lp-=got;cur.lp.cur=l0+got;queueSave(cur);renderAll();showMsg(got?`${got} LP aus dem Blutbeutel: LP ${l0} → ${cur.lp.cur}`:"Deine LP sind schon voll.");return;}
     case "zbagx":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.bag)return;e.bag.lp=Math.max(0,Math.min(e.bag.max,e.bag.lp+(+b.dataset.d)));queueSave(cur);return renderAll();}
@@ -2268,7 +2268,7 @@ function zBloodAk(e){const o=[];
   if(e.fst!=null)o.push(`<div class="hint">Fluchstärke <b>${e.fst}</b></div>`);
   if(e.ghul!=null)o.push(`<div class="zslp"><span class="lab">Ghule</span><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="-1">−1</button><b>${e.ghul}</b><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="1">+1</button></div><div class="hint">Ein Biss macht den Nächsten zum Ghul (KO-Test 6). Stirbt der Alpha-Ghul, sterben alle.</div>`);
   if(e.bleed){const B=e.bleed;o.push(`<div class="zslp"><span class="lab">Treffer</span><button class="btn small" data-act="zbleed" data-k="${e.k}" data-d="-1">−1</button><b>${B.n}</b><button class="btn small" data-act="zbleed" data-k="${e.k}" data-d="1">+1 Treffer</button></div>
-    <div class="zrolls"><button class="btn small zroll2" data-act="zbleedr" data-k="${e.k}" ${B.n?"":"disabled"}>${ICON_DICE_S}Blutung: ${B.n}W10</button></div><div class="hint">Jeder körperliche Treffer am Ziel zählt. Ist das Ziel dran, würfelt es die Blutung und verliert so viele LP.</div>`);}
+    <div class="zrolls"><button class="btn small zroll2" data-act="zbleedr" data-k="${e.k}" ${B.n?"":"disabled"}>${ICON_DICE_S}Blutung: ${B.n}W10</button></div><div class="hint">${e.self?"Jeder körperliche Treffer an dir zählt. Bist du dran, würfelst du die Blutung, sie geht direkt von deinen LP ab.":"Jeder körperliche Treffer am Ziel zählt. Ist das Ziel dran, würfelt es die Blutung und verliert so viele LP."}</div>`);}
   if(e.bag){const B=e.bag;o.push(`<div class="zslp"><span class="lab">LP im Beutel</span><button class="btn small" data-act="zbagx" data-k="${e.k}" data-d="-1">−1</button><b>${B.lp}<small>/${B.max}</small></b><button class="btn small" data-act="zbagx" data-k="${e.k}" data-d="1">+1</button></div>
     <div class="zrolls"><button class="btn small" data-act="zbag" data-k="${e.k}" data-d="1" ${B.lp?"":"disabled"}>1 LP entnehmen</button><button class="btn small" data-act="zbag" data-k="${e.k}" data-d="5" ${B.lp?"":"disabled"}>5 LP entnehmen</button></div>`);}
   if(e.rune){const {db,ch}=sbParse(),ls=(db&&db.spells||[]).filter(x=>num(ch.learned&&ch.learned[x.id])>0&&x.name!=="Blutige Runen");
@@ -3045,9 +3045,16 @@ function kritNow(){syncKrit();return sum(cur.krit);}
 function kritBadgeHtml(){const k=kritWeapon();return `<span class="tzb kritb" title="Krit${k?` mit ${esc(k.w.name||"Waffe")}`:""}: W100 ≤ Wert" aria-label="Krit ${kritNow()}">${ICON_KRIT}<b id="krit-n">${kritNow()}</b></span>`;}
 function tzBadgeHtml(){return `<span class="tzb" title="Trefferzone Körper / Kopf${shieldBonus().tz?` (inkl. Schild +${shieldBonus().tz})`:""}" aria-label="Trefferzone ${tzText()}">${ICON_TZ}<b id="tz-n">${esc(tzText())}</b></span>`;}
 function armorBtnHtml(){const on=!!(cur.kampf&&cur.kampf.armorOn);return `<span class="pbadges">${kritBadgeHtml()}${tzBadgeHtml()}<button class="armor${on?" on":""}" id="armorbtn" data-armor="1" aria-pressed="${on}" title="Rüstung ${armorTotal()}${shieldBonus().r?` (${num(cur.ruestung)} + ${shieldBonus().r} Schild)`:""}. ${armorTmp()?`Davon ${armorTmp()} temporär.`:""} Tippen: Schaden zuerst über die Rüstung abfangen" aria-label="Rüstung ${armorTotal()}, ${on?"aktiv":"aus"}">${ICON_SHIELD}<b id="armor-n">${hit.pend?Math.max(0,armorTotal()-hit.pend):armorTotal()}</b>${armorTmp()?`<span class="armt">+${armorTmp()}</span>`:""}</button></span>`;}
+/* LP-Leiste mit Minusbereich: links 20 % für −Max…0, rechts 80 % für 0…Max */
+const NEGZ=20;
+function barPos(k,v){const max=Math.max(1,num(cur[k].max));if(k!=="lp")return Math.max(0,Math.min(100,v/max*100));
+  return v>=0?NEGZ+(100-NEGZ)*Math.min(1,v/max):NEGZ*Math.max(0,1+v/max);}
+function barStyle(k,v){const p=barPos(k,v);if(k!=="lp")return `width:${p}%`;return v>=0?`left:${NEGZ}%;width:${p-NEGZ}%`:`left:${p}%;width:${NEGZ-p}%`;}
+function barSet(i,k,v){if(!i)return;i.setAttribute("style",barStyle(k,v));i.classList.toggle("neg",k==="lp"&&v<0);}
+const barHtml=(k,v,id)=>`<div class="pbar${k==="lp"?" lpz":""}">${k==="lp"?`<span class="pz" style="left:${NEGZ}%"></span>`:""}<i id="${id}" class="${k==="lp"&&v<0?"neg":""}" style="${barStyle(k,v)}"></i></div>`;
 function compactRow(k,label){const p=cur[k],max=Math.max(1,num(p.max)),pct=Math.max(0,Math.min(100,num(p.cur)/max*100));
   return `<div class="crow ${k}"><div class="ctop"><button class="cl" data-ptog="${k}" aria-expanded="false" aria-label="${k==="lp"?"Lebenspunkte":"Mana"} ausklappen">${label}</button><span class="cval" id="${k}-val">${num(p.cur)}<small> / ${num(p.max)}</small>${tmpHtml(k)}</span><span class="delta" id="${k}-delta"></span><span class="cright">${k==="lp"?armorBtnHtml():""}</span></div>
-    <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="0" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}"><div class="pbar"><i id="${k}-bar" style="width:${pct}%"></i></div><b class="cknob" style="left:${pct}%"></b></div></div>`;}
+    <div class="cbar" data-cbar="${k}" role="slider" tabindex="0" aria-label="${label} ziehen" aria-valuemin="${k==="lp"?-num(p.max):0}" aria-valuemax="${num(p.max)}" aria-valuenow="${num(p.cur)}">${barHtml(k,num(p.cur),k+"-bar")}<b class="cknob" style="left:${barPos(k,num(p.cur))}%"></b></div></div>`;}
 function poolsHtml(){
   const one=k=>poolsCompact[k]
     ?`<div class="card pcomp ${k}" data-poolcard="${k}" data-ptarea="${k}" title="Tippen zum Ausklappen"><div class="pcmain">${compactRow(k,k==="lp"?"LP":"Mana")}${k==="lp"?`<div class="hitbox" id="lp-hit" hidden></div>`:""}</div></div>`
@@ -3412,9 +3419,10 @@ document.addEventListener("keydown",e=>{const el=e.target.closest&&e.target.clos
   const d=e.key==="ArrowLeft"?-1:e.key==="ArrowRight"?1:0;if(!d)return;e.preventDefault();const k=+el.getAttribute("aria-valuenow");wslCommit(Math.max(0,Math.min(+el.dataset.wsl,k+d)));});
 /* Kompakt: Balken ziehen */
 let cdrag=null;
-function cbarVal(el,x){const r=el.getBoundingClientRect(),k=el.dataset.cbar,max=num(cur[k].max);return Math.round(Math.max(0,Math.min(1,(x-r.left)/Math.max(1,r.width)))*max);}
-function cbarShow(el,v){const k=el.dataset.cbar,max=Math.max(1,num(cur[k].max)),pct=Math.max(0,Math.min(100,v/max*100))+"%";
-  el.querySelector(".cknob").style.left=pct;el.querySelector(".pbar i").style.width=pct;
+function cbarVal(el,x){const r=el.getBoundingClientRect(),k=el.dataset.cbar,max=num(cur[k].max),f=Math.max(0,Math.min(1,(x-r.left)/Math.max(1,r.width)));
+  if(k!=="lp")return Math.round(f*max);const z=NEGZ/100;return Math.round(f>=z?(f-z)/(1-z)*max:-(1-f/z)*max);}
+function cbarShow(el,v){const k=el.dataset.cbar;
+  el.querySelector(".cknob").style.left=barPos(k,v)+"%";barSet(el.querySelector(".pbar i"),k,v);
   const d=document.getElementById(k+"-delta"),dl=v-num(cur[k].cur);if(d){clearTimeout(deltaTimer[k]);d.textContent=dl?(dl>0?"+"+dl:"−"+Math.abs(dl)):"";d.className="delta"+(dl>0?" up":dl<0?" down":"");}}
 document.addEventListener("pointerdown",e=>{const el=e.target.closest("[data-cbar]");if(!el||!cur)return;
   const k0=el.dataset.cbar;cdrag={el,x0:e.clientX,moved:false,v:num(cur[k0].cur),v0:num(cur[k0].cur),last:null};
@@ -3422,7 +3430,7 @@ document.addEventListener("pointerdown",e=>{const el=e.target.closest("[data-cba
 document.addEventListener("pointermove",e=>{if(!cdrag)return;if(Math.abs(e.clientX-cdrag.x0)>4)cdrag.moved=true;if(!cdrag.moved)return;
   const v=cbarVal(cdrag.el,e.clientX);if(v!==cdrag.last){if(cdrag.last!==null)buzz(3);cdrag.last=v;}cdrag.v=v;
   if(cdrag.arm){hit.pend=Math.max(0,cdrag.p0+(cdrag.v0-v));hitRender();hitBox();hitPause();
-    const max=Math.max(1,num(cur.lp.max));cdrag.el.querySelector(".cknob").style.left=Math.max(0,Math.min(100,v/max*100))+"%";return;}
+    cdrag.el.querySelector(".cknob").style.left=barPos("lp",v)+"%";return;}
   cbarShow(cdrag.el,v);});
 function cdragEnd(cancel){if(!cdrag)return;const {el,moved,v,arm,v0}=cdrag,k=el.dataset.cbar;cdrag=null;el.classList.remove("drag");
   if(arm){if(hit.pend>0){refreshComputed();hitBox();hitTimer();return;}
