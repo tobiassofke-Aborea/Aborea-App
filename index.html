@@ -2296,6 +2296,7 @@ function zBloodAfter(sp,z,calc,cs,a,before){
   if(zIs(z,"Blutige Rüstung")&&pr&&pr.ok){const ar=zArmVal(a);const e=news[0]||mk({r:2});e.armor=ar;cur.kampf.armorOn=true;note+=` +${ar} Rüstung.`;}
   if(zIs(z,"Blutsauger")&&pr){const n=zSaugVal(a),l0=num(cur.lp.cur);if(pr.ok){cur.lp.cur=Math.min(num(cur.lp.max),l0+n);note+=` Du saugst ${n} LP (${l0} → ${cur.lp.cur}).`;}else{lpLose(n);note+=` Umgekehrt: Du verlierst ${n} LP (${l0} → ${cur.lp.cur}), das Ziel heilt ${n}.`;}}
   if(zIs(z,"Blutsturm")){const e=news[0]||mk({});e.later=[];e.wait="";e.t="bis die Lebensenergie verteilt ist";const c=zbChoice(sp,sbParse().ch);const fl=!!(pr&&!pr.ok),v=num(a&&a.stormV);e.r=null;e.t=fl?"Misserfolg":"bis die Heilung verteilt ist";e.storm={list:(a&&a.stormList)||[],fail:fl,v,left:fl?0:v,use:fl?0:v};}
+  if(zIs(z,"Infektion")&&ok&&news[0]){news[0].vow={ziel:(a&&a.ziel)||""};news[0].vowLab="Infiziert";}
   if(zIs(z,"Blutschwur")){const e=news[0]||mk({});e.t="bis zum Tod oder Fluchbrecher-Ritual (20)";e.vow={ziel:(a&&a.ziel)||""};}
   if(zIs(z,"Lebenstausch")&&pr&&pr.ok){const n=num(a.lt)||1,l0=num(cur.lp.cur);lpLose(n);note+=` Du gibst ${n} LP ab (${l0} → ${cur.lp.cur}).`;}
   if(zIs(z,"Blutopfer")&&pr){const n=num(a.bo)||1,lc=pr.ok?n:2*n,l0=num(cur.lp.cur);lpLose(lc);const m0=num(cur.mp.cur),room=Math.max(0,num(cur.mp.max)-m0),add=Math.min(n,room);cur.mp.cur=m0+add;if(n>add)tmpAdd("mp",n-add);
@@ -2305,7 +2306,7 @@ function zBloodAk(e){const o=[];
   if(e.storm){const S=e.storm;o.push(`<div class="zstr">${zStormRes(S.list||[],S.v,S.fail)}</div>`+(S.fail?`<div class="zwarn">Teile die ${S.v} Schaden auf deine Verbündeten im Radius auf.</div>`
     :S.left?`<div class="zslp"><span class="lab">Noch zu verteilen</span><b>${S.left}</b><span class="hint">von ${S.v} LP</span></div><div class="zslp"><span class="lab">Menge</span><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="-5">−5</button><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="-1">−1</button><b>${S.use}</b><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="1">+1</button><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="5">+5</button></div>
       <div class="zrolls"><button class="btn small" data-act="zstormgo" data-op="me" data-k="${e.k}" ${S.use?"":"disabled"}>An mich: +${S.use} LP</button><button class="btn small" data-act="zstormgo" data-op="ally" data-k="${e.k}" ${S.use?"":"disabled"}>An Verbündete: ${S.use} LP</button></div>`:`<div class="hint">Alles verteilt.</div>`));}
-  if(e.vow)o.push(`<div class="zslp"><span class="lab">Verbunden mit</span><input class="zvin" data-zvow="${e.k}" value="${esc(e.vow.ziel||"")}" placeholder="Name des Ziels" autocomplete="off"></div><div class="hint">Ihr teilt denselben Schaden.</div>`);
+  if(e.vow)o.push(`<div class="zslp"><span class="lab">${esc(e.vowLab||"Verbunden mit")}</span><input class="zvin" data-zvow="${e.k}" value="${esc(e.vow.ziel||"")}" placeholder="Name des Ziels" autocomplete="off"></div>${e.vowLab?"":`<div class="hint">Ihr teilt denselben Schaden.</div>`}`);
   if(e.self)o.push(`<div class="zwarn">Wirkt auf dich${e.selfTxt?`: ${esc(e.selfTxt)}`:""}</div>`);
   if(e.fst!=null)o.push(`<div class="hint">Fluchstärke <b>${e.fst}</b></div>`);
   if(e.ghul!=null)o.push(`<div class="zslp"><span class="lab">Ghule</span><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="-1">−1</button><b>${e.ghul}</b><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="1">+1</button></div><div class="hint">Ein Biss macht den Nächsten zum Ghul (KO-Test 6). Stirbt der Alpha-Ghul, sterben alle.</div>`);
@@ -2466,7 +2467,7 @@ function zDlgRender(){
     ${kwarn}${setHtml}${tierHtml}${prev}${penHtml}
     ${zSumDlg(sp,z,a)}${zMineDlg(sp,z,a)}${z&&!zIs(z,"Blutsturm")&&z.fx.some(f=>ZDEF.test(f.d||""))?`<div class="zsumbox"><span class="lab">Wirkt später</span><div>${z.fx.filter(f=>ZDEF.test(f.d||"")).map(f=>`${esc(f.t)} <span class="hint">${esc(f.d)}</span>`).join("<br>")}</div><div class="hint">Gewürfelt wird erst dann, unter „Aktive Zauber“.</div></div>`:""}
     ${steps.length?`<ol class="zsteps">${rows}</ol>`:""}
-    ${zPresHtml(z,a)}${zIs(z,"Blutschwur")&&!fin?zVowDlg(a):""}${zIs(z,"Blutsturm")&&!fin?zStormDlg(a,steps.some(x=>okOf(x)&&!res[x.k])):""}${blood&&z&&z.fl&&!fin?zFstHtml(a,steps.some(x=>okOf(x)&&!res[x.k])):""}
+    ${zPresHtml(z,a)}${zIs(z,"Blutschwur")&&!fin?zVowDlg(a):""}${zIs(z,"Infektion")&&!fin&&!(a.pres&&!a.pres.ok)?`<div class="zsumbox"><span class="lab">Wen infizierst du?</span><input class="zvin" data-zbtxt="ziel" value="${esc(a.ziel||"")}" placeholder="Name des Ziels" autocomplete="off"></div>`:""}${zIs(z,"Blutsturm")&&!fin?zStormDlg(a,steps.some(x=>okOf(x)&&!res[x.k])):""}${blood&&z&&z.fl&&!fin?zFstHtml(a,steps.some(x=>okOf(x)&&!res[x.k])):""}
     ${dsum}
     <div class="zmain">${main}</div>
     ${!fin?`<button class="linkbtn zcl" data-act="zcancel">Abbrechen</button>`:""}
