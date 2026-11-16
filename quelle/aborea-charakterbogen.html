@@ -1780,8 +1780,6 @@ function kampfDo(b){
     case "zexp":{const id=b.dataset.spell;zExp.has(id)?zExp.delete(id):zExp.add(id);return renderAll();}
     case "zcancel":if(zArm&&zArm.autoT)clearTimeout(zArm.autoT);zArm=null;return renderAll();
     case "zpay":if(zArm&&zArm.phase==="armed"&&!zArm.aimed&&!(zArm.done||[]).length){const k=b.dataset.v;if(num(cur[k].cur)<num(zArm.cost)){showMsg(`Nicht genug ${k==="lp"?"LP":"Mana"}: ${num(cur[k].cur)} da, ${zArm.cost} nötig.`);return;}zArm.pay=k;}return renderAll();
-    case "zslp":{const e=zAkt().find(x=>x.k===b.dataset.k);const d0=e&&e.sum&&zbDiceIn(e.sum.lpTxt);if(!d0)return;
-      zbRollDice(`${e.n}: LP`,d0,t=>{e.sum.lp=t;e.sum.lpMax=t;queueSave(cur);setTimeout(renderAll,0);return {tag:`${t} LP`};});return;}
     case "zbx":if(zArm&&zArm.phase==="armed"&&!zArm.aimed&&!(zArm.done||[]).length){const f=b.dataset.f,mn=f==="bo"||f==="lt"?1:0;zArm[f]=Math.max(mn,(num(zArm[f])||mn)+(+b.dataset.d));}return renderAll();
     case "zfst":{const A=zArm;if(!A||A.fst!=null)return;const key=magAttr(),n=num(cur.attr[key].b),lab=key==="Cha"?"CHA":"INT";
       rollPool(`${A.name}: Fluchstärke (${lab}-Wurf)`,{groups:n>0?[{label:lab,n,s:6}]:[{label:"Plus",n:1,s:6},{label:"Minus",n:1-n,s:6,neg:true}],flat:0},t=>{A.fst=t;setTimeout(()=>{try{renderAll();}catch(e){}},0);return {tag:`Fluchstärke ${t}`};});return;}
@@ -2369,6 +2367,7 @@ function zDlgRender(){
   const fin=a.phase==="done",req=a.req||[],res=a.res||{},done=a.done||[],gz=!!a.gz;
   if(!fin)a.cost=sp.level+a.cs+num(a.xmp)+zExtra(z,a);
   const steps=[...(gz?[{k:"aim",label:"Zielwurf",at:`data-act="zgo" data-spell="${a.id}"`}]:[]),...req];
+  steps.forEach(x=>{if(/^\d*W\d+\s+Werte$/.test(x.label||""))x.label="LP der Kreatur: "+x.label.match(/\d*W\d+/)[0];});
   const okOf=x=>x.k==="aim"?!!a.aimed:done.includes(x.k);
   let nowI=-1;if(!fin)steps.forEach((x,i)=>{if(!okOf(x)&&nowI<0)nowI=i;});
   const all=steps.every(okOf);
@@ -2433,7 +2432,9 @@ function zSumDlg(sp,z,a){
   const {ch}=sbParse(),si=zSumInfo(z,a.cs,zbChoice(sp,ch),a.elems);if(!si)return "";
   const cur1=(a.elems||[])[0];
   const picks=si.elem?`<div class="zelr"><span class="lab">Element${si.bonusN>1?` <span class="hint">(Bonus ${si.bonusN}×)</span>`:""}</span><div class="chips">${Object.keys(ELEM).map(k=>`<button class="chip${cur1===k?" on":""}" data-act="zelem" data-v="${k}" ${a.phase!=="armed"?"disabled":""}>${k} <small>${ELEM[k]}${si.bonusN>1?" ×"+si.bonusN:""}</small></button>`).join("")}</div></div>`:"";
-  return `<div class="zsumbox">${picks}<div><span class="lab">${si.count>1?si.count+"× ":""}${esc(si.name||"Beschwörung")}</span><div><b>${esc(zSumLine(si))}</b></div><div class="hint">Bleibt unter „Aktive Zauber“, bis es zerstört wird${si.du?" oder nach "+esc(zDurTxt(si.du)):""}. Dort führst du LP und würfelst Angriffe.</div></div></div>`;
+  const dl=si.lp==null&&zbDiceIn(si.lpTxt),rl=dl&&a.res&&a.res["f"+si.i];if(rl)si.lp=num(rl.t);
+  const lpRoll=dl&&!rl?`<div class="hint">Die LP der Kreatur (${esc(si.lpTxt)}) würfelst du unten einmal aus.</div>`:"";
+  return `<div class="zsumbox">${picks}<div><span class="lab">${si.count>1?si.count+"× ":""}${esc(si.name||"Beschwörung")}</span><div><b>${esc(zSumLine(si))}</b></div>${lpRoll}<div class="hint">Bleibt unter „Aktive Zauber“, bis es zerstört wird${si.du?" oder nach "+esc(zDurTxt(si.du)):""}. Dort führst du LP und würfelst Angriffe.</div></div></div>`;
 }
 /* Würfelknöpfe sind erst nach „Wirken“ aktiv */
 const zKeyOf=d=>d.act==="zprobe"?"p":d.ref?`r${d.ref}_${d.fx}`:d.o?`a${d.fx}`:`f${d.fx}`;
@@ -2686,8 +2687,8 @@ function zTrack0(sp,z,calc,cs){
   if(bi){const r0=rounds>0?rounds:null;for(let i=0;i<bi.n;i++){const pn=bi.part(i);L.push({k:Math.random().toString(36).slice(2,8),g,n:pn?`${sp.name} · ${pn}`:sp.name,sp:sp.name,st:cs,r:r0,t:time,konz:!!z.k,bau:1,sum:{lp:bi.lp,lpMax:bi.lp}});}return msg;}
   if(z.nr===19&&zArm&&zArm.mines){L.push({k:Math.random().toString(36).slice(2,8),n:"Explosive Steine",sp:sp.name,st:cs,r:null,t:"",konz:false,mines:zArm.mines.map((d,i)=>({i:i+1,d,s:8})),boom:0});return msg;}
   const {ch}=sbParse(),si=zSumInfo(z,cs,zbChoice(sp,ch),zArm&&zArm.id===sp.id?zArm.elems:null);
-  if(si){const d=si.du;for(let n=0;n<+si.count;n++)L.push({k:Math.random().toString(36).slice(2,8),n:si.count>1?`${si.name} ${n+1}`:si.name,sp:sp.name,st:cs,
-      r:d&&zDurU(d.u)==="r"?d.n:null,t:d&&zDurU(d.u)!=="r"?zDurTxt(d):"",konz:!!z.k,g,sum:{lp:si.lp,lpMax:si.lp,lpTxt:si.lp==null?si.lpTxt:"",ap:si.ap,dmg:si.dmg,heal:si.heal}});return msg;}
+  if(si){const d=si.du,lp0=si.lp!=null?si.lp:(zArm&&zArm.id===sp.id&&zArm.res&&zArm.res["f"+si.i]?num(zArm.res["f"+si.i].t):null);for(let n=0;n<+si.count;n++)L.push({k:Math.random().toString(36).slice(2,8),n:si.count>1?`${si.name} ${n+1}`:si.name,sp:sp.name,st:cs,
+      r:d&&zDurU(d.u)==="r"?d.n:null,t:d&&zDurU(d.u)!=="r"?zDurTxt(d):"",konz:!!z.k,g,sum:{lp:lp0,lpMax:lp0,ap:si.ap,dmg:si.dmg,heal:si.heal}});return msg;}
   const later=[];let wait="";calc.fx.forEach(f=>{const d=String(f.d||""),m=d.match(/^Runde\s*(\d+)/);
     if(m&&+m[1]>=2&&f.dice){later.push({rd:+m[1],t:f.t,a:f.a,dice:f.dice,f:f.f});rounds=Math.max(rounds,+m[1]);}
     else if(/^(nach |beim )/i.test(d)){if(!wait)wait=d;if(f.dice)later.push({t:f.t,a:f.a,dice:f.dice,f:f.f});}});
@@ -2719,7 +2720,7 @@ function zAktHtml(){
     ${e.later&&e.later.length?`<div class="zrolls">${e.later.map((l,i)=>l.done?`<span class="hint">${esc(l.t)}: gewürfelt (${l.done})</span>`:`<button class="btn small zroll2" data-act="zlater" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(l.t)}: ${esc(zbDiceTxt(l.dice))}${l.f?" · "+esc(l.f):""}</button>`).join("")}</div>`:""}</div>`;
     return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">${e.sp&&e.sp!==e.n?esc(e.sp)+" · ":""}Stufe ${e.st}</span>${e.konz?' <span class="ktag">Konzentration</span>':""}<div class="hint">${dur}</div></div>
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
-      <div class="zsumv">${S.lp!=null?zLpRow(e):S.lpTxt&&zbDiceIn(S.lpTxt)?`<div class="zrolls"><button class="btn small zroll2" data-act="zslp" data-k="${e.k}">${ICON_DICE_S}LP würfeln: ${esc(S.lpTxt)}</button></div>`:""}
+      <div class="zsumv">${S.lp!=null?zLpRow(e):""}
         ${S.ap?`<div><span class="lab">AP</span> <b>${S.ap}</b></div>`:""}</div>
       <div class="zrolls">${S.dmg?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="dmg">${ICON_DICE_S}Angriff ${esc(zbDiceTxt(S.dmg))}</button>`:""}${S.heal?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="heal">${ICON_DICE_S}Heilung ${esc(zbDiceTxt(S.heal))}</button>`:""}</div></div>`;})())).join("")}</div>`;
 }
