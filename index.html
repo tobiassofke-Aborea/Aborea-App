@@ -2248,6 +2248,10 @@ function zBloodAfter(sp,z,calc,cs,a,before){
   const mk=(o)=>{const e=Object.assign({k:nk(),n:sp.name,st:cs,r:null,t:"",konz:false,sid:sp.id},o);L.push(e);news.push(e);return e;};
   const H=zHeart();if(H&&zHeartFor(sp)){H.heart.sum+=sp.level;H.heart.gs=Math.max(0,H.heart.gs-sp.level);note+=` Das Herz nimmt ${sp.level} GS-Schaden auf (gesammelt ${H.heart.sum}).`;}
   if(z.fl&&ok){if(!news.length)mk({t:"dauerhaft"});news.forEach(e=>{e.fl=1;if(e.r==null&&!e.t)e.t="dauerhaft";if(a&&a.fst!=null)e.fst=a.fst;});}
+  if(pr&&!pr.ok&&z.p&&/(trifft|geht auf|geht in) (den )?(Zaubernden|eigenen Körper)/i.test(z.p.no||"")){
+    if(!news.length)mk({});const f0=calc.fx[0]||{},w=String(f0.w||"").trim();
+    news.forEach(e=>{e.self=1;e.n=sp.name+" (auf dir)";if(z.fl){e.fl=1;if(e.r==null&&!e.t)e.t="dauerhaft";if(a&&a.fst!=null)e.fst=a.fst;}e.selfTxt=w&&f0.a?`${w} ${f0.a}`:String(f0.t||"");});
+    note+=` ${sp.name} hat dich selbst getroffen, siehe „Aktive Zauber“.`;}
   if(zIs(z,"Ghule")&&news[0])news[0].ghul=1;
   if(zIs(z,"Aderlass")){const e=news[0]||mk({r:3});const c=zbChoice(sp,sbParse().ch);e.bleed={n:0,plus:z.m==="ODER"?num(c&&c[1]):cs-1};}
   if(zIs(z,"Blutvorrat")&&ok&&pr){const amt=4*cs;tmpAdd("lp",amt);const e=news[0]||mk({t:"24h"});e.tmpLp=amt;note+=` +${amt} temporäre LP.`;}
@@ -2263,6 +2267,7 @@ function zBloodAfter(sp,z,calc,cs,a,before){
     note+=` Blutopfer: −${lc} LP (${l0} → ${cur.lp.cur}), +${n} Mana${n>add?` (davon ${n-add} temporär)`:""}.`;}
   return note;}
 function zBloodAk(e){const o=[];
+  if(e.self)o.push(`<div class="zwarn">Wirkt auf dich${e.selfTxt?`: ${esc(e.selfTxt)}`:""}</div>`);
   if(e.fst!=null)o.push(`<div class="hint">Fluchstärke <b>${e.fst}</b></div>`);
   if(e.ghul!=null)o.push(`<div class="zslp"><span class="lab">Ghule</span><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="-1">−1</button><b>${e.ghul}</b><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="1">+1</button></div><div class="hint">Ein Biss macht den Nächsten zum Ghul (KO-Test 6). Stirbt der Alpha-Ghul, sterben alle.</div>`);
   if(e.bleed){const B=e.bleed;o.push(`<div class="zslp"><span class="lab">Treffer</span><button class="btn small" data-act="zbleed" data-k="${e.k}" data-d="-1">−1</button><b>${B.n}</b><button class="btn small" data-act="zbleed" data-k="${e.k}" data-d="1">+1 Treffer</button></div>
