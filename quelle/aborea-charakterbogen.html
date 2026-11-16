@@ -2031,7 +2031,9 @@ function zRiskTxt(t,calc){t=String(t||"").trim();const n=zFlatDmg(calc),mx=t.mat
   let add="";if(mx&&n)add=` <span class="hint">= ${n*mx[1]} Schaden am Ziel</span>`;
   else if(n&&/Schaden geht auf .*Zaubernde|Schaden .*auf Ziel und Zaubernde/i.test(t))add=` <span class="hint">= ${n} Schaden am Ziel und ${n} an dir (ohne Rüstung)</span>`;
   return parts.join(" · ")+add;}
-function zRiskHtml(z,calc){const p=z&&z.p;if(!p||!(p.ok||p.no))return "";
+function zRiskHtml(z,calc,a){const p=z&&z.p;if(!p||!(p.ok||p.no))return "";
+  if(zIs(z,"Blutsauger")){const f=(calc&&calc.fx||[])[0]||{},n=a?zSaugVal(a):Math.abs(parseInt(String(f.w||"").replace(/[^\d-]/g,""))||5);
+    return `<div class="zrisk"><div class="ok"><span class="lab">Bei Erfolg</span><div>Du heilst dich um <b>${n} LP</b>, das Ziel verliert ${n} LP <span class="hint">· wird direkt auf deine LP gebucht</span></div></div><div class="no"><span class="lab">Bei Misserfolg</span><div>Umgekehrt: Du verlierst <b>${n} LP</b>, das Ziel heilt ${n} LP <span class="hint">· wird direkt von deinen LP abgezogen</span></div></div></div>`;}
   return `<div class="zrisk"><div class="ok"><span class="lab">Bei Erfolg</span><div>${zRiskTxt(p.ok,calc)||"Zauber gelingt"}</div></div><div class="no"><span class="lab">Bei Misserfolg</span><div>${zRiskTxt(p.no,calc)}</div></div></div>`;}
 function zProbeFx(txt,calc){const out=[];txt=String(txt||"");
   const n=/Schaden geht auf .*Zaubernde|Schaden .*auf Ziel und Zaubernde/i.test(txt)?zFlatDmg(calc):0;
@@ -2226,6 +2228,7 @@ function zBloodSetHtml(z,a,pu){
   if(zIs(z,"Lebenstausch")){const n=num(a.lt)||1;return st("lt",n,"LP abgeben","gehen bei Erfolg von dir ans Ziel",1);}
   if(zIs(z,"Blutopfer")){const n=num(a.bo)||1;return st("bo",n,"Gewünschtes Mana",`Erfolg: ${n} LP · Misserfolg: ${2*n} LP`,1);}
   return "";}
+function zSaugVal(a){const c=zbChoice({id:a.id},sbParse().ch);return 5+5*num(c[1]);}
 function zArmVal(a){const c=zbChoice({id:a.id},sbParse().ch);return 2+2*num(c[0]);}
 function zFstHtml(a,busy){return a.fst!=null?`<div class="zsumbox"><span class="lab">Fluchstärke</span><div><b>${a.fst}</b> <span class="hint">wird beim Fluch vermerkt</span></div></div>`
   :`<div class="zsumbox"><span class="lab">Fluchstärke</span><div class="hint">Der Fluch ist dauerhaft. Würfle seine Stärke mit deinem ${magAttr()==="Cha"?"CHA":"INT"}-Wurf, sie wird beim Fluch vermerkt.</div>${busy?"":`<button class="btn pri zgo2" data-act="zfst">${ICON_DICE_S} Fluchstärke würfeln</button>`}</div>`;}
@@ -2250,6 +2253,7 @@ function zBloodAfter(sp,z,calc,cs,a,before){
   if(zIs(z,"Scharfe Knochen")&&pr&&pr.ok)news.forEach(e=>e.konz=false);
   if(zIs(z,"Herz der Finsternis")&&ok&&pr){news.forEach(e=>{const i=L.indexOf(e);if(i>=0)L.splice(i,1);});mk({n:"Herz der Finsternis",t:"Artefakt",heart:{gs:50,sum:0}});note+=" Das Herz liegt jetzt unter „Aktive Zauber“.";}
   if(zIs(z,"Blutige Rüstung")&&pr&&pr.ok){const ar=zArmVal(a);const e=news[0]||mk({r:2});e.armor=ar;cur.kampf.armorOn=true;note+=` +${ar} Rüstung.`;}
+  if(zIs(z,"Blutsauger")&&pr){const n=zSaugVal(a),l0=num(cur.lp.cur);if(pr.ok){cur.lp.cur=Math.min(num(cur.lp.max),l0+n);note+=` Du saugst ${n} LP (${l0} → ${cur.lp.cur}).`;}else{lpLose(n);note+=` Umgekehrt: Du verlierst ${n} LP (${l0} → ${cur.lp.cur}), das Ziel heilt ${n}.`;}}
   if(zIs(z,"Lebenstausch")&&pr&&pr.ok){const n=num(a.lt)||1,l0=num(cur.lp.cur);lpLose(n);note+=` Du gibst ${n} LP ab (${l0} → ${cur.lp.cur}).`;}
   if(zIs(z,"Blutopfer")&&pr){const n=num(a.bo)||1,lc=pr.ok?n:2*n,l0=num(cur.lp.cur);lpLose(lc);const m0=num(cur.mp.cur),room=Math.max(0,num(cur.mp.max)-m0),add=Math.min(n,room);cur.mp.cur=m0+add;if(n>add)tmpAdd("mp",n-add);
     note+=` Blutopfer: −${lc} LP (${l0} → ${cur.lp.cur}), +${n} Mana${n>add?` (davon ${n-add} temporär)`:""}.`;}
@@ -2400,7 +2404,7 @@ function zDlgRender(){
   const tierHtml=T&&!fin?(!started?`<div class="ztier"><span class="lab">Wie viele? Lege es vor dem Wurf fest</span><div class="chips">${T.map((x,i)=>`<button class="chip${pq===i+1?" on":""}" data-act="zpq" data-v="${i+1}">${esc(x.lab)} <span class="hint">ab ${x.th}</span></button>`).join("")}</div><div class="hint">Darunter: ${esc(z.p.no||"Strafe")}</div></div>`
     :`<div class="zsetline"><div><b>${esc(T[pq-1].lab)}</b> · <span class="hint">Schwelle ${T[pq-1].th}</span></div></div>`):"";
   const penHtml=!fin&&z&&z.p&&/charakterstufe/i.test(z.p.no||"")&&(a.pen||a.penR!=null)?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${a.penR!=null?`<b>${a.penR} Schaden</b> <span class="hint">· ohne Rüstung von deinen LP abgezogen</span>`:esc(z.p.no)}</div></div>`:"";
-  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${blood?zRiskHtml(z,calc0):""}${calc0.fx.some(zAllyFx)?`<p class="hint">Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
+  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${zPrevHtml(calc0)}${blood?zRiskHtml(z,calc0,a):""}${calc0.fx.some(zAllyFx)?`<p class="hint">Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);if(!fin&&blood&&z&&z.fl&&a.fst==null)pend.push("Fluchstärke");
   const main=fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} ${pu}, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`
