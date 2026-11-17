@@ -289,7 +289,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .ib{display:inline-grid;place-items:center;width:28px;height:28px;margin:-6px -4px -6px 2px;padding:0;border:0;background:none;color:var(--muted);opacity:.65;cursor:pointer;vertical-align:middle;border-radius:50%;font:inherit;line-height:0}
 .ib:hover,.ib:focus-visible{opacity:1;color:var(--accent)}.top .ib{margin-right:auto}
 #infopop{position:fixed;inset:0;z-index:60;background:rgba(20,15,10,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
-#infopop[hidden]{display:none}
+#infopop[hidden]{display:none}.vrow{margin:10px 0}.vrow .vt{font-weight:600;font-size:.9rem;margin-bottom:4px}.vrow .vt small{font-weight:400;color:var(--muted);font-size:.82rem;margin-left:4px}.vrow .vl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.vrow .vl b{font-size:.95rem}.vrow.vsum{border-top:1px solid var(--line);padding-top:8px}.vdg{display:flex;gap:3px}.vdg i{width:24px;height:30px;border:1px solid var(--line);border-radius:6px;display:grid;place-items:center;font-style:normal;font-weight:700;background:var(--card)}.vdg i.x{opacity:.3;text-decoration:line-through;background:transparent;border-style:dashed}
 .ipbox{width:100%;max-width:480px;max-height:80vh;overflow-y:auto;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .ipbox h3{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0 0 8px}
 .ipbody{font-size:.95rem;line-height:1.45}.ipbody p{margin:0 0 8px}.ipbody ol{margin:0 0 8px;padding-left:20px}.ipbody li{margin-bottom:4px}
@@ -968,7 +968,7 @@ function iniBase(){return iniParts().reduce((a,x)=>a+x[1],0);}
 function renderHeader(){
   if(!cur){$("#hname").textContent="Aborea";$("#hsub").textContent="Kein Charakter";$("#hmini").innerHTML="";return;}
   $("#hname").textContent=cur.name||"Ohne Namen";
-  $("#hsub").textContent=[cur.volk,cur.beruf,"Stufe "+(cur.level||1)].filter(Boolean).join(" · ");
+  $("#hsub").textContent=[cur.volk,zHasAge()?num(cur.alter)+" Jahre":"",cur.beruf,"Stufe "+(cur.level||1)].filter(Boolean).join(" · ");
   $("#hmini").innerHTML=`<div class="hp"><button class="gs" id="rollgs" aria-label="Geistige Stabilität ${esc(cur.gs||"nicht eingetragen")}, tippen für GS-Test (W100)"><small>GS</small><b>${esc(String(cur.gs||"").trim()||"–")}</b></button><span class="lpmp${hasMana()?"":" solo"}"><button class="l" id="golp" aria-label="Lebenspunkte ${num(cur.lp.cur)}, zum Kampf"><small>LP</small><b>${num(cur.lp.cur)}</b></button>${hasMana()?`<button class="m" id="gomp" aria-label="Manapunkte ${num(cur.mp.cur)}, zum Kampf"><small>MP</small><b>${num(cur.mp.cur)}</b></button>`:""}</span><button class="a sw" id="opentable3" aria-label="Menü: ${OV_NAME[ovLast]}. Tippen zum Ausklappen, doppelt tippen zum Öffnen, wischen zum Wechseln" aria-haspopup="menu" aria-expanded="false">${OV_ICON[ovLast]()}<span class="dots">${OV_ORDER.map(k=>`<i class="${k===ovLast?"on":""}"></i>`).join("")}</span></button></div>`;
 }
 function pool(key,label){
@@ -1113,7 +1113,7 @@ function renderBogen(){
   const a=armorOf(),lvl=lvlNow(),apts=num(cur.ausbildung),hasB=!!BERUF[cur.beruf];
   const tile=(cls,label,val,sub)=>`<div class="stile ${cls}"><span>${label}</span><b>${val}</b>${sub?`<small>${sub}</small>`:""}</div>`;
   const hero=`<div class="card hero">
-    <div class="hrow"><div class="hname"><input id="f-name" data-k="name" class="namein" value="${esc(cur.name)}" aria-label="Name" placeholder="Name"><small>${esc([cur.volk,cur.beruf].filter(Boolean).join(" · ")||"Volk und Beruf unten wählen")}</small></div>
+    <div class="hrow"><div class="hname"><input id="f-name" data-k="name" class="namein" value="${esc(cur.name)}" aria-label="Name" placeholder="Name"><small>${esc([cur.volk,zHasAge()?num(cur.alter)+" Jahre":"",cur.beruf].filter(Boolean).join(" · ")||"Volk und Beruf unten wählen")}</small></div>
       <div class="hside"><label class="hgs" title="Geistige Stabilität"><span>GS</span><input id="f-gs" data-k="gs" inputmode="numeric" value="${esc(cur.gs||"")}" placeholder="–" aria-label="Geistige Stabilität"></label><div class="hlvl"><span>Stufe</span><b>${lvl}</b></div></div></div>
     <div class="stats">
       ${tile("lp","LP",num(cur.lp.max),num(cur.lpBonus)?`inkl. ${num(cur.lpBonus)>0?"+":""}${num(cur.lpBonus)} Bonus`:"")}
@@ -1202,7 +1202,7 @@ document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest
 /* ---------- Info-Knöpfe: kurze Regel-Erklärung zu einer Überschrift ---------- */
 const ICON_INFO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.6v.1"/></svg>';
 const INFO={
-  verj:["Verjüngung","<p>Pro Wirken verjüngt sich die Zaubernde um zwei Teile:</p><ul><li><b>Grundverlust:</b> das Alter ohne die letzte Stelle (ein Zehntel, abgerundet).</li><li><b>Stufenzuschlag:</b> das Alter ohne die letzten zwei Stellen, mindestens 1, mal die Stufe.</li></ul><p>Bei Misserfolg wird das Ganze zweimal hintereinander gerechnet, beim zweiten Mal mit dem neuen Alter.</p><p>Beispiele: Mensch 43, Stufe 2: 4 + 2 × 1 = 6, also 37. Zwerg 140, Stufe 3: 14 + 3 × 1 = 17, also 123. Elb 2450, Stufe 5: 245 + 5 × 24 = 365, also 2085.</p><p>Die App rechnet das beim Wirken mit dem Alter aus „Volk & Beruf“ und trägt das neue Alter ein.</p>"],
+  verj:["Verjüngung",()=>zVerjInfo()],
   zkonz:["Konzentration","<p>Der Zauber hält nur, solange du dich konzentrierst. Es geht immer nur ein Konzentrationszauber gleichzeitig: Wirkst du einen neuen, endet der alte.</p><p>Erleidest du Schaden, machst du einen GS-Test. Misslingt er, bricht der Zauber ab.</p>"],
   zfluch:["Fluch","<p>Ein Fluch bleibt, bis er gebrochen wird. Seine Stärke ist der INT- oder CHA-Wurf beim Wirken. Brechen kann ihn nur, wer mit seinem Test höher würfelt.</p>"],
   zgez:["Gezielt","<p>Vor den Effekten kommt ein Zielwurf. Er entscheidet, ob und wo der Zauber trifft (Kopf, Körper oder daneben).</p>"],
@@ -1275,7 +1275,7 @@ const ib=k=>`<button class="ib" data-info="${k}" aria-label="Erklärung: ${INFO[
 let ipHist=false;
 function infoOpen(k){const d=INFO[k];if(!d)return;let el=$("#infopop");
   if(!el){el=document.createElement("div");el.id="infopop";document.body.appendChild(el);}
-  el.innerHTML=`<div class="ipbox" role="dialog" aria-modal="true" aria-label="${esc(d[0])}"><h3>${esc(d[0])}</h3><div class="ipbody">${d[1]}</div><button class="btn pri" id="ipclose">Verstanden</button></div>`;
+  el.innerHTML=`<div class="ipbox" role="dialog" aria-modal="true" aria-label="${esc(d[0])}"><h3>${esc(d[0])}</h3><div class="ipbody">${typeof d[1]==="function"?d[1]():d[1]}</div><button class="btn pri" id="ipclose">Verstanden</button></div>`;
   el.hidden=false;if(!ovHist){histOpen();ipHist=true;}const b=$("#ipclose");if(b)b.focus();}
 function infoClose(){const el=$("#infopop");if(!el||el.hidden)return;el.hidden=true;if(ipHist){ipHist=false;histClose();}}
 document.addEventListener("click",e=>{const t=e.target;
@@ -2825,6 +2825,16 @@ function zConjure(sp,z,cw,e){
 /* Jungbrunnen: Verjüngung = Alter ohne letzte Stelle + Stufe × (Alter ohne letzte zwei Stellen, mind. 1); Misserfolg zweimal */
 const zVerj=(a,cs)=>{a=Math.max(0,Math.floor(num(a)));return Math.floor(a/10)+Math.max(1,num(cs))*Math.max(1,Math.floor(a/100));};
 function zVerjRun(a,cs,times){let x=Math.max(0,Math.floor(num(a))),loss=0;for(let i=0;i<times;i++){const l=Math.min(x,zVerj(x,cs));x-=l;loss+=l;}return {loss,age:x};}
+/* Info-Grafik: Stellen des Alters, die wegfallen */
+function zVerjInfo(){const own=zHasAge()&&num(cur.alter)>=10,a=own?Math.floor(num(cur.alter)):2450,cs=zArm&&zArm.name==="Jungbrunnen"?Math.max(1,num(zArm.cs)):2;
+  const ds=String(a).split(""),box=(n)=>`<div class="vdg">${ds.map((d,i)=>`<i class="${i>=ds.length-n?"x":""}">${d}</i>`).join("")}</div>`;
+  const g=Math.floor(a/10),h=Math.max(1,Math.floor(a/100)),z=h*cs,neu=Math.max(0,a-g-z);
+  return `<p>Pro Wirken fallen beim Alter Stellen weg. Beispiel ${own?"mit deinem Alter":"mit 2450 Jahren"} auf Stufe ${cs}:</p>
+  <div class="vrow"><div class="vt">Alter</div><div class="vl">${box(0)}</div></div>
+  <div class="vrow"><div class="vt">Grundverlust <small>letzte Stelle weg</small></div><div class="vl">${box(1)}<b>= ${g}</b></div></div>
+  <div class="vrow"><div class="vt">Stufenzuschlag <small>letzte zwei Stellen weg${Math.floor(a/100)<1?", mindestens 1":""}, mal Stufe</small></div><div class="vl">${box(2)}<b>= ${h} × ${cs} = ${z}</b></div></div>
+  <div class="vrow vsum"><div class="vt">Neues Alter</div><div class="vl"><b>${a} − ${g} − ${z} = ${neu}</b></div></div>
+  <p>Bei Misserfolg wird das Ganze zweimal gerechnet, beim zweiten Mal mit dem neuen Alter. Die App rechnet das beim Wirken automatisch und trägt das neue Alter ein.</p>`;}
 const zHasAge=()=>!!cur&&cur.alter!==""&&cur.alter!=null;
 const zWeapPlus=(t,v)=>{t=String(t||"");return /[+-]\d+$/.test(t)?t.replace(/([+-]\d+)$/,m=>{const n=+m+v;return (n>=0?"+":"")+n;}):t?`${t}+${v}`:`${v}`;};
 /* Waffe verschwindet, sobald der Zauber unter „Aktive Zauber“ endet */
@@ -3388,6 +3398,7 @@ document.addEventListener("input",e=>{
   const k=t.dataset.k;if(!k||!cur)return;
   let v=t.value;if(t.hasAttribute("data-num"))v=t.value===""?"":num(t.value);
   setPath(cur,k,v);
+  if(k==="alter")try{renderHeader();}catch(x){}
   {const m=/^attr\.(\w+)\.w$/.exec(k);if(m&&t.value!==""){cur.attr[m[1]].b=attrB(cur.attr[m[1]]);const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.textContent=pbSign(cur.attr[m[1]].b);}}
   {const m=/^attr\.(\w+)\.x$/.exec(k);if(m){const A=cur.attr[m[1]];A.b=attrB(A);const bi=document.getElementById("a-"+m[1]+"-b");if(bi)bi.textContent=pbSign(A.b);}}
   if(k==="lp.max"||k==="mp.max"){const p=cur[k.slice(0,2)];if(num(p.cur)>num(p.max))p.cur=num(p.max);}
