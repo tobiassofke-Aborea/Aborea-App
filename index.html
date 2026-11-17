@@ -2311,7 +2311,21 @@ function zBloodAfter(sp,z,calc,cs,a,before){
   if(zIs(z,"Blutopfer")&&pr){const n=num(a.bo)||1,lc=pr.ok?n:2*n,l0=num(cur.lp.cur);lpLose(lc);const m0=num(cur.mp.cur),room=Math.max(0,num(cur.mp.max)-m0),add=Math.min(n,room);cur.mp.cur=m0+add;if(n>add)tmpAdd("mp",n-add);
     note+=` Blutopfer: −${lc} LP (${l0} → ${cur.lp.cur}), +${n} Mana${n>add?` (davon ${n-add} temporär)`:""}.`;}
   return note;}
+/* Zuletzt gewirkt: 1 Runde lang unter „Aktive Zauber“, mit allem, was passiert ist */
+function zLastCast(sp,z,calc,cs,a,note){const L=zAkt();for(let i=L.length-1;i>=0;i--)if(L[i].last)L.splice(i,1);
+  const lines=[],res=(a&&a.res)||{},req=(a&&a.req)||[];
+  if(res.aim)lines.push(`Zielwurf: ${res.aim.t}`);
+  req.forEach(x=>{const r=res[x.k];if(r&&x.k!=="p")lines.push(`${String(x.label).replace(/\s*würfeln$/,"")}: ${r.t}`);});
+  const pr=a&&a.pres;
+  if(pr){const txt=pr.ok?z.p&&z.p.ok:z.p&&z.p.no;lines.push(pr.heart?"Herz der Finsternis: kein GS-Test":`GS-Test ${pr.ok?"geschafft":"nicht geschafft"}${pr.how?` (${pr.how})`:""}`);
+    const o=zOutPlain(txt,!!pr.ok);if(o&&o!=="kein Effekt")lines.push((pr.ok?"Dazu: ":"Folge: ")+o);if(pr.frz)lines.push(pr.frz);if(pr.dm)lines.push("Gegen das Ziel: "+pr.dm);(pr.fx||[]).forEach(x=>lines.push(x));}
+  if(a&&a.stormList&&a.stormList.length)lines.push("Schaden: "+a.stormList.map((x,i)=>`G${i+1} ${num(x.w12)+num(x.w6)}`).join(" · ")+` · Heilung ${a.stormV}`);
+  if(a&&a.fst!=null)lines.push(`Fluchstärke ${a.fst}`);
+  const eff=(!pr||pr.ok)?calc.fx.map(f=>{const v=f.dice?zbDiceTxt(f.dice)+" "+(f.a||""):f.w?`${f.w} ${f.a||""}`:"";return [f.t,v.trim()&&!String(f.t).includes(v.trim())?v.trim():"",f.f,f.d].filter(Boolean).join(" · ");}).filter(Boolean):[];
+  if(String(note||"").trim())lines.push(String(note).trim());
+  L.unshift({k:Math.random().toString(36).slice(2,8),n:`Zuletzt: ${sp.name}`,st:cs,r:1,t:"",konz:false,last:{eff,lines,cost:`${num(a&&a.cost)} ${zPayU(a)}`}});}
 function zBloodAk(e){const o=[];
+  if(e.last){const X=e.last;o.push(`${X.eff.length?`<ul class="zul">${X.eff.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}${X.lines.length?`<div class="hint">${X.lines.map(esc).join("<br>")}</div>`:""}`);}
   if(e.storm){const S=e.storm;o.push(`<div class="zstr">${zStormRes(S.list||[],S.v,S.fail)}</div>`+(S.fail?`<div class="zwarn">Teile die ${S.v} Schaden auf deine Verbündeten im Radius auf.</div>`
     :S.left?`<div class="zslp"><span class="lab">Noch zu verteilen</span><b>${S.left}</b><span class="hint">von ${S.v} LP</span></div><div class="zslp"><span class="lab">Menge</span><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="-5">−5</button><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="-1">−1</button><b>${S.use}</b><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="1">+1</button><button class="btn small" data-act="zstormx" data-k="${e.k}" data-d="5">+5</button></div>
       <div class="zrolls"><button class="btn small" data-act="zstormgo" data-op="me" data-k="${e.k}" ${S.use?"":"disabled"}>An mich: +${S.use} LP</button><button class="btn small" data-act="zstormgo" data-op="ally" data-k="${e.k}" ${S.use?"":"disabled"}>An Verbündete: ${S.use} LP</button></div>`:`<div class="hint">Alles verteilt.</div>`));}
@@ -2352,7 +2366,8 @@ function zExec(sp,cs,listName,z){
   cur.kampf.att=num(cur.kampf.att)+1;if(pk=="lp")lpLose(cost);else cur.mp.cur=num(cur.mp.cur)-tmpUse("mp",cost);
   cur.zCnt=cur.zCnt||{};cur.zCnt[sp.id]=num(cur.zCnt[sp.id])+1;
   let note="";
-  if(z){const {ch}=sbParse(),before=new Set(zAkt()),calc=zbCalc(z,cs,zbChoice(sp,ch),xmp);note=zTrack(sp,z,calc,cs);if(zIsBlood(sp))note+=zBloodAfter(sp,z,calc,cs,A0,before);else if(z.fl){let ns=zAkt().filter(e=>!before.has(e));if(!ns.length){const e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"dauerhaft",konz:!!z.k,sid:sp.id};zAkt().push(e);ns=[e];}ns.forEach(e=>{e.fl=1;if(A0&&A0.fst!=null)e.fst=A0.fst;});}}
+  if(z){const {ch}=sbParse(),before=new Set(zAkt()),calc=zbCalc(z,cs,zbChoice(sp,ch),xmp);note=zTrack(sp,z,calc,cs);if(zIsBlood(sp))note+=zBloodAfter(sp,z,calc,cs,A0,before);else if(z.fl){let ns=zAkt().filter(e=>!before.has(e));if(!ns.length){const e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"dauerhaft",konz:!!z.k,sid:sp.id};zAkt().push(e);ns=[e];}ns.forEach(e=>{e.fl=1;if(A0&&A0.fst!=null)e.fst=A0.fst;});}
+    try{zLastCast(sp,z,calc,cs,A0,note);}catch(e){}}
   else if(/K\*/.test(sp.details||"")){const L=zAkt(),old=zKonz();if(old){L.splice(L.indexOf(old),1);note=`Konzentration auf ${old.n} beendet. `;}L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:true});}
   queueSave(cur);
   const pay=zArm&&zArm.pay,pres=zArm&&zArm.pres;zArm={id:sp.id,cs,xmp,phase:"done",cost,ap,note,pay,pres,show:true,name:sp.name,elems:zArm&&zArm.elems,req:zArm&&zArm.req,gz:zArm&&zArm.gz,aimed:zArm&&zArm.aimed,done:zArm&&zArm.done,res:zArm&&zArm.res};
