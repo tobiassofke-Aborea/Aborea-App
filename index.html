@@ -1330,6 +1330,7 @@ function renderEmpty(){
     <div class="row-actions" style="justify-content:center;margin-top:16px"><button class="btn pri" id="new1">Neuer Charakter</button><button class="btn" id="ex1">Beispiel laden</button></div></div>`;
 }
 function renderAll(){
+  try{zWeapSync();}catch(e){}
   renderHeader();setTimeout(()=>{try{zDlgRender();}catch(e){}try{zObserve();}catch(e){}},0);
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false"));
   const kt=document.querySelector('nav [data-tab="kampf"]');
@@ -2366,7 +2367,7 @@ function zBloodAfter(sp,z,calc,cs,a,before){
   if(zIs(z,"Blutige Herrschaft")){let e=news.find(x=>x.trg);if(!e)e=mk({});delete e.trg;e.pool={v:0,left:3+(cs-1),n:3+(cs-1),use:0};e.t=e.t||"bis der Pool aufgebraucht ist";
     e.trg=[{t:"Blut entziehen",dice:{dice:[{n:1,s:20}],flat:0},a:"entzogenes Blut",n:""}];}
   if(zIs(z,"Blutdurst")){const e=news.find(x=>x.wb)||news[0];if(e){if(pr&&!pr.ok)e.drain=10+5*(cs-1);
-    else if(cs>1&&e.wb){const v=5*(cs-1);e.wb.hit+=v;e.wb.dmg+=v;e.wb.krit+=v;e.wb.txt.push(`+${v} Treffen/Schaden/Krit (Steigerung)`);}}}
+    else if(cs>1){const v=5*(cs-1),w=cur.weapons.find(x=>x&&x.zk===e.k);if(w){w.hit=zWeapPlus(w.hit,v);w.dmg=zWeapPlus(w.dmg,v);w.krit=String(num(w.krit)+v);}else if(e.wb){e.wb.hit+=v;e.wb.dmg+=v;e.wb.krit+=v;e.wb.txt.push(`+${v} Treffen/Schaden/Krit (Steigerung)`);}}}}
   if(zIs(z,"Blutige Marionette")&&pr&&!pr.ok){(news.length?news:[mk({})]).forEach(e=>{e.t="3 min";e.r=null;});note+=" Misserfolg: Kontrolle nur 3 min, -5 auf alle Würfe der Marionette, kein AP-Bonus.";}
   if(zIs(z,"Leuchtfeuer des Lebens")&&pr&&!pr.ok){const m=cs;(news.length?news:[mk({})]).forEach(e=>{e.t=`${m} min`;e.r=null;});note+=` Misserfolg: wirkt nur ${m} min.`;}
   if(zIs(z,"Gefrorenes Blut")&&pr&&!pr.ok)news.forEach(e=>{if(e.r!=null)e.r=Math.min(e.r,2);});
@@ -2815,7 +2816,8 @@ function zMineDlg(sp,z,a){
 }
 function zTrack(sp,z,calc,cs){
   const before=new Set(zAkt()),msg=zTrack0(sp,z,calc,cs),c=zbChoice(sp,sbParse().ch);
-  const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0,wb=zWb(z,calc,cs);if(wb)wb.self=/^selbst$/i.test(String(z.rw||"").trim())||!!z.o;
+  const cw=calc.fx.filter(f=>/^Waffenwert\b/i.test(f.t||""));
+  const xm=zArm&&zArm.id===sp.id?num(zArm.xmp):0,wb=cw.length?null:zWb(z,calc,cs);if(wb)wb.self=/^selbst$/i.test(String(z.rw||"").trim())||!!z.o;
   const tg=calc.fx.filter(zTrgFx);
   if(tg.length){let e=zAkt().find(x=>!before.has(x));if(!e){let r=0;calc.fx.forEach(f=>{if(f.du&&zDurU(f.du.u)==="r")r=Math.max(r,f.du.n);});e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:r||null,t:r?"":"bis du ihn beendest",konz:!!z.k};zAkt().push(e);}
     e.trg=tg.map(f=>({t:String(f.t||"").replace(/\s*\(.*\)$/,""),dice:f.dice,a:f.a||"",n:f.n||""}));}
@@ -2824,7 +2826,20 @@ function zTrack(sp,z,calc,cs){
     e.ally=al.map(f=>`+${zbDiceTxt(f.dice)} ${f.a||"Schaden"}`).join(" · ");}
   if(wb&&!zAkt().some(e=>!before.has(e)))zAkt().push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:!!z.k});
   if(wb){let first=true;zAkt().forEach(e=>{if(!before.has(e)&&first){e.wb=wb;first=false;}});}
+  if(cw.length){let e=zAkt().find(x=>!before.has(x));if(!e){e={k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:!!z.k};zAkt().push(e);}zConjure(sp,z,cw,e);}
   zAkt().forEach(e=>{if(!before.has(e)){e.sid=sp.id;e.ch=Array.isArray(c)?c.slice():c;if(xm)e.xmp=xm;}});return msg;}
+/* Beschworene Waffen („Waffenwert (Treffen/Schaden/Kritisch)“): landen unter „Waffen“ und lassen sich anlegen, solange der Zauber läuft */
+function zConjure(sp,z,cw,e){
+  const by=re=>cw.find(f=>re.test(`${f.a||""} ${f.t||""}`)),dt=f=>f?(f.dice?zbDiceTxt(f.dice):String(f.w||"")).replace(/\s+/g,"").replace(/^\+/,""):"";
+  const kr=by(/Krit/i),main=cur.kampf.main!=null?cur.weapons[cur.kampf.main]:null,any=cur.weapons.find(w=>w&&w.skill>=0);
+  const note=[z.de,...cw.map(f=>f.n)].filter(Boolean).join(" ");
+  cur.weapons.push({name:sp.name,skill:main&&main.skill>=0?main.skill:any?any.skill:-1,rang:0,hit:dt(by(/Treffen/i)),dmg:dt(by(/Schaden/i)),krit:kr?String(num(String(kr.w||"").replace(/[^\d.,-]/g,""))):"",malus:0,note,zk:e.k});
+  e.weapon=1;}
+const zWeapPlus=(t,v)=>{t=String(t||"");return /[+-]\d+$/.test(t)?t.replace(/([+-]\d+)$/,m=>{const n=+m+v;return (n>=0?"+":"")+n;}):t?`${t}+${v}`:`${v}`;};
+/* Waffe verschwindet, sobald der Zauber unter „Aktive Zauber“ endet */
+function zWeapSync(){if(!cur||!cur.kampf||!Array.isArray(cur.weapons))return;const keys=new Set(zAkt().map(e=>e.k));let gone=false;
+  for(let i=cur.weapons.length-1;i>=0;i--){const w=cur.weapons[i];if(w&&w.zk&&!keys.has(w.zk)){unequip(i);cur.weapons.splice(i,1);["main","off"].forEach(k=>{if(cur.kampf[k]!=null&&cur.kampf[k]>i)cur.kampf[k]--;});gone=true;}}
+  if(gone){wOpen.clear();queueSave(cur);}}
 function zAkWrap(e,h){const d=zBloodAk(e)+(e.trg&&e.trg.length?`<div class="zrolls ztrg">${e.trg.map((x,i)=>`<button class="btn small zroll2" data-act="ztrg" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}${esc(x.t)}: ${esc(zbDiceTxt(x.dice))}</button>`).join("")}</div>`:"")+(e.ally?`<div class="zwbl"><span>Für den Verbündeten: ${esc(e.ally)} auf seinen nächsten Angriff, er würfelt sie dort mit.</span></div>`:"")+(e.wb?`<div class="zwbl"><span>⚔ ${e.wb.off?(e.wb.auto?"verbraucht":"nicht auf deinen Angriffen"):"wirkt auf deine Waffenangriffe"}: ${esc(e.wb.txt.join(" · "))}</span> ${(e.wb.auto&&e.wb.off)||e.wb.self?"":`<button class="linkbtn" data-act="zwbtog" data-k="${e.k}">${e.wb.off?"einschalten":"ausschalten"}</button>`}</div>`:"")+zAkDet(e);return d?h.replace(/<\/div>\s*$/,d+"</div>"):h;}
 const zAkOpen=new Set();
 function zAkDet(e){try{
@@ -3274,7 +3289,7 @@ function renderKampf(){
   <h2>Waffen${ib("waffen")}</h2><div class="card">${cur.weapons.map((x,i)=>{
     const where=cur.kampf.main===i?"main":cur.kampf.off===i?"off":null;
     return `<div class="weapon${where?" eq":""}">
-    <button class="whead full" data-wtog="${i}" aria-expanded="${wOpen.has(i)}"><span class="wchev${wOpen.has(i)?" open":""}" aria-hidden="true">▸</span><b>${esc(x.name||"Waffe "+(i+1))}</b><span class="wsum">${esc([x.hit,x.dmg].filter(Boolean).join(" / "))}</span>${where?`<span class="badge">${where==="main"?"Haupthand":"Nebenhand"}</span>`:`<span class="hint">abgelegt</span>`}</button>
+    <button class="whead full" data-wtog="${i}" aria-expanded="${wOpen.has(i)}"><span class="wchev${wOpen.has(i)?" open":""}" aria-hidden="true">▸</span><b>${esc(x.name||"Waffe "+(i+1))}</b>${x.zk?`<span class="hint">Zauber</span>`:""}<span class="wsum">${esc([x.hit,x.dmg].filter(Boolean).join(" / "))}</span>${where?`<span class="badge">${where==="main"?"Haupthand":"Nebenhand"}</span>`:`<span class="hint">abgelegt</span>`}</button>
     <div class="wbtns full">${where?`<button class="btn small" data-act="unequip" data-i="${i}">Ablegen</button>`:""}
       ${where!=="main"?`<button class="btn small pri" data-act="equip" data-v="main" data-i="${i}">In Haupthand</button>`:""}
       ${where!=="off"?`<button class="btn small${where?"":" pri"}" data-act="equip" data-v="off" data-i="${i}">In Nebenhand</button>`:""}</div>
