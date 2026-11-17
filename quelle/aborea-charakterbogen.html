@@ -2042,15 +2042,21 @@ function zGsAttr(p){const m=String(p&&p.a||"").match(/\+\s*(INT|CHA)(?:-?\s*\/\s
 /* fester Schaden des Zaubers (nach Steigerungen), z. B. „8 Schaden“ */
 function zFlatDmg(calc){const f=calc&&calc.fx.find(f=>/schaden/i.test((f.t||"")+(f.a||""))&&!/GS/.test(f.t||"")&&!f.dice);if(!f)return 0;const w=String(f.w||"").replace(/^'/,"").trim();if(/^\d+$/.test(w))return +w;const m=String(f.t).match(/^(\d+)\s/);return m?+m[1]:0;}
 /* Blutmagie: was bei Erfolg und Misserfolg passiert, gut sichtbar und mit ausgerechneten Werten */
-function zRiskTxt(t,calc){t=String(t||"").trim();const n=zFlatDmg(calc),mx=t.match(/Schaden x(\d+)/i);
-  const parts=t.split("|").map(x=>x.trim()).filter(Boolean).map(x=>esc(x).replace(/(\d+\s*GS-Schaden|[−-]\s*\d+\s*GS-Schaden)/gi,"<b>$1</b>"));
+/* Einheitlich: Erfolg = Zauber wirkt wie beschrieben (+ Zusätze); Misserfolg = Zauber wirkt nicht, wenn nicht anders angegeben */
+const ZWORKS=/^(zauber (gelingt|wirkt)|fluch wirkt|kontrolle|effekt (tritt ein|wirkt))$/i,ZFAILS=/^(zauber misslingt|effekt (tritt nicht ein|wirkt nicht))$/i,ZFAILISH=/GS-Schaden|[−-]\s*\d+\s*GS\b|wird zum Feind|nicht aufgehoben|Fluch bleibt|keinen Sinn/i;
+function zOut(t,ok){let parts=String(t||"").split(/[|;]/).map(x=>x.trim()).filter(Boolean);
+  if(ok){parts=parts.filter(x=>!ZWORKS.test(x));return {lead:parts.length?"Zauber wirkt, dazu:":"Zauber wirkt wie beschrieben",parts};}
+  parts=parts.filter(x=>!ZFAILS.test(x));return {lead:parts.every(x=>ZFAILISH.test(x))?(parts.length?"Zauber wirkt nicht, dazu:":"Zauber wirkt nicht"):"Stattdessen:",parts};}
+const zOutPlain=(t,ok)=>{const o=zOut(t,ok);return o.parts.length?`${o.lead} ${o.parts.join(" · ")}`:o.lead;};
+function zRiskTxt(t,calc,ok){t=String(t||"").trim();const n=zFlatDmg(calc),mx=t.match(/Schaden x(\d+)/i),O=zOut(t,ok);
+  const parts=O.parts.map(x=>"<b>"+esc(x)+"</b>");
   let add="";if(mx&&n)add=` <span class="hint">= ${n*mx[1]} Schaden am Ziel</span>`;
   else if(n&&/Schaden geht auf .*Zaubernde|Schaden .*auf Ziel und Zaubernde/i.test(t))add=` <span class="hint">= ${n} Schaden am Ziel und ${n} an dir (ohne Rüstung)</span>`;
-  return parts.join(" · ")+add;}
+  return `<span class="hint">${O.lead}</span>${parts.length?" "+parts.join(" · "):""}`+add;}
 function zRiskHtml(z,calc,a){const p=z&&z.p;if(!p||!(p.ok||p.no))return "";
   if(zIs(z,"Blutsauger")){const f=(calc&&calc.fx||[])[0]||{},n=a?zSaugVal(a):Math.abs(parseInt(String(f.w||"").replace(/[^\d-]/g,""))||5);
     return `<div class="zrisk"><div class="ok"><span class="lab">Bei Erfolg</span><div>Du heilst dich um <b>${n} LP</b>, das Ziel verliert ${n} LP <span class="hint">· wird direkt auf deine LP gebucht</span></div></div><div class="no"><span class="lab">Bei Misserfolg</span><div>Umgekehrt: Du verlierst <b>${n} LP</b>, das Ziel heilt ${n} LP <span class="hint">· wird direkt von deinen LP abgezogen</span></div></div></div>`;}
-  return `<div class="zrisk"><div class="ok"><span class="lab">Bei Erfolg</span><div>${zRiskTxt(p.ok,calc)||"Zauber gelingt"}</div></div><div class="no"><span class="lab">Bei Misserfolg</span><div>${zRiskTxt(p.no,calc)}</div></div></div>`;}
+  return `<div class="zrisk"><div class="ok"><span class="lab">Bei Erfolg</span><div>${zRiskTxt(p.ok,calc,true)}</div></div><div class="no"><span class="lab">Bei Misserfolg</span><div>${zRiskTxt(p.no,calc,false)}</div></div></div>`;}
 function zProbeFx(txt,calc){const out=[];txt=String(txt||"");
   const n=/Schaden geht auf .*Zaubernde|Schaden .*auf Ziel und Zaubernde/i.test(txt)?zFlatDmg(calc):0;
   if(n){const l0=num(cur.lp.cur);lpLose(n);out.push(`Der Zauber trifft auch dich: ${n} Schaden ohne Rüstung, LP ${l0} → ${cur.lp.cur}`);}
@@ -2065,9 +2071,9 @@ function zProbeFx(txt,calc){const out=[];txt=String(txt||"");
   if(out.length){queueSave(cur);setTimeout(()=>{try{renderHeader();}catch(e){}},0);}
   return out;}
 function zPresHtml(z,a){const r=a&&a.pres;if(!r||!z||!z.p)return "";
-  const parts=String(r.ok?z.p.ok:z.p.no||"").split("|").map(x=>x.trim()).filter(Boolean);
-  if(r.heart)return `<div class="zsumbox good"><span class="lab">Herz der Finsternis: kein GS-Test</span><div>${parts.map(x=>`<b>${esc(x)}</b>`).join("<br>")||"Zauber gelingt"}</div><div class="hint">Negative GS-Folgen nimmt das Herz auf.</div></div>`;
-  return `<div class="zsumbox ${r.ok?"good":"bad"}"><span class="lab">${r.ok?"GS-Test geschafft":"GS-Test nicht geschafft"}${r.how?` · ${esc(r.how)}`:""}</span>${r.frz?`<div><b>${esc(r.frz)}</b></div>`:""}<div>${parts.map(x=>`<b>${esc(x)}</b>`).join("<br>")||(r.ok?"Zauber gelingt":"")}</div>${r.dm?`<div>Gegen das Ziel: <b>${esc(r.dm)}</b></div>`:""}${r.fx&&r.fx.length?`<div class="hint">Schon abgezogen: ${esc(r.fx.join(" · "))}</div>`:""}</div>`;}
+  const O=zOut(r.ok?z.p.ok:z.p.no,!!r.ok),parts=O.parts,body=`<span class="hint">${O.lead}</span>${parts.length?"<br>"+parts.map(x=>`<b>${esc(x)}</b>`).join("<br>"):""}`;
+  if(r.heart)return `<div class="zsumbox good"><span class="lab">Herz der Finsternis: kein GS-Test</span><div>${body}</div><div class="hint">Negative GS-Folgen nimmt das Herz auf.</div></div>`;
+  return `<div class="zsumbox ${r.ok?"good":"bad"}"><span class="lab">${r.ok?"GS-Test geschafft":"GS-Test nicht geschafft"}${r.how?` · ${esc(r.how)}`:""}</span>${r.frz?`<div><b>${esc(r.frz)}</b></div>`:""}<div>${body}</div>${r.dm?`<div>Gegen das Ziel: <b>${esc(r.dm)}</b></div>`:""}${r.fx&&r.fx.length?`<div class="hint">Schon abgezogen: ${esc(r.fx.join(" · "))}</div>`:""}</div>`;}
 function zbProbeHtml(sp,z,calc){
   const p=z.p;if(!p)return "";
   const n2=/ab dem 2\. Wirken/i.test(p.d||""),cnt=num((cur.zCnt||{})[sp.id]);
@@ -2079,7 +2085,7 @@ function zbProbeHtml(sp,z,calc){
   else lab=`${esc(p.a)}-Test${/fluch/i.test(p.d||"")?" (Fluch)":p.d?" · "+esc(p.d):""}${bon?` · +${bon} Bonus`:""}`;
  return `<div class="zprobe"><div class="lab">Probe der Zaubernden</div><div class="zplab">${lab}</div>
     <button class="btn small zroll" data-act="zprobe" data-spell="${sp.id}">${ICON_DICE_S}${lab}</button>
-    <div class="hint">${zTiers(p)?`<ul class="zul">${zTiers(p).map(x=>`<li><b>${esc(x.lab)}</b>: ab ${x.th}</li>`).join("")}</ul>Vor dem Wurf legst du fest, wie viele du stellst. Erreichst du die Schwelle nicht: <b>${esc(p.no||"Strafe")}</b>`:/fluch/i.test(p.d||"")?`${/verfluchen/i.test(p.ok||"")?"Verfluchen: Dein Wurf ist die Stärke des Fluchs.<br>":""}Fluch brechen: Du würfelst, die Spielleitung kennt die Stärke des Fluchs und sagt dir, ob er bricht.`:zIsBlood(sp)?"Was bei Erfolg und Misserfolg passiert, steht oben bei den Effekten.":`${p.ok?`Erfolg: ${esc(p.ok)}`:""}${p.no?`<br>Misserfolg: ${esc(p.no)}`:""}`}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
+    <div class="hint">${zTiers(p)?`<ul class="zul">${zTiers(p).map(x=>`<li><b>${esc(x.lab)}</b>: ab ${x.th}</li>`).join("")}</ul>Vor dem Wurf legst du fest, wie viele du stellst. Erreichst du die Schwelle nicht: <b>${esc(p.no||"Strafe")}</b>`:/fluch/i.test(p.d||"")?`${/verfluchen/i.test(p.ok||"")?"Verfluchen: Dein Wurf ist die Stärke des Fluchs.<br>":""}Fluch brechen: Du würfelst, die Spielleitung kennt die Stärke des Fluchs und sagt dir, ob er bricht.`:zIsBlood(sp)?"Was bei Erfolg und Misserfolg passiert, steht oben bei den Effekten.":`${p.ok?`Erfolg: ${esc(zOutPlain(p.ok,true))}`:""}${p.no?`<br>Misserfolg: ${esc(zOutPlain(p.no,false))}`:""}`}${n2?`<br>Schon ${cnt}× gewirkt · <button class="linkbtn" data-act="zcnt0" data-spell="${sp.id}">zurücksetzen</button>`:""}</div></div>`;
 }
 function zbOderHtml(sp,z,calc,ch){
   if(!calc.oder||calc.slots<=0)return "";
@@ -2120,7 +2126,7 @@ function zbAct(b){
         (t,G)=>{const d=((G.find(x=>x.tens).vals[0]%10)*10+G.find(x=>x.ones).vals[0]%10)||100,w=aw?G.filter(x=>!x.tens&&!x.ones).reduce((s,x)=>s+x.vals.reduce((u,v)=>u+(x.neg?v:-v),0),0):0;
           const ok=t<=gs,how=`W100 ${d}${aw?` − ${aw.lab} ${w}`:""}${bon?` − Bonus ${bon}`:""} = ${t} ${ok?"≤":">"} GS ${gs}`,txt=ok?p.ok:p.no;
           if(/GS|Entzieht dem Zaubernden|Zaubernde/i.test(txt||""))snap("GS-Test");const fx=zProbeFx(txt,calc),hi=aw?G.filter(x=>!x.tens&&!x.ones&&x.neg).some(x=>x.vals.some(v=>v>=5)):false,mx=String(txt||"").match(/Schaden x(\d+)/i),bd=zFlatDmg(calc);if(A)A.pres={ok,fx,how,frz:zIs(z,"Gefrorenes Blut")&&ok?(hi?"Eingefroren: ein W6 zeigt 5 oder 6. Kompletter Stillstand für 3 Runden.":"Nur verlangsamt: kein W6 zeigt 5 oder 6. Bewegung kostet 2 AP, 3 Runden."):"",dm:mx&&bd?`${bd} × ${mx[1]} = ${bd*mx[1]} Schaden`:""};
-          return {tag:`${ok?"Geschafft":"Nicht geschafft"} (${how}): ${txt||""}${fx.length?" · "+fx.join(" · "):""}`,cls:ok?"ok":"bad"};});return true;}
+          return {tag:`${ok?"Geschafft":"Nicht geschafft"} (${how}): ${zOutPlain(txt,ok)}${fx.length?" · "+fx.join(" · "):""}`,cls:ok?"ok":"bad"};});return true;}
     const A=zbAttr(p.a),key=A==="CHA"?"Cha":A==="INT"?"Int":magAttr();
     const n=num(cur.attr[key].b),groups=n>0?[{label:key==="Cha"?"CHA":"INT",n,s:6}]:[{label:"Plus",n:1,s:6},{label:"Minus",n:1-n,s:6,neg:true}];
     const th=String(p.d||"").match(/^\d+(\s*\/\s*\d+)*$/)?String(p.d).split("/").map(x=>+x):null,T=zTiers(p);
