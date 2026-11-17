@@ -664,7 +664,7 @@ body.zshake .wrap{animation:zsh .42s linear}
 .znote{font-size:.84rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
 .zsteig ul{margin:4px 0 0;padding-left:18px}.zsteig li{margin:2px 0}
 .zspell .zfxs .zrolls,.zspell .zprobe .zroll{display:none}.zplab{font-weight:600;font-size:.92rem}
-.zft{font-weight:600;font-size:.94rem;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.zft{font-weight:600;font-size:.94rem;display:flex;align-items:center;gap:4px;flex-wrap:wrap}.zft .zfs{display:none}.zft .zfd{flex-basis:100%;font-weight:400;line-height:1.35}.zft .zfd b{font-weight:650}
 .zmeta{font-size:.84rem;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center}
 .zt{font-size:.86rem}
 .zrolls{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
@@ -2066,11 +2066,11 @@ function zOutVal(t,calc){const m=String(t).trim().match(/^(½|x\d+|[+\-−]?\d*W
   const f=calc&&calc.fx.find(f=>f.d0&&pl&&zNz(pl)===zNz(f.d0));if(f)pl=f.d||pl;
   return {v,art,tx,pl};}
 function zOutTile(x,calc){let t=String(x).trim(),pill="";
-  {const o=zOutVal(t,calc);if(o)return `<div class="zfx"><div class="zfxh"><div class="zval"><b>${esc(o.v)}</b><span>${esc(o.art)}</span></div><div class="zfxt"><div class="zft">${esc(o.tx)}</div>${o.pl?`<div class="zmeta"><span class="zpill">${esc(o.pl)}</span></div>`:""}</div></div></div>`;}
+  {const o=zOutVal(t,calc);if(o)return `<div class="zfx"><div class="zfxh"><div class="zval"><b>${esc(o.v)}</b><span>${esc(o.art)}</span></div><div class="zfxt"><div class="zft">${zFxT(o.tx)}</div>${o.pl?`<div class="zmeta"><span class="zpill">${esc(o.pl)}</span></div>`:""}</div></div></div>`;}
   const du=t.match(ZDURRE);if(du){pill=du[1];t=t.slice(0,du.index).trim();}
   const m=t.match(/^([+\-−]?\s*\d*W\d+(?:\s*\+\s*\d+)?|[+\-−]?\d+(?:[.,]\d+)?%?)\s+(.+)$/);
   const badge=m?`<div class="zval"><b>${esc(m[1].replace(/\s+/g,""))}</b><span>${esc(m[2])}</span></div>`:"";
-  return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt">${m?"":`<div class="zft">${esc(t)}</div>`}${pill?`<div class="zmeta"><span class="zpill">${esc(pill)}</span></div>`:""}</div></div></div>`;}
+  return `<div class="zfx"><div class="zfxh">${badge}<div class="zfxt">${m?"":`<div class="zft">${zFxT(t)}</div>`}${pill?`<div class="zmeta"><span class="zpill">${esc(pill)}</span></div>`:""}</div></div></div>`;}
 const ZVALRE=/^(½|\d+:\d+|[+\-−]?\s*\d*W\d+(?:\s*\+\s*\d+)?|[+\-−]?\d+(?:[.,]\d+)?%?)\s+((?:\S*[^\s:]|:)(?:\s(?:\S*[^\s:]|:)){0,2})$/;
 const ZDURP=/^(\d+\s*(?:Runden?|min|h|Stunden?|Tage?))(\s+pro Stufe)?(\s*\(fest\))?$/i;
 function zOutTiles(parts,calc,rowFn){const vals=[],txt=[];
@@ -2323,7 +2323,7 @@ function zBloodAfter(sp,z,calc,cs,a,before){
   const mk=(o)=>{const e=Object.assign({k:nk(),n:sp.name,st:cs,r:null,t:"",konz:false,sid:sp.id},o);L.push(e);news.push(e);return e;};
   const H=zHeart();if(H&&zHeartFor(sp)){H.heart.sum+=sp.level;H.heart.gs=Math.max(0,H.heart.gs-sp.level);note+=` Das Herz nimmt ${sp.level} GS-Schaden auf (gesammelt ${H.heart.sum}).`;}
   if(z.fl&&ok){if(!news.length)mk({t:"dauerhaft"});news.forEach(e=>{e.fl=1;if(e.r==null&&!e.t)e.t="dauerhaft";if(a&&a.fst!=null)e.fst=a.fst;});}
-  if(pr&&!pr.ok&&z.p&&(["Fluch des Unheils","Infektion","Aderlass"].includes(z.n)||/(trifft|geht auf|geht in) (den )?(Zaubernden|eigenen Körper)|trifft dich|wirkt auf dich/i.test(z.p.no||""))){
+  if(pr&&!pr.ok&&z.p&&(["Fluch des Unheils","Infektion","Aderlass"].includes(z.n)||/(trifft|geht auf|geht in) (den )?(Zaubernden?\b|eigenen Körper)|trifft dich|wirkt auf dich/i.test(z.p.no||""))){
     if(!news.length)mk({});const f0=calc.fx[0]||{},w=String(f0.w||"").trim();
     news.forEach(e=>{e.self=1;e.n=sp.name+" (auf dir)";if(z.fl){e.fl=1;if(e.r==null&&!e.t)e.t="dauerhaft";if(a&&a.fst!=null)e.fst=a.fst;}e.selfTxt=w&&f0.a?`${w} ${f0.a}`:String(f0.t||"");});
     note+=` ${sp.name} hat dich selbst getroffen, siehe „Aktive Zauber“.`;}
@@ -2841,7 +2841,11 @@ function zBauDlg(sp,z,a){if(!z)return "";const calc=zbCalc(z,a.cs,zbChoice(sp,sb
   const f=z.fx.find(zBauF),base=f?zBauLp(f):bi.lp,pl=bi.lp-base,lab=bi.n>1?(bi.part(1).startsWith("Element")?"Elemente":"Teile"):"";
   return `<div class="zsumbox"><span class="lab">Haltbarkeit</span><div><b>${bi.n>1?`${bi.n} ${lab} je ${bi.lp} LP`:`${bi.lp} LP`}</b>${pl?` <span class="hint">(${base} + ${pl} durch Steigerung${num(a.xmp)?" und zusätzliches Mana":""})</span>`:""}</div><div class="hint">Unter „Aktive Zauber“ ziehst du Schaden ab${bi.n>1?", jedes Teil einzeln":""}.</div></div>`;}
 /* Stufen wie „höchstens 60 LP = 1 min taub; …“ als Liste */
-function zFxT(t){t=String(t||"");const m=t.match(/^(.*?):\s*(höchstens \d+ LP\s*=.*)$/i);if(!m)return esc(t);
+/* Werte im Fließtext hervorheben (Würfel, LP, Schaden …) */
+const zHiV=x=>esc(x).replace(/((?<![\wÄÖÜäöüß-])\d*W\d+(?:\s*\+\s*\d*W?\d+)*(?:\s+(?:LP|Schaden))?|\b\d+(?:[.,]\d+)?\s*(?:LP|Schaden|AP|GS|Runden?|min)\b)/g,"<b>$1</b>");
+/* „Bezeichnung: Details“ → Bezeichnung als Titel, Details normal darunter */
+function zFxT(t){t=String(t||"");const m=t.match(/^(.*?):\s*(höchstens \d+ LP\s*=.*)$/i);
+  if(!m){const k=t.match(/^([^:]{2,40}):\s+(.+)$/);if(k&&k[2].length<12&&!/\d/.test(k[2]))return esc(t);return k?`<span class="zfl">${esc(k[1])}</span><span class="zfs">: </span><span class="zfd">${zHiV(k[2])}</span>`:esc(t);}
   return `${esc(m[1])}:<ul class="zul ztl">${m[2].split(/;\s*/).map(x=>{const y=x.match(/höchstens (\d+) LP\s*=\s*(.*)/i);return y?`<li><b>bis ${y[1]} LP</b>: ${esc(y[2])}</li>`:`<li>${esc(x)}</li>`;}).join("")}</ul>`;}
 function zPrevHtml(calc,notes){
   const li=calc.fx.map(f=>{if(f._skip)return "";const v=f.dice?`${zbDiceTxt(f.dice)} ${f.a||""}`:f.w?`${f.w} ${f.a||""}`:"";
