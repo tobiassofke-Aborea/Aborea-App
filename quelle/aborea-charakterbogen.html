@@ -1880,7 +1880,7 @@ function kampfDo(b){
       const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st);
       if(!zArm||zArm.id!==sp.id||zArm.phase!=="armed")return;
       zArm.aimed=true;zStepKey="aim";renderAll();zAim(sp,sp.level+cs);return;}
-    case "zresok":zRes=null;zResRender();return;
+    case "zresok":zRes=null;zMagicHold=false;zResRender();return;
     case "zfin":{
       const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return;
       const lname=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",z=zbFor(sp,lname);
@@ -2264,6 +2264,7 @@ function zKind(z,listName){
   return "mix";
 }
 const zElemKind=a=>{const e=a&&a.elems&&a.elems[0];return e?{Feuer:"fire",Luft:"air",Erde:"earth",Wasser:"water"}[e]:null;};
+let zMagicHold=false;
 function zMagic(kind){
   const old=document.querySelector(".zmagic");if(old)old.remove();
   if(calmMotion()){const f=document.createElement("div");f.className="zmagic zflash k-"+kind;document.body.appendChild(f);setTimeout(()=>f.remove(),450);return;}
@@ -2271,9 +2272,9 @@ function zMagic(kind){
   const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
   const c=cv.getContext("2d");c.scale(dpr,dpr);
   const R=(a,b)=>a+Math.random()*(b-a),pick=a=>a[Math.floor(Math.random()*a.length)];
-  const P=[],T=1500,t0=performance.now(),kinds=kind==="mix"?["fire","ice","storm","earth"]:[kind];
+  const P=[],T=1500;let t0=performance.now(),cyc=0;const kinds=kind==="mix"?["fire","ice","storm","earth"]:[kind];
   const bolts=[];
-  kinds.forEach(k=>{
+  const spawn=()=>{bolts.length=0;kinds.forEach(k=>{
     const n=kind==="mix"?40:90;
     for(let i=0;i<n;i++){
       const p={k,x:R(0,W),y:H+R(0,60),vx:R(-.4,.4),vy:R(-7,-3),s:R(3,9),r:R(0,6.3),vr:R(-.1,.1),d:R(0,500),life:R(700,1300)};
@@ -2291,11 +2292,12 @@ function zMagic(kind){
       P.push(p);
     }
     if(k==="storm")for(let i=0;i<3;i++)bolts.push({at:i*260+R(0,120),x:R(W*.15,W*.85),pts:null});
-  });
+  });};spawn();
   const bolt=(x)=>{const pts=[[x,0]];let y=0;while(y<H*R(.55,.85)){y+=R(20,50);x+=R(-35,35);pts.push([x,y]);}return pts;};
   function star(x,y,s){c.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,r=i%2?s*.35:s;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);}c.closePath();c.fill();}
   function frame(now){
-    const t=now-t0,fade=t>T-400?Math.max(0,(T-t)/400):Math.min(1,t/150);
+    if(zMagicHold&&now-t0>=T-400){t0=now;cyc++;P.length=0;spawn();}
+    const t=now-t0,fade=t>T-400?Math.max(0,(T-t)/400):cyc?1:Math.min(1,t/150);
     c.clearRect(0,0,W,H);c.globalAlpha=1;
     // Hintergrund-Schimmer
     const bg={fire:"255,120,40",ice:"150,210,255",water:"60,140,220",earth:"140,100,50",air:"220,230,240",storm:"160,200,255",holy:"255,215,110",wild:"110,180,90",blood:"150,0,10",white:"240,248,255",arcane:"150,100,255",mix:"200,150,255"}[kind];
@@ -2323,7 +2325,7 @@ function zMagic(kind){
       else{c.beginPath();c.arc(p.x,p.y,p.k==="fire"?p.s*(1-age/p.life*.6):p.s,0,6.3);c.fill();}
     });
     c.globalCompositeOperation="source-over";c.globalAlpha=1;
-    if(t<T)requestAnimationFrame(frame);else cv.remove();
+    if(t<T&&cv.isConnected)requestAnimationFrame(frame);else cv.remove();
   }
   requestAnimationFrame(frame);
   if(kind==="earth"||kind==="mix"){document.body.classList.add("zshake");setTimeout(()=>document.body.classList.remove("zshake"),420);}
@@ -2502,7 +2504,7 @@ function zExec(sp,cs,listName,z){
   else if(/K\*/.test(sp.details||"")){const L=zAkt(),old=zKonz();if(old){L.splice(L.indexOf(old),1);note=`Konzentration auf ${old.n} beendet. `;}L.push({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:null,t:"",konz:true});}
   queueSave(cur);
   const pay=zArm&&zArm.pay,pres=zArm&&zArm.pres;zArm={id:sp.id,cs,xmp,phase:"done",cost,ap,note,pay,pres,show:true,name:sp.name,elems:zArm&&zArm.elems,req:zArm&&zArm.req,gz:zArm&&zArm.gz,aimed:zArm&&zArm.aimed,done:zArm&&zArm.done,res:zArm&&zArm.res};
-  try{zMagic(zElemKind(zArm)||zKind(z,listName));}catch(e){}
+  zMagicHold=true;try{zMagic(zElemKind(zArm)||zKind(z,listName));}catch(e){}
   buzz([25,50,70]);
   renderAll();
   const me=zArm;clearTimeout(rollTimer);$("#roll").innerHTML="";
