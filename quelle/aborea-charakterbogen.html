@@ -551,6 +551,7 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .kedit{display:grid;gap:2px}.kedit .lab{font-size:.62rem}.kedit .kost{width:64px;min-height:36px;text-align:center}
 .srow .mv{display:flex;gap:6px}
 .srow .mv .btn{min-width:40px;padding:0 8px}
+#zres{position:fixed;inset:0;z-index:32;background:rgba(20,15,10,.5);display:flex;align-items:center;justify-content:center;padding:16px}.zresb{gap:14px}.zrn{font-size:1.25rem;font-weight:700}.zrst{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:var(--line)}.zrst b{font-size:1.1rem}.zrst span{font-size:.8rem;opacity:.8}.zrst.ok{background:color-mix(in srgb,var(--good,#3f7d4a) 16%,transparent);color:var(--good,#3f7d4a)}.zrst.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}.zrl{margin:0;padding-left:18px;display:grid;gap:6px}.zrl li.big{font-size:1.05rem;font-weight:700}.zresb .btn.pri{width:100%}
 #zdlg{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
 @media (min-width:600px){#zdlg{align-items:center}}
 body.zdlgon #roll{z-index:35;top:calc(8px + env(safe-area-inset-top,0px));bottom:auto}
@@ -1879,6 +1880,7 @@ function kampfDo(b){
       const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st);
       if(!zArm||zArm.id!==sp.id||zArm.phase!=="armed")return;
       zArm.aimed=true;zStepKey="aim";renderAll();zAim(sp,sp.level+cs);return;}
+    case "zresok":zRes=null;zResRender();return;
     case "zfin":{
       const {db,ch}=sbParse();const sp=db&&(db.spells||[]).find(x=>x.id===b.dataset.spell);if(!sp)return;
       const lname=((db.spellLists||[]).find(l=>l.id===sp.listId)||{}).name||"",z=zbFor(sp,lname);
@@ -2402,6 +2404,18 @@ function zBloodAfter(sp,z,calc,cs,a,before){
     note+=` Blutopfer: −${lc} LP (${l0} → ${cur.lp.cur}), +${n} Mana${n>add?` (davon ${n-add} temporär)`:""}.`;}
   return note;}
 /* Zuletzt gewirkt: 1 Runde lang unter „Aktive Zauber“, mit allem, was passiert ist */
+/* Ergebnisfenster nach dem Wirken */
+let zRes=null,zResLast=null;
+function zResRender(){let el=$("#zres");if(!zRes){if(el)el.remove();return;}
+  if(!el){el=document.createElement("div");el.id="zres";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Ergebnis");document.body.appendChild(el);}
+  const R=zRes,gl=R.lines.find(x=>/^GS-Test /.test(x)),how=gl&&(gl.match(/\((.*)\)$/)||[])[1],rest=R.lines.filter(x=>x!==gl&&!/^Herz der Finsternis: kein GS-Test$/.test(x));
+  const st=R.heart?["ok","Gelungen","Herz der Finsternis: kein GS-Test"]:R.ok===true?["ok","GS-Test geschafft",how]:R.ok===false?["bad","GS-Test nicht geschafft",how]:["","Gewirkt",""];
+  el.innerHTML=`<div class="zdbox zresb"><div><span class="lab">Ergebnis</span><div class="zrn">${esc(R.name)} <span class="hint">Stufe ${R.cs}</span></div></div>
+    <div class="zrst ${st[0]}"><b>${st[1]}</b>${st[2]?`<span>${esc(st[2])}</span>`:""}</div>
+    ${rest.length?`<ul class="zrl">${rest.map(x=>`<li${/^Gegen das Ziel|^Das Herz explodiert|^Der Zauber trifft auch dich|^Die Explosion/.test(x)?' class="big"':""}>${esc(x)}</li>`).join("")}</ul>`:""}
+    <div class="hint">${esc(R.cost)}${R.entry?" · steht jetzt unter „Aktive Zauber“":""}</div>
+    <button class="btn pri" data-act="zresok">Weiter</button></div>`;
+  setTimeout(()=>{const b=el.querySelector("[data-act=zresok]");if(b)b.focus();},30);}
 function zLastCast(sp,z,calc,cs,a,note,before){const L=zAkt();for(let i=L.length-1;i>=0;i--){const e=L[i];if(e.last&&e.lastOnly!==false&&!(before&&!before.has(e)&&!e.last))L.splice(i,1);}
   const lines=[],res=(a&&a.res)||{},req=(a&&a.req)||[];
   if(res.aim)lines.push(`Zielwurf: ${res.aim.t}`);
@@ -2415,6 +2429,7 @@ function zLastCast(sp,z,calc,cs,a,note,before){const L=zAkt();for(let i=L.length
   if(String(note||"").trim())lines.push(String(note).trim());
   L.forEach(e=>{if(e.fresh){delete e.fresh;if(e.lastOnly===false)delete e.last;}});
   const news=before?L.filter(e=>!before.has(e)&&!e.last):[];const cost=`${num(a&&a.cost)} ${zPayU(a)}`;
+  const pr0=a&&a.pres;zResLast={name:sp.name,lines:lines.slice(),ok:pr0?!!pr0.ok:null,heart:!!(pr0&&pr0.heart),entry:news.length>0};
   if(news.length){const e=news[0];e.fresh=1;e.lastOnly=false;e.last={eff:[],lines,cost};return;}
   L.unshift({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:1,t:"",konz:false,fresh:1,last:{eff,lines,cost}});}
 function zBloodAk(e){const o=[];
@@ -2490,7 +2505,10 @@ function zExec(sp,cs,listName,z){
   try{zMagic(zElemKind(zArm)||zKind(z,listName));}catch(e){}
   buzz([25,50,70]);
   renderAll();
-  const me=zArm;setTimeout(()=>{if(zArm===me&&me.show){me.show=false;renderAll();showMsg(`${sp.name} gewirkt: −${cost} ${pu}, −${ap} AP.${note?" "+note:""}`);}},1900);
+  const me=zArm;clearTimeout(rollTimer);$("#roll").innerHTML="";
+  const R=zResLast&&zResLast.name===sp.name?zResLast:{lines:String(note||"").trim()?[String(note).trim()]:[],ok:null,entry:zAkt().some(e=>e.fresh&&e.lastOnly===false)};zResLast=null;
+  zRes={name:sp.name,cs,cost:free?"keine Kosten (Rune)":`−${cost} ${pu}${ap?` · −${ap} AP`:""}`,...R};
+  setTimeout(()=>{if(zArm===me&&me.show){me.show=false;renderAll();}zResRender();},700);
   return true;
 }
 function zAim(sp,cost){
