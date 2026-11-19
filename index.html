@@ -569,7 +569,7 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .kedit{display:grid;gap:2px}.kedit .lab{font-size:.62rem}.kedit .kost{width:64px;min-height:36px;text-align:center}
 .srow .mv{display:flex;gap:6px}
 .srow .mv .btn{min-width:40px;padding:0 8px}
-#zres{position:fixed;inset:0;z-index:32;background:rgba(20,15,10,.5);display:flex;align-items:center;justify-content:center;padding:16px}.zresb{gap:14px}.zrn{font-size:1.25rem;font-weight:700}.zrst{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:var(--line)}.zrst b{font-size:1.1rem}.zrst span{font-size:.8rem;opacity:.8}.zrst.ok{background:color-mix(in srgb,var(--good,#3f7d4a) 16%,transparent);color:var(--good,#3f7d4a)}.zrst.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}.zrl{margin:0;padding-left:18px;display:grid;gap:6px}.zrl li.big{font-size:1.05rem;font-weight:700}.zresb .btn.pri{width:100%}
+#zres{position:fixed;inset:0;z-index:32;background:rgba(20,15,10,.5);display:flex;align-items:center;justify-content:center;padding:16px}.zresb{gap:14px}.zrn{font-size:1.25rem;font-weight:700}.zrst{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:var(--line)}.zrst b{font-size:1.1rem}.zrst span{font-size:.8rem;opacity:.8}.zrst.ok{background:color-mix(in srgb,var(--good,#3f7d4a) 16%,transparent);color:var(--good,#3f7d4a)}.zrst.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}.zrl{margin:0;padding-left:18px;display:grid;gap:6px}.zre{margin-top:4px}.zrl li.big{font-size:1.05rem;font-weight:700}.zresb .btn.pri{width:100%}
 #zdlg{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
 @media (min-width:600px){#zdlg{align-items:center}}
 body.zdlgon #roll{z-index:35;top:calc(8px + env(safe-area-inset-top,0px));bottom:auto}
@@ -2461,7 +2461,8 @@ function zResRender(){let el=$("#zres");if(!zRes){if(el)el.remove();return;}
   const st=R.heart?["ok","Gelungen","Herz der Finsternis: kein GS-Test"]:R.ok===true?["ok","GS-Test geschafft",how]:R.ok===false?["bad","GS-Test nicht geschafft",how]:["","Gewirkt",""];
   el.innerHTML=`<div class="zdbox zresb"><div><span class="lab">Ergebnis</span><div class="zrn">${esc(R.name)} <span class="hint">Stufe ${R.cs}</span></div></div>
     <div class="zrst ${st[0]}"><b>${st[1]}</b>${st[2]?`<span>${esc(st[2])}</span>`:""}</div>
-    ${rest.length?`<ul class="zrl">${rest.map(x=>`<li${/^Gegen das Ziel|^Das Herz explodiert|^Der Zauber trifft auch dich|^Die Explosion/.test(x)?' class="big"':""}>${esc(x)}</li>`).join("")}</ul>`:""}
+    ${R.eff&&R.eff.length?`<div><span class="lab">Wirkung</span><ul class="zrl zre">${R.eff.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+    ${rest.length?`<div><span class="lab">Gewürfelt und Folgen</span><ul class="zrl zre">${rest.map(x=>`<li${/^Gegen das Ziel|^Das Herz explodiert|^Der Zauber trifft auch dich|^Die Explosion/.test(x)||(/:\s*\d+$/.test(x)&&!/^Zielwurf/.test(x))?' class="big"':""}>${esc(x)}</li>`).join("")}</ul></div>`:""}
     <div class="hint">${esc(R.cost)}${R.entry?" · steht jetzt unter „Aktive Zauber“":""}</div>
     <button class="btn pri" data-act="zresok">Weiter</button></div>`;
   setTimeout(()=>{const b=el.querySelector("[data-act=zresok]");if(b)b.focus();},30);}
@@ -2475,11 +2476,11 @@ function zLastCast(sp,z,calc,cs,a,note,before){const L=zAkt();for(let i=L.length
     const o=zOutPlain(txt,!!pr.ok,calc);if(o&&!/^(kein Effekt|wirkt wie beschrieben)$/i.test(o))lines.push((pr.ok?"Dazu: ":"Folge: ")+o);if(pr.frz)lines.push(pr.frz);if(pr.dm)lines.push("Gegen das Ziel: "+pr.dm);(pr.fx||[]).forEach(x=>lines.push(x));}
   if(a&&a.stormList&&a.stormList.length)lines.push("Schaden: "+a.stormList.map((x,i)=>`G${i+1} ${num(x.w12)+num(x.w6)}`).join(" · ")+` · Heilung ${a.stormV}`);
   if(a&&a.fst!=null)lines.push(`Fluchstärke ${a.fst}`);
-  const eff=(!pr||pr.ok)?calc.fx.map(f=>{const v=f.dice?zbDiceTxt(f.dice)+" "+(f.a||""):f.w?`${f.w} ${f.a||""}`:"";return [f.t,v.trim()&&!String(f.t).includes(v.trim())?v.trim():"",f.f,f.d].filter(Boolean).join(" · ");}).filter(Boolean):[];
+  const eff=(!pr||pr.ok)?calc.fx.map(f=>{const v=f.dice?zbDiceTxt(f.dice)+" "+(f.a||""):f.w?`${f.w} ${f.a||""}`:"";return [f.t,v.trim()&&!String(f.t).includes(v.trim())?v.trim():"",f.f,f.z,f.d,f.ta?`${f.tw||"Ziel"} würfelt ${f.ta}-Test${f.tdN!=null?" "+f.tdN:/^GS-Wert$/i.test(f.td||"")?" auf GS":""}`:""].filter(Boolean).join(" · ");}).filter(Boolean):[];
   if(String(note||"").trim())lines.push(String(note).trim());
   L.forEach(e=>{if(e.fresh){delete e.fresh;if(e.lastOnly===false)delete e.last;}});
   const news=before?L.filter(e=>!before.has(e)&&!e.last):[];const cost=`${num(a&&a.cost)} ${zPayU(a)}`;
-  const pr0=a&&a.pres;zResLast={name:sp.name,lines:lines.slice(),ok:pr0?!!pr0.ok:null,heart:!!(pr0&&pr0.heart),entry:news.length>0};
+  const pr0=a&&a.pres;zResLast={name:sp.name,eff:eff.slice(),lines:lines.slice(),ok:pr0?!!pr0.ok:null,heart:!!(pr0&&pr0.heart),entry:news.length>0};
   if(news.length){const e=news[0];e.fresh=1;e.lastOnly=false;e.last={eff:[],lines,cost};return;}
   L.unshift({k:Math.random().toString(36).slice(2,8),n:sp.name,st:cs,r:1,t:"",konz:false,fresh:1,last:{eff,lines,cost}});}
 function zBloodAk(e){const o=[];
