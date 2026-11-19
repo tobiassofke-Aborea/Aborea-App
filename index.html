@@ -2526,7 +2526,7 @@ function zExec(sp,cs,listName,z){
   const me=zArm;clearTimeout(rollTimer);$("#roll").innerHTML="";
   const R=zResLast&&zResLast.name===sp.name?zResLast:{lines:String(note||"").trim()?[String(note).trim()]:[],ok:null,entry:zAkt().some(e=>e.fresh&&e.lastOnly===false)};zResLast=null;
   zRes={name:sp.name,cs,cost:free?"keine Kosten (Rune)":`−${cost} ${pu}${ap?` · −${ap} AP`:""}`,...R};
-  setTimeout(()=>{if(zArm===me&&me.show){me.show=false;renderAll();}zResRender();},700);
+  me.show=false;renderAll();zResRender();
   return true;
 }
 function zAim(sp,cost){
