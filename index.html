@@ -655,6 +655,7 @@ body.zdlgon #roll .box{margin-top:0}
 .zaoe .grid rect{fill:none;stroke:var(--line);stroke-width:1}.zaoe .grid rect.on{fill:color-mix(in srgb,var(--accent) 38%,transparent)}
 .zaoe .shp *{fill:none;stroke:var(--accent);stroke-width:2}
 .zaoe .me{fill:var(--ink)}.zaoe text{font-size:9px;fill:var(--muted);text-anchor:middle;font-family:var(--body)}.zaoe .tg{stroke:var(--ink);stroke-width:2}
+.zakc{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;min-width:0}.zakc.konz{border-left-color:var(--mp)}.zakc.warn{border-left-color:var(--bad)}.zakc>summary{list-style:none;display:flex;align-items:center;gap:6px;padding:6px 10px;min-height:38px;cursor:pointer;font-size:.9rem;min-width:0}.zakc>summary::-webkit-details-marker{display:none}.zakc>summary .chev{display:inline-block;width:10px;color:var(--muted);transition:transform .15s}.zakc[open]>summary .chev{transform:rotate(90deg)}.zakc .zn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}.zakc .zs{color:var(--muted);font-size:.72rem;white-space:nowrap}.zakc .zk{font-size:.62rem;font-weight:700;color:var(--mp);border:1px solid currentColor;border-radius:4px;padding:0 3px}.zakc .zc{margin-left:auto;display:flex;gap:4px;min-width:0;overflow:hidden;justify-content:flex-end}.zakc .zc i{font-style:normal;font-size:.72rem;padding:1px 6px;border-radius:9px;background:var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:11em}.zakc .zc i.b{color:var(--mp)}.zakc .zc i.w{color:var(--bad);font-weight:700}.zakc .zdr{display:inline-flex;align-items:center;gap:3px;font-size:.74rem;color:var(--muted);white-space:nowrap;flex:none}.zakc .zc:empty+.zdr{margin-left:auto}.zakc svg,.zgi svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.zakc>.zakb{padding:0 10px 8px}.zakc .zak{border:0;box-shadow:none;padding:0;background:none}.zakc .zak>.zsumh>div:first-child{display:none}.zakc .zak>.zsumh{justify-content:flex-end}.zgi{display:inline-flex;vertical-align:-1px;margin-right:4px}.zgn{opacity:.7}
 .zgrp{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.8;margin:2px 0 -4px 2px}.zakt.card{display:grid;gap:8px;padding:0;background:none;border:0}.zak{display:grid;gap:6px;padding:8px 12px 6px;min-width:0;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}.zak:has(.ktag){border-left-color:var(--mp)}.zak .zsumh b{font-size:1rem}.zak .btn.small{min-height:0;height:34px;padding-top:0;padding-bottom:0}.zak .zslp{gap:6px}.zak .zbar{height:5px}.zak .zsumh .btn{padding-top:6px;padding-bottom:6px}.zak .zakd{margin-top:2px;padding-top:2px}.zak .zakd summary{padding:2px 0}.zak>*{min-width:0}.zslp .btn{white-space:nowrap}.zslp{flex-wrap:wrap}
 .ktag{font-size:.7rem;font-weight:700;color:var(--mp);background:var(--mp-soft);padding:1px 6px;border-radius:5px}
 .zwarn{font-size:.86rem;font-weight:600;color:var(--bad)}
@@ -2930,13 +2931,31 @@ let zaktZu=(()=>{try{return localStorage.getItem("aborea-zakt-zu")==="1";}catch(
 /* Aktive Zauber: erst was nach Runden abläuft, dann Dauerhaftes (Flüche, Artefakte, Zeitdauer) */
 /* Ghule: Der Alpha-Ghul ist eine spielbare Figur (LP bis −50, 8 AP, Angriff 3W20 + 4W6) */
 function zGhulSum(e){if(e.sum)return e.sum;const lp=Math.round(num(e.glp));e.sum={lp,lpMax:Math.max(lp,num(e.gmax),0),lpMin:-50,ap:8,dmg:{dice:[{n:3,s:20},{n:4,s:6}],flat:0}};e.n="Alpha-Ghul";e.sp="Ghule";return e.sum;}
-function zGrp(L){const T=L.filter(e=>e.r!=null),P=L.filter(e=>e.r==null);if(!T.length||!P.length)return [...T,...P];return [{hd:"Temporär"},...T,{hd:"Dauerhaft"},...P];}
+/* Aktive Zauber: Kategorien Runden / Zeit / Dauerhaft, jeder Eintrag als einklappbare Zeile */
+const ZAK_IC={r:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8M4 14h8M5 2c0 3 6 4 6 6s-6 3-6 6M11 2c0 3-6 4-6 6s6 3 6 6"/></svg>',
+  t:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>',
+  p:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8c-1.5-2-2.5-3-4-3a3 3 0 0 0 0 6c1.5 0 2.5-1 4-3s2.5-3 4-3a3 3 0 0 1 0 6c-1.5 0-2.5-1-4-3z"/></svg>'};
+const zAkCat=e=>e.r!=null?"r":/\b\d+\s*(?:min|Minuten?|h|Std\.?|Stunden?|Tage?|Wochen?)\b/i.test(`${e.t||""} ${e.wait||""}`)?"t":"p";
+const ZAK_CAT={r:"Runden",t:"Minuten bis Tage",p:"Dauerhaft"};
+function zGrp(L){const out=[];["r","t","p"].forEach(c=>{const G=L.filter(e=>zAkCat(e)===c);if(G.length)out.push({hd:`<span class="zgi">${ZAK_IC[c]}</span>${ZAK_CAT[c]} <span class="zgn">${G.length}</span>`},...G);});return out;}
+const zAkCOpen=new Set();
+function zAkC(e,full){const S=e.sum,c=[];let warn=false;const cat=zAkCat(e);
+  if(S&&S.lp!=null){c.push(`<i${S.lp<=0?' class="w"':""}>${e.bau?"Haltb.":"LP"} ${S.lp}/${S.lpMax}</i>`);if(e.ghul!=null&&S.lp<=-50)warn=true;}
+  if(e.heart){const v=zHeartVal(e.heart),M=zHeartMax();if(v>M.v)warn=true;c.push(`<i${v>M.v?' class="w"':""}>GS ${v}/${M.v}</i>`);}
+  if(e.mines)c.push(`<i>${e.mines.length} Stein${e.mines.length===1?"":"e"}</i>`);
+  if(e.geist)c.push(`<i>${e.geist.n}/${e.geist.max} Geister</i>`);
+  if(e.cnt)c.push(`<i>${e.cnt.n}/${e.cnt.max}</i>`);
+  if(e.bag)c.push(`<i${e.bag.bleed?' class="w"':""}>${e.bag.lp} LP</i>`);
+  if(e.storm&&e.storm.left)c.push(`<i>${e.storm.left} offen</i>`);
+  if(e.wb&&!e.wb.off&&e.wb.txt&&e.wb.txt.length)c.push(`<i class="b">${esc(e.wb.txt.join(" · "))}</i>`);
+  const dur=cat==="r"?`${e.r} R`:cat==="t"?esc(String(e.wait||e.t||"").replace(/^läuft /,"")):"";
+  return `<details class="zakc${e.konz?" konz":""}${warn?" warn":""}" data-k="${e.k}"${zAkCOpen.has(e.k)?" open":""}><summary><span class="chev" aria-hidden="true">›</span><span class="zn">${esc(e.n)}</span><span class="zs">St. ${e.st}</span>${e.konz?'<span class="zk" title="Konzentration">K</span>':""}<span class="zc">${c.join("")}</span>${dur?`<span class="zdr" title="${cat==="r"?"Runden übrig":"Dauer"}">${ZAK_IC[cat]}${dur}</span>`:""}</summary><div class="zakb">${full}</div></details>`;}
 function zAktHtml(){
   if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";L.forEach(e=>{if(e.ghul!=null)zGhulSum(e);});
   const zu=zaktZu;
   const head=`<h2 class="zakth"><button class="zaktt" data-act="zakttog" aria-expanded="${!zu}"><span class="chev" aria-hidden="true">${zu?"▸":"▾"}</span>Aktive Zauber <span class="zcnt">${L.length}</span></button>${ib("aktiv")}</h2>`;
   if(zu)return head;
-  return `${head}<div class="card zakt">${zGrp(L).map(e=>e.hd!=null?`<div class="zgrp">${e.hd}</div>`:zAkWrap(e,(()=>{const S=e.sum;
+  return `${head}<div class="card zakt">${zGrp(L).map(e=>e.hd!=null?`<div class="zgrp">${e.hd}</div>`:zAkC(e,zAkWrap(e,(()=>{const S=e.sum;
     if(e.mines)return `<div class="zak zsumc"><div class="zsumh"><div><b>${esc(e.n)}</b> <span class="hint">${esc(e.sp)} · Stufe ${e.st}</span><div class="hint">${e.mines.length} Stein${e.mines.length===1?"":"e"} scharf · Annäherung auf 1m löst aus</div></div>
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
       <div class="zrolls">${e.mines.map((x,i)=>`<button class="btn small zroll2" data-act="zmboom" data-k="${e.k}" data-i="${i}">${ICON_DICE_S}Stein ${x.i||i+1} explodiert: ${x.d||x}W${x.s||10}</button>`).join("")}</div></div>`;
@@ -2955,7 +2974,7 @@ function zAktHtml(){
       <button class="btn small" data-act="zend" data-k="${e.k}">Beenden</button></div>
       <div class="zsumv">${S.lp!=null?zLpRow(e):""}
         ${S.ap?`<div><span class="lab">AP</span> <b>${S.ap}</b></div>`:""}</div>
-      <div class="zrolls">${S.dmg?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="dmg">${ICON_DICE_S}Angriff ${esc(zbDiceTxt(S.dmg))}</button>`:""}${S.heal?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="heal">${ICON_DICE_S}Heilung ${esc(zbDiceTxt(S.heal))}</button>`:""}</div></div>`;})())).join("")}</div>`;
+      <div class="zrolls">${S.dmg?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="dmg">${ICON_DICE_S}Angriff ${esc(zbDiceTxt(S.dmg))}</button>`:""}${S.heal?`<button class="btn small zroll2" data-act="zsroll" data-k="${e.k}" data-w="heal">${ICON_DICE_S}Heilung ${esc(zbDiceTxt(S.heal))}</button>`:""}</div></div>`;})()))).join("")}</div>`;
 }
 function zBauDlg(sp,z,a){if(!z)return "";const calc=zbCalc(z,a.cs,zbChoice(sp,sbParse().ch),num(a.xmp)),bi=zBauInfo(z,calc);if(!bi)return "";
   const f=z.fx.find(zBauF),base=f?zBauLp(f):bi.lp,pl=bi.lp-base,lab=bi.n>1?(bi.part(1).startsWith("Element")?"Elemente":"Teile"):"";
@@ -3109,7 +3128,7 @@ function zInfoHtml(sp,listName,z){
 }
 document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("[data-zexp]");if(!c||e.target.closest("button"))return;zExp.add(c.dataset.zexp);renderAll();});
 document.addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const c=e.target.closest&&e.target.closest("[data-zexp]");if(!c||e.target!==c)return;e.preventDefault();zExp.add(c.dataset.zexp);renderAll();});
-document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("zinfo")){d.open?zOpen.add(d.dataset.zid):zOpen.delete(d.dataset.zid);}if(d.classList&&d.classList.contains("zakd")){d.open?zAkOpen.add(d.dataset.k):zAkOpen.delete(d.dataset.k);}},true);
+document.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("zinfo")){d.open?zOpen.add(d.dataset.zid):zOpen.delete(d.dataset.zid);}if(d.classList&&d.classList.contains("zakc")){d.open?zAkCOpen.add(d.dataset.k):zAkCOpen.delete(d.dataset.k);}if(d.classList&&d.classList.contains("zakd")){d.open?zAkOpen.add(d.dataset.k):zAkOpen.delete(d.dataset.k);}},true);
 let zSlide="";
 function zSetList(id,dir){const {ch}=sbParse();if(ch.activeList===id&&dir!==0)return;ch.activeList=id;zSaveCh(ch);zSlide=dir>0?"slidel":dir<0?"slider":"";renderAll();zSlide="";}
 function zKnownIds(){const {db,ch}=sbParse();if(!db)return [];const ls=db.spellLists||[];return ls.filter(l=>(db.spells||[]).some(sp=>sp.listId===l.id&&num(ch.learned[sp.id])>0)).map(l=>l.id);}
