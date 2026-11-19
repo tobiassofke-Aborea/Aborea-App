@@ -1768,7 +1768,8 @@ function kampfDo(b){
       rollPool("Verteidigen",{groups:[{label:"Waffenfertigkeit",n:wSkill(w),s:10},{label:"KO-Bonus",n:attrDice("Ko",true),s:6}],flat:0},total=>{def=total;return {tag:`${total} Schaden negiert`};});
       return;}
     case "zroll":case "zprobe":case "zch":case "zbft":case "zaoe":zbAct(b);return;
-    case "zlp":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.sum)return;e.sum.lp=Math.max(0,Math.min(e.sum.lpMax,num(e.sum.lp)+(+b.dataset.d)));
+    case "zlp":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.sum)return;
+      if(e.ghul!=null){e.sum.lp=Math.max(-50,Math.min(num(e.sum.lpMax),num(e.sum.lp)+(+b.dataset.d)));e.glp=e.sum.lp;queueSave(cur);renderAll();if(e.sum.lp<=-50)showMsg("Der Alpha-Ghul ist tot: Alle Ghule sterben, der Zauber endet.");return;}e.sum.lp=Math.max(0,Math.min(e.sum.lpMax,num(e.sum.lp)+(+b.dataset.d)));
       if(e.sum.lp<=0){zAkt().splice(zAkt().indexOf(e),1);queueSave(cur);renderAll();showMsg(`${e.n} wurde zerstört.`);return;}queueSave(cur);return renderAll();}
     case "zsroll":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.sum)return;const d=e.sum[b.dataset.w];if(!d)return;
       zbRollDice(`${e.n}: ${b.dataset.w==="heal"?"Heilung":"Angriff"}`,d,t=>({tag:`${t} ${b.dataset.w==="heal"?"Heilung":"Schaden"}`}));return;}
@@ -2387,7 +2388,7 @@ function zBloodAfter(sp,z,calc,cs,a,before){
     if(!news.length)mk({});const f0=calc.fx[0]||{},w=String(f0.w||"").trim();
     news.forEach(e=>{e.self=1;e.n=sp.name+" (auf dir)";if(z.fl){e.fl=1;if(e.r==null&&!e.t)e.t="dauerhaft";if(a&&a.fst!=null)e.fst=a.fst;}e.selfTxt=w&&f0.a?`${w} ${f0.a}`:String(f0.t||"");});
     note+=` ${sp.name} hat dich selbst getroffen, siehe „Aktive Zauber“.`;}
-  if(zIs(z,"Ghule")){const e=news[0]||mk({});e.ghul=1;e.r=null;e.t="bis der Alpha-Ghul getötet ist";e.gmax=10*Math.max(0,cs-1);e.glp=Math.max(-49,Math.min(e.gmax,Math.round(num(a&&a.glp))));e.alpha=(a&&a.alpha)||"";e.self=0;}
+  if(zIs(z,"Ghule")){const e=news[0]||mk({});e.ghul=0;e.r=null;e.t="bis der Alpha-Ghul getötet ist";e.gmax=10*Math.max(0,cs-1);e.glp=Math.max(-49,Math.min(e.gmax,Math.round(num(a&&a.glp))));e.alpha=(a&&a.alpha)||"";e.self=0;e.sum=null;zGhulSum(e);}
   if(zIs(z,"Aderlass")){const e=news[0]||mk({r:3});const c=zbChoice(sp,sbParse().ch);e.bleed={n:0,plus:0};}
   if(zIs(z,"Blutvorrat")&&pr){const amt=(pr.ok?4:2)*cs;tmpAdd("lp",amt);const e=news[0]||mk({t:"24h"});e.tmpLp=amt;note+=` +${amt} temporäre LP.`;}
   if(zIs(z,"Blutbeutel")){const e=news[0]||mk({}),mx=40+10*(cs-1);e.bag={lp:mx,max:mx};e.t="bis der Fluch gebrochen wird";if(!ok){e.bag.bleed=1;e.t="bis das Ziel verblutet ist";}}
@@ -2438,13 +2439,12 @@ function zBloodAk(e){const o=[];
   if((e.vow||e.fl)&&e.ghul==null)o.push(`<div class="zslp"><span class="lab">${esc((e.vow&&e.vowLab)||(e.vow&&!e.fl?"Verbunden mit":e.self?"Fluch":"Verflucht"))}</span><input class="zvin" data-zvow="${e.k}" value="${esc((e.vow&&e.vow.ziel)||"")}" placeholder="${e.self?"dich":"Name des Ziels"}" autocomplete="off"></div>${e.vow&&!e.vowLab&&!e.fl?`<div class="hint">Ihr teilt denselben Schaden.</div>`:""}`);
   if(e.self)o.push(`<div class="zwarn">Wirkt auf dich${e.selfTxt?`: ${esc(e.selfTxt)}`:""}</div>`);
   if(e.fst!=null)o.push(`<div class="hint">Fluchstärke <b>${e.fst}</b></div>`);
-  if(e.ghul!=null){const lp=num(e.glp),gb=d=>`<button class="btn small" data-act="zghullp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`,dead=lp<=-50;
-    o.push(`<div class="zslp ztk"><span class="lab">Alpha-Ghul</span><textarea class="zvin" data-zalpha="${e.k}" rows="2" placeholder="Name, Merkmale, Ort …">${esc(e.alpha||"")}</textarea></div>
-    <div class="zslp"><span class="lab">LP Alpha</span>${gb(-5)}${gb(-1)}<b>${lp}</b>${gb(1)}${gb(5)}</div>
-    <div class="${dead?"zwarn":"hint"}">${dead?"Der Alpha-Ghul ist tot: Alle Ghule sterben, der Zauber endet.":lp>0?"Fluch brechen jetzt: Er wird wieder ein Mensch.":"Fluch brechen jetzt: Er stirbt."} Ein Ghul stirbt erst bei −50 LP.</div>
-    <div class="zslp"><span class="lab">Ghule</span><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="-1">−1</button><b>${e.ghul}</b><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="1">+1</button></div>
-    <div class="hint">Je Ghul: 8 AP · INI wie die Zaubernde (oder wie der Ghul, der gebissen hat) · greift an wie eine wilde Kreatur. Ein Biss macht jeden zum Ghul, der höchstens ${num(e.gmax)} LP hat. Wer mehr hat, wird gebissen, bis er darunter fällt.</div>
-    <div class="zrolls"><button class="btn small zroll2" data-act="zghulatk" data-k="${e.k}">${ICON_DICE_S}Angriff eines Ghuls: 3W20 + 4W6</button>${dead?`<button class="btn small pri" data-act="zend" data-k="${e.k}">Zauber beenden</button>`:""}</div>`);}
+  if(e.ghul!=null){const lp=num(e.sum?e.sum.lp:e.glp),dead=lp<=-50;
+    o.push(`<div class="zslp ztk"><span class="lab">Wer ist der Alpha-Ghul?</span><textarea class="zvin" data-zalpha="${e.k}" rows="2" placeholder="Name, Merkmale, Ort …">${esc(e.alpha||"")}</textarea></div>
+    <div class="${dead?"zwarn":"hint"}">${dead?"Der Alpha-Ghul ist tot: Alle Ghule sterben, der Zauber endet.":lp>0?"Fluch brechen jetzt: Er wird wieder ein Mensch.":"Fluch brechen jetzt: Er stirbt."} Ein Ghul stirbt erst bei −50 LP. INI wie die Zaubernde.</div>
+    <div class="zslp"><span class="lab">Weitere Ghule</span><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="-1">−1</button><b>${e.ghul}</b><button class="btn small" data-act="zghul" data-k="${e.k}" data-d="1">+1</button></div>
+    <div class="hint">Jeder weitere Ghul hat dieselben Werte (8 AP, Angriff 3W20 + 4W6, INI wie der Ghul, der ihn gebissen hat) und die LP, die er beim Verwandeln hatte. Ein Biss macht jeden zum Ghul, der höchstens ${num(e.gmax)} LP hat; wer mehr hat, wird gebissen, bis er darunter fällt.</div>
+    ${dead?`<div class="zrolls"><button class="btn small pri" data-act="zend" data-k="${e.k}">Zauber beenden</button></div>`:""}`);}
   if(e.bleed){const B=e.bleed;o.push(`<div class="zslp"><span class="lab">Treffer</span><button class="btn small" data-act="zbleed" data-k="${e.k}" data-d="-1">−1</button><b>${B.n}</b><button class="btn small" data-act="zbleed" data-k="${e.k}" data-d="1">+1 Treffer</button></div>
     <div class="zrolls"><button class="btn small zroll2" data-act="zbleedr" data-k="${e.k}" ${B.n?"":"disabled"}>${ICON_DICE_S}Blutung: ${B.n}W10</button></div><div class="hint">${e.self?"Jeder körperliche Treffer an dir zählt. Bist du dran, würfelst du die Blutung, sie geht direkt von deinen LP ab.":"Jeder körperliche Treffer am Ziel zählt. Ist das Ziel dran, würfelt es die Blutung und verliert so viele LP."}</div>`);}
   if(e.bag){const B=e.bag;o.push(`<div class="zslp"><span class="lab">LP im Beutel</span><button class="btn small" data-act="zbagx" data-k="${e.k}" data-d="-1">−1</button><b>${B.lp}<small>/${B.max}</small></b><button class="btn small" data-act="zbagx" data-k="${e.k}" data-d="1">+1</button></div>
@@ -2929,9 +2929,11 @@ function zTrack0(sp,z,calc,cs){
 }
 let zaktZu=(()=>{try{return localStorage.getItem("aborea-zakt-zu")==="1";}catch(e){return false;}})();
 /* Aktive Zauber: erst was nach Runden abläuft, dann Dauerhaftes (Flüche, Artefakte, Zeitdauer) */
+/* Ghule: Der Alpha-Ghul ist eine spielbare Figur (LP bis −50, 8 AP, Angriff 3W20 + 4W6) */
+function zGhulSum(e){if(e.sum)return e.sum;const lp=Math.round(num(e.glp));e.sum={lp,lpMax:Math.max(lp,num(e.gmax),0),lpMin:-50,ap:8,dmg:{dice:[{n:3,s:20},{n:4,s:6}],flat:0}};e.n="Alpha-Ghul";e.sp="Ghule";return e.sum;}
 function zGrp(L){const T=L.filter(e=>e.r!=null),P=L.filter(e=>e.r==null);if(!T.length||!P.length)return [...T,...P];return [{hd:"Temporär"},...T,{hd:"Dauerhaft"},...P];}
 function zAktHtml(){
-  if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";
+  if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";L.forEach(e=>{if(e.ghul!=null)zGhulSum(e);});
   const zu=zaktZu;
   const head=`<h2 class="zakth"><button class="zaktt" data-act="zakttog" aria-expanded="${!zu}"><span class="chev" aria-hidden="true">${zu?"▸":"▾"}</span>Aktive Zauber <span class="zcnt">${L.length}</span></button>${ib("aktiv")}</h2>`;
   if(zu)return head;
@@ -2974,7 +2976,7 @@ function zPrevHtml(calc,notes){
     return `<li>${same?"":zFxT(f.t)}${vt?`${same?"":" · "}<b>${esc(vt)}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}${notes&&f.n?`<br><span class="hint">${esc(f.n)}</span>`:""}</li>`;}).join("");
   const ex=(calc.extra||[]).filter(x=>!(/-Test [+-]\d+/.test(x)&&calc.fx.some(f=>f.plus))).map(x=>`<li>${esc(x)}</li>`).join("");
   return `<ul>${li}${ex}</ul>`;}
-function zLpRow(e){const S=e.sum,big=S.lpMax>=100,b=d=>`<button class="btn small" data-act="zlp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`;
+function zLpRow(e){const S=e.sum,big=S.lpMax>=100||e.ghul!=null,b=d=>`<button class="btn small" data-act="zlp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`;
   const pct=Math.max(0,Math.min(100,S.lp/Math.max(1,S.lpMax)*100));
   return `<div class="zslp${e.bau?" bau":""}"><span class="lab">${e.bau?"Haltbarkeit":"LP"}</span>${(big?[-10,-5,-1]:[-5,-1]).map(b).join("")}<b>${S.lp}<small>/${S.lpMax}</small></b>${b(1)}${big?b(10):""}</div>${e.bau?`<div class="zbar"><i style="width:${pct}%"></i></div>`:""}`;}
 let zTick=[];
