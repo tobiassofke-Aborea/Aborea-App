@@ -1213,7 +1213,7 @@ const INFO={
   zfluch:["Fluch","<p>Ein Fluch bleibt, bis er gebrochen wird. Seine Stärke ist der INT- oder CHA-Wurf beim Wirken. Brechen kann ihn nur, wer mit seinem Test höher würfelt.</p>"],
   zgez:["Gezielt","<p>Vor den Effekten kommt ein Zielwurf. Er entscheidet, ob und wo der Zauber trifft (Kopf, Körper oder daneben).</p>"],
   zorig:["Geht von dir aus","<p>Die Fläche beginnt bei dir: Kreise liegen mit dir in der Mitte, Kegel und Linien starten im Feld vor dir.</p>"],
-  zrea:["Reaktion","<p>Reaktionen kannst du in deiner Runde direkt wirken oder wie eine Verteidigung bereithalten (gleiche AP-Kosten). Bereitgehalten setzt du sie später unter „Aktive Zauber“ ein, z. B. wenn du angegriffen wirst: ohne AP, das Mana zahlst du erst dann. Mit „Neue Runde“ verfällt die Bereitschaft.</p>"],
+  zrea:["Reaktion","<p>Reaktionen kannst du in deiner Runde direkt wirken oder bereithalten; das kostet so viele AP wie direktes Wirken. Bereitgehalten setzt du sie später unter „Aktive Zauber“ ein, z. B. wenn du angegriffen wirst: ohne AP, das Mana zahlst du erst dann. Mit „Neue Runde“ verfällt die Bereitschaft.</p>"],
   aktiv:["Aktive Zauber",`<p>Hier landen Zauber, die länger als eine Runde wirken, und Zauber mit Konzentration.</p><p>Mit „Neue Runde“ zählt die App die Runden herunter. Zauber mit Minuten oder Stunden laufen, bis du sie beendest.</p><p>Es geht immer nur ein Konzentrationszauber gleichzeitig. Wirkst du einen neuen, endet der alte.</p>`],
   get beaufort(){return ["Beaufort-Skala",BFT_INFO()]},
   fert:["Fertigkeiten",`<p><b>Würfeln:</b> Der Würfel rechts würfelt eine Probe: W10 + Rang + Boni.</p>
@@ -1888,7 +1888,7 @@ function kampfDo(b){
     case "zwahr":{const e=zAkt().find(x=>x.k===b.dataset.k);if(!e||!e.wahr)return;const k=attrDice("Int",true);
       rollPool(`${e.n}: Wahrnehmung`,{groups:[{label:"Wahrnehmung (Zauber)",n:e.wahr,s:10},...(k?[{label:"INT",n:k,s:6}]:[])],flat:0},t=>({tag:`${t} Wahrnehmung`}));return;}
     case "zready":{const A=zArm;if(!A)return;const {db}=sbParse(),sp=(db.spells||[]).find(x=>x.id===A.id);if(!sp)return;
-      if(!spendAp(defCost()))return;snap("Reaktion bereithalten");cur.kampf.defc=num(cur.kampf.defc)+1;
+      const apR=atkCost(2);snap("Reaktion bereithalten");if(!spendAp(apR)){undoStack.pop();undoBtnSync();return;}cur.kampf.att=num(cur.kampf.att)+1;
       zAkt().unshift({k:Math.random().toString(36).slice(2,8),n:sp.name,st:A.cs,r:1,t:"",konz:false,ready:{sid:sp.id,cs:A.cs,xmp:num(A.xmp)}});
       zArm=null;queueSave(cur);renderAll();showMsg(`${sp.name} ist als Reaktion bereit. Einsetzen unter „Aktive Zauber“.`);return;}
     case "zreadygo":{const L=zAkt(),e=L.find(x=>x.k===b.dataset.k);if(!e||!e.ready)return;const {db}=sbParse(),sp=(db.spells||[]).find(x=>x.id===e.ready.sid);if(!sp)return;
@@ -2673,7 +2673,7 @@ function zDlgRender(){
     :pend.length?`<p class="hint zpend">${pend.length===1&&pend[0]==="Alter"?"Trag oben dein Alter ein, dann kannst du wirken.":pend.length===1&&pend[0]==="GS des Opfers"?"Trag oben die GS des Opfers ein, dann kannst du wirken.":"Würfle oben Schritt für Schritt, dann kannst du wirken."}</p>`
     :elemOk?`<button class="btn big pri" data-act="zfin" data-spell="${sp.id}">Wirken: ${a.cost} ${pu} · ${ap} AP</button>`
     :`<p class="hint">Wähle zuerst das Element.</p>`;
-  const rdy=z&&z.re&&!fin&&!started&&!a.react&&!a.free?`<div class="zready"><button class="btn" data-act="zready" data-spell="${sp.id}">Als Reaktion bereithalten: ${defCost()} AP</button><span class="hint">Wie eine Verteidigung. Einsetzen später unter „Aktive Zauber“, ohne AP; Mana zahlst du erst dann. Mit „Neue Runde“ verfällt sie.</span></div>`:a.react&&!fin?`<p class="hint">Reaktion: Sie war bereitgehalten, kostet jetzt keine AP mehr.</p>`:"";
+  const rdy=z&&z.re&&!fin&&!started&&!a.react&&!a.free?`<div class="zready"><button class="btn" data-act="zready" data-spell="${sp.id}">Als Reaktion bereithalten: ${atkCost(2)} AP</button><span class="hint">Kostet so viele AP wie direkt wirken. Einsetzen später unter „Aktive Zauber“, ohne AP; Mana zahlst du erst dann. Mit „Neue Runde“ verfällt sie.</span></div>`:a.react&&!fin?`<p class="hint">Reaktion: Sie war bereitgehalten, kostet jetzt keine AP mehr.</p>`:"";
   const dsum=dmgR.length>1?`<div class="zdsum">Schaden gesamt: <b>${dmgR.reduce((p,q)=>p+q,0)}</b></div>`:"";
   el.querySelector(".zdinner").innerHTML=`<div class="zdbox"><div class="zdh"><div><div class="lab">${fin?"Gewirkt":"Zauber wirken"}</div><h3>${esc(sp.name)}</h3><div class="hint">Stufe ${a.cs} · ${a.cost} ${pu} · ${ap} AP</div></div><button class="zx" data-act="${fin?"zclose":"zcancel"}" aria-label="${fin?"Schließen":"Abbrechen"}">×</button></div>
     ${kwarn}${setHtml}${tierHtml}${prev}${penHtml}
