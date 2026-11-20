@@ -2041,8 +2041,7 @@ function zbFxHtml(sp,z,calc,cs){
       const rolls=rc.fx.map((g,j)=>g.dice?`<button class="btn small zroll" data-act="zroll" data-spell="${sp.id}" data-ref="${ref.z.nr}" data-rs="${rs}" data-fx="${j}">${ICON_DICE_S}${esc(zbDiceTxt(g.dice))} ${esc(g.a||g.t)}</button>`:"").join("");
       return `<div class="zfx"><div class="zft"><b>${ref.times>1?ref.times+"× ":""}${esc(ref.z.n)}</b> <span class="hint">Stufe ${rs}</span></div>
         <div class="zmeta">${esc(rc.fx.map(g=>g.t).filter(Boolean).join(" · "))}</div>${rolls?`<div class="zrolls">${rolls}</div>`:""}</div>`;}
-    const hdD=(z.fx.find(g=>g.d&&!ZDEF.test(g.d)&&!/^(bis |solange)/i.test(g.d))||{}).d;
-    const meta=[f.f,f.z,f.d&&f.d!==hdD?f.d:""].filter(Boolean);
+    const meta=[f.f,f.z,f.d?(/^\d/.test(String(f.d))?"Dauer "+f.d:/^dauerhaft$/i.test(f.d)?"Dauerhaft":f.d):""].filter(Boolean);
     const bv=f.dice?zbDiceTxt(f.dice):f.w?String(f.w):"",ba=bv?String(f.a||""):"";
     const badge=bv?`<div class="zval"><b>${esc(bv)}</b>${ba?`<span>${esc(ba)}</span>`:""}</div>`:"";
     const test=f.ta?zResHtml(f):"";
@@ -3138,7 +3137,7 @@ function zauberCardHtml(){
         const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"Konzentration":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
         return compact(bits.join("<br>"),castH,tg.map(esc).join(" · "));}
       const S1=zIsBlood(sp)&&z.p?zSplit(z,calc1):null,zdu=((S1?z.fx.filter((f,i)=>!S1.calcU.fx[i]._hideD):z.fx).find(f=>f.d&&!ZDEF.test(f.d)&&!/^(bis |solange)/i.test(f.d))||{}).d;
-      const chips=[z.rw&&!(z.o&&/^selbst$/i.test(z.rw))?`<span class="zchip">Reichweite ${esc(z.rw)}</span>`:"",zdu?`<span class="zchip">${/^dauerhaft$/i.test(zdu)?"Dauerhaft":"Dauer "+esc(zdu)}</span>`:"",z.o?`<span class="zchip">geht von dir aus${ib("zorig")}</span>`:"",z.gz?`<span class="zchip">Gezielt${/1x/.test(z.gz)?" (1x)":""}${ib("zgez")}</span>`:"",
+      const chips=[z.rw&&!(z.o&&/^selbst$/i.test(z.rw))?`<span class="zchip">Reichweite ${esc(z.rw)}</span>`:"",z.o?`<span class="zchip">geht von dir aus${ib("zorig")}</span>`:"",z.gz?`<span class="zchip">Gezielt${/1x/.test(z.gz)?" (1x)":""}${ib("zgez")}</span>`:"",
         z.k?`<span class="zchip k">Konzentration${ib("zkonz")}</span>`:"",z.fl?`<span class="zchip">Fluch${ib("zfluch")}</span>`:"",z.re?`<span class="zchip">Reaktion${ib("zrea")}</span>`:""].filter(Boolean).join("");
       const sec=(t,h)=>`<section class="zsec"><h4>${t}</h4>${h}</section>`;
       const oder=z.st.length>1&&z.m==="ODER";
