@@ -665,6 +665,8 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zval b{font-size:1.15rem;line-height:1.1;color:var(--ink)}.zval span{font-size:.72rem;color:var(--muted);line-height:1.2;margin-top:2px}
 .zpill{display:inline-block;font-size:.78rem;padding:2px 8px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--muted);margin:0 4px 4px 0}
 .zres{font-size:.86rem;padding:8px 10px;border-radius:8px;background:var(--card);border-left:3px solid var(--mp);display:grid;gap:4px}
+.zms{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.zm{font-size:.78rem;padding:1px 7px;border-radius:999px;background:var(--card);border:1px solid var(--line,rgba(0,0,0,.12));color:var(--mute,#6b5d4f)}
+.zm i{font-style:normal;opacity:.75}.zm.up{border-color:var(--mp,#3b7dd8);color:var(--ink,#2b2118);font-weight:600}.zm em,.zvup em{font-style:normal;font-size:.72rem;font-weight:700;color:var(--mp,#3b7dd8);margin-left:4px}
 .zrnext{display:grid;gap:6px}.zrnext .hint{margin:0}
 .zresr{display:flex;flex-wrap:wrap;gap:4px 12px}.zresr .ok{color:var(--ok,#3b7a3a)}.zresr .no{color:var(--lp)}
 .znote{font-size:.84rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
@@ -2673,7 +2675,7 @@ function zDlgRender(){
   const tierHtml=T&&!fin?(!started?`<div class="ztier"><span class="lab">Wie viele? Lege es vor dem Wurf fest</span><div class="chips">${T.map((x,i)=>`<button class="chip${pq===i+1?" on":""}" data-act="zpq" data-v="${i+1}">${esc(x.lab)} <span class="hint">ab ${x.th}</span></button>`).join("")}</div><div class="hint">Darunter: ${esc(z.p.no||"Strafe")}</div></div>`
     :`<div class="zsetline"><div><b>${esc(T[pq-1].lab)}</b> · <span class="hint">Schwelle ${T[pq-1].th}</span></div></div>`):"";
   const penHtml=!fin&&z&&z.p&&/charakterstufe/i.test(z.p.no||"")&&(a.pen||a.penR!=null)?`<div class="zsumbox bad"><span class="lab">Strafe</span><div>${a.penR!=null?`<b>${a.penR} Schaden</b> <span class="hint">· ohne Rüstung von deinen LP abgezogen</span>`:esc(z.p.no)}</div></div>`:"";
-  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${blood&&z.p?zRiskHtml(z,calc0,a,c=>zPrevHtml(c)):zPrevHtml(calc0)}${zAreaHtml(z,calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
+  const prev=!fin&&!started&&calc0?`<div class="zprev"><span class="lab">Wirkung</span>${blood&&z.p?zRiskHtml(z,calc0,a,c=>zPrevHtml(c,false,a.cs>1?zbCalc(z,1,[],0):null)):zPrevHtml(calc0,false,a.cs>1||xmp?zbCalc(z,1,[],0):null)}${zAreaHtml(z,calc0)}${calc0.fx.some(zAllyFx)?`<p class="hint">Diese Würfel würfelt der Verbündete bei seinem Angriff mit.</p>`:""}${calc0.fx.some(zWbFx)?`<p class="hint">⚔ Diese Würfel kommen beim Waffenangriff dazu und werden dort mitgewürfelt.</p>`:""}</div>`:"";
   const elemOk=(()=>{const si=zSumInfo(z,a.cs,zbChoice(sp,sbParse().ch),a.elems);const mi=zMineInfo(z,a.cs,zbChoice(sp,sbParse().ch));return (!si||!si.elem||(a.elems||[]).filter(Boolean).length>=si.bonusN)&&(!mi||zMinesOk(a,mi));})();
   const pend=steps.filter(x=>!okOf(x)).map(x=>x.label);if(!fin&&zNeedFst(z)&&a.fst==null)pend.push("Fluchstärke");if(!fin&&zIs(z,"Blutsturm")&&a.stormV==null)pend.push("Schaden");if(!fin&&zIs(z,"Blutige Herrschaft")&&a.pres){if(a.hv==null)pend.push("Blut entziehen");else if(num(a.hshot)>0&&a.haim==null)pend.push("Zielen");}if(!fin&&zIs(z,"Jungbrunnen")&&!zHasAge())pend.push("Alter");
   const main=fin?`<div class="zdfin"><b>Gewirkt!</b> −${a.cost} ${pu}, −${a.ap} AP.${a.note?`<br><span class="zwarn">${esc(a.note)}</span>`:""}</div>`
@@ -3078,12 +3080,27 @@ function zTkHtml(a,calc){const mx=zTkKg(calc),kg=Math.max(1,Math.min(mx,num(a.tk
   return `<div class="zsumbox"><span class="lab">Als Geschoss</span><div class="zcast"><span class="lab">Gewicht</span><div class="step"><button data-act="ztkkg" data-mx="${mx}" data-d="-1" ${kg<=1?"disabled":""} aria-label="leichter">−</button><output>${kg} kg</output><button data-act="ztkkg" data-mx="${mx}" data-d="1" ${kg>=mx?"disabled":""} aria-label="schwerer">+</button></div><span class="hint">bis ${mx} kg</span></div>
   <div class="zrolls">${ZTK.map(([l,sd])=>`<button class="btn small zroll" data-act="ztkroll" data-s="${sd}" data-l="${l}" data-kg="${kg}">${ICON_DICE_S}${l}: 1W${sd} × ${kg}</button>`).join("")}</div><div class="hint">Schaden = Wurf mal kg</div></div>`;}
 function zAreaHtml(z,calc){if(!z||!calc)return "";const F=calc.fx.filter(f=>f.sh&&!zBauKind(z,f)&&!(f.sh.t==="rect"&&f.sh.c!=null));return F.length?`<div class="zarea">${F.map(f=>`<div class="zaoe">${zAoeSvg(f.sh,z.o)}</div>`).join("")}</div>`:"";}
-function zPrevHtml(calc,notes){
-  const li=calc.fx.map(f=>{if(f._skip)return "";const v=f.dice?`${zbDiceTxt(f.dice)} ${f.a||""}`:f.w?`${f.w} ${f.a||""}`:"";
-    const meta=[f.f,f.z,f.d].filter(Boolean).join(" · "),t=f.ta?`${f.ta}-Test${f.tdN!=null?" "+f.tdN:f.td?" "+f.td:""}`:"";
+/* Was die Steigerung gegenüber Stufe 1 verändert hat: hervorheben, mit Differenz */
+function zUpDelta(now,was){now=String(now||"").trim();was=String(was||"").trim();if(!now||now===was)return null;
+  const a=now.match(/^([+−-]?)(\d+(?:,\d+)?)(W\d+)?(.*)$/),b=was.match(/^([+−-]?)(\d+(?:,\d+)?)(W\d+)?(.*)$/);
+  if(a&&b&&(a[3]||"")===(b[3]||"")){const sg=x=>/[−-]/.test(x)?-1:1,d=parseFloat(a[2].replace(",","."))*sg(a[1])-parseFloat(b[2].replace(",","."))*sg(b[1]);
+    const xa=a[4].match(/^x(\d+(?:,\d+)?)(.*)$/),xb=b[4].match(/^x(\d+(?:,\d+)?)(.*)$/);
+    if(xa&&xb&&xa[2]===xb[2]){const e=parseFloat(xa[1].replace(",","."))-parseFloat(xb[1].replace(",","."));if(d||e)return `+${zFmt(d)}x${zFmt(e)}${xa[2]}`;}
+    else if(zPlN(a[4])===zPlN(b[4])&&d)return `${d>0?"+":"−"}${zFmt(Math.abs(d))}${a[3]||""}`;}
+  return "neu";}
+function zPlN(x){return String(x||"").trim().replace(/(en|n|e)$/,"");}
+function zChip(txt,was,base,lab){if(!txt)return "";const d=base?zUpDelta(txt,was):null;
+  return `<span class="zm${d?" up":""}">${lab?`<i>${lab}</i> `:""}${esc(txt)}${d&&d!=="neu"?`<em>${esc(d)}</em>`:""}</span>`;}
+function zPrevHtml(calc,notes,base){
+  const li=calc.fx.map((f,i)=>{if(f._skip)return "";const v=f.dice?`${zbDiceTxt(f.dice)} ${f.a||""}`:f.w?`${f.w} ${f.a||""}`:"";
+    const g=base&&base.fx[i]||null,gv=g?(g.dice?`${zbDiceTxt(g.dice)} ${g.a||""}`:g.w?`${g.w} ${g.a||""}`:""):"";
+    const dur=x=>x?(/^\d/.test(String(x))?x:/^dauerhaft$/i.test(x)?"dauerhaft":x):"";
+    const chips=[zChip(f.f,g&&g.f,!!g),zChip(f.z,g&&g.z,!!g),zChip(dur(f.d),g&&dur(g.d),!!g,/^\d/.test(String(f.d||""))?"Dauer":"")].join("");
+    const meta="",t=f.ta?`${f.ta}-Test${f.tdN!=null?" "+f.tdN:f.td?" "+f.td:""}`:"";
     const od=[f.okD?"Erfolg "+zbDiceTxt(f.okD):"",f.noD?"Misserfolg "+zbDiceTxt(f.noD):""].filter(Boolean).join(" / ");
     const vt=v.trim(),tt=String(f.t||"").replace(/\s+/g," ").trim().toLowerCase(),same=vt&&(tt===vt.replace(/\s+/g," ").toLowerCase()||(!!f.a&&tt.replace(/^\d+\s+/,"")===String(f.a).toLowerCase()&&/^\d+\s/.test(tt)));
-    return `<li>${same?"":zFxT(f.t)}${vt?`${same?"":" · "}<b>${esc(vt)}</b>`:""}${meta?` <span class="hint">${esc(meta)}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}${notes&&f.n?`<br><span class="hint">${esc(f.n)}</span>`:""}</li>`;}).join("");
+    const vd=g?zUpDelta(vt,gv.trim()):null;
+    return `<li>${same?"":zFxT(f.t)}${vt?`${same?"":" · "}<b${vd?' class="zvup"':""}>${esc(vt)}${vd&&vd!=="neu"?`<em>${esc(vd)}</em>`:""}</b>`:""}${chips?`<span class="zms">${chips}</span>`:""}${t?` <span class="hint">· ${esc(t)}</span>`:""}${od?` <span class="hint">· ${esc(od)}</span>`:""}${notes&&f.n?`<br><span class="hint">${esc(f.n)}</span>`:""}</li>`;}).join("");
   const ex=(calc.extra||[]).filter(x=>!(/-Test [+-]\d+/.test(x)&&calc.fx.some(f=>f.plus))).map(x=>`<li>${esc(x)}</li>`).join("");
   return `<ul>${li}${ex}</ul>`;}
 function zLpRow(e){const S=e.sum,big=S.lpMax>=100||e.ghul!=null,b=d=>`<button class="btn small" data-act="zlp" data-k="${e.k}" data-d="${d}">${d>0?"+":"−"}${Math.abs(d)}</button>`;
