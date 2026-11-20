@@ -556,6 +556,7 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 
 .zhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .zname{font-weight:700;font-size:1.08rem}
+.zreic{display:inline-flex;vertical-align:-2px;margin-left:5px;color:var(--mp)}.zreic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .zlvl{font-size:.75rem;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;margin-right:7px;vertical-align:2px}
 .zeff{font-size:.92rem}
 .zsteig{font-size:.88rem;color:var(--muted)}
@@ -3021,6 +3022,8 @@ function zGhulSum(e){if(e.sum)return e.sum;const lp=Math.round(num(e.glp));e.sum
 const ZAK_IC={r:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8M4 14h8M5 2c0 3 6 4 6 6s-6 3-6 6M11 2c0 3-6 4-6 6s6 3 6 6"/></svg>',
   t:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.5 1.5"/></svg>',
   p:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8c-1.5-2-2.5-3-4-3a3 3 0 0 0 0 6c1.5 0 2.5-1 4-3s2.5-3 4-3a3 3 0 0 1 0 6c-1.5 0-2.5-1-4-3z"/></svg>'};
+/* Symbol für Reaktionszauber: Pfeil, der zurückschlägt */
+const ZRE_IC='<span class="zreic" title="Reaktion" aria-label="Reaktion"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 3.5A6 6 0 1 0 14 8"/><path d="M13 1v2.8h-2.8"/><path d="M8.6 4.5 6.6 8.2h2.6l-1.9 3.6"/></svg></span>';
 const zAkCat=e=>e.r!=null?"r":/\b\d+\s*(?:sek\.?|Sekunden|min|Minuten?|h|Std\.?|Stunden?|Tage?|Wochen?)(?=\s|$|[.,;)])/i.test(`${e.t||""} ${e.wait||""}`)?"t":"p";
 const ZAK_CAT={r:"Runden",t:"Minuten bis Tage",p:"Dauerhaft"};
 function zGrp(L){const out=[];["r","t","p"].forEach(c=>{const G=L.filter(e=>zAkCat(e)===c);if(G.length)out.push({hd:`<span class="zgi">${ZAK_IC[c]}</span>${ZAK_CAT[c]} <span class="zgn">${G.length}</span>`},...G);});return out;}
@@ -3035,7 +3038,7 @@ function zAkC(e,full){const S=e.sum,c=[];let warn=false;const cat=zAkCat(e);
   if(e.storm&&e.storm.left)c.push(`<i>${e.storm.left} offen</i>`);
   if(e.wb&&!e.wb.off&&e.wb.txt&&e.wb.txt.length)c.push(`<i class="b">${esc(e.wb.txt.join(" · "))}</i>`);
   const dur=cat==="r"?`${e.r} R`:cat==="t"?esc(String(e.wait||e.t||"").replace(/^läuft /,"")):"";
-  return `<details class="zakc${e.konz?" konz":""}${warn?" warn":""}${e.fresh?" fresh":""}" data-k="${e.k}"${zAkCOpen.has(e.k)?" open":""}><summary><span class="chev" aria-hidden="true">›</span>${e.fresh?'<span class="zfr" title="Gerade gewirkt, die Markierung verschwindet nach der Runde"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.6 4.9 4.9 1.6-4.9 1.6L8 14.5l-1.6-4.9L1.5 8l4.9-1.6z"/></svg></span>':""}<span class="zn">${esc(e.n)}</span><span class="zs">St. ${e.st}</span>${e.konz?'<span class="zk" title="Konzentration">K</span>':""}<span class="zc">${c.join("")}</span>${dur?`<span class="zdr" title="${cat==="r"?"Runden übrig":"Dauer"}">${ZAK_IC[cat]}${dur}</span>`:""}</summary><div class="zakb">${full}</div></details>`;}
+  return `<details class="zakc${e.konz?" konz":""}${warn?" warn":""}${e.fresh?" fresh":""}" data-k="${e.k}"${zAkCOpen.has(e.k)?" open":""}><summary><span class="chev" aria-hidden="true">›</span>${e.fresh?'<span class="zfr" title="Gerade gewirkt, die Markierung verschwindet nach der Runde"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.6 4.9 4.9 1.6-4.9 1.6L8 14.5l-1.6-4.9L1.5 8l4.9-1.6z"/></svg></span>':""}<span class="zn">${esc(e.n)}</span>${e.ready?ZRE_IC:""}<span class="zs">St. ${e.st}</span>${e.konz?'<span class="zk" title="Konzentration">K</span>':""}<span class="zc">${c.join("")}</span>${dur?`<span class="zdr" title="${cat==="r"?"Runden übrig":"Dauer"}">${ZAK_IC[cat]}${dur}</span>`:""}</summary><div class="zakb">${full}</div></details>`;}
 function zAktHtml(){
   if(!cur||!cur.kampf)return "";const L=zAkt();if(!L.length)return "";L.forEach(e=>{if(e.ghul!=null)zGhulSum(e);});
   const zu=zaktZu;
@@ -3132,10 +3135,10 @@ function zauberCardHtml(){
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
     const st=num(ch.learned[sp.id]),cs=Math.min(num(ch.castStufe[sp.id])||st,st),cost=sp.level+cs,z=zbFor(sp,act.name);
     const open=zExp.has(sp.id);
-    const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname"><span class="zlv2">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zlvl">Stufe ${st}</span>${chev(open)}</span></button>`;
+    const head=`<button class="zhead zhbtn" data-act="zexp" data-spell="${sp.id}" aria-expanded="${open}"><span class="zname"><span class="zlv2">Lvl ${sp.level}</span>${esc(z&&z.re?sp.name.replace(/\s*\(Reaktion\)$/,""):sp.name)}${z&&z.re?ZRE_IC:""}</span><span class="zhr"><span class="zlvl">Stufe ${st}</span>${chev(open)}</span></button>`;
     const compact=(brief,castH,meta)=>{const a=zArm&&zArm.id===sp.id&&zArm.phase==="done"?zArm:null;
       return `<div class="zspell zc" data-zexp="${sp.id}" role="button" tabindex="0" aria-expanded="false" aria-label="${esc(sp.name)}: Details aufklappen">
-      <div class="zch"><span class="zname"><span class="zlv2">Lvl ${sp.level}</span>${esc(sp.name)}</span><span class="zhr"><span class="zlvl">Stufe ${st}</span>${chev(false)}</span></div>
+      <div class="zch"><span class="zname"><span class="zlv2">Lvl ${sp.level}</span>${esc(z&&z.re?sp.name.replace(/\s*\(Reaktion\)$/,""):sp.name)}${z&&z.re?ZRE_IC:""}</span><span class="zhr"><span class="zlvl">Stufe ${st}</span>${chev(false)}</span></div>
       <div class="zbrief">${brief}</div>
       <div class="zmeta2">${meta?meta+" · ":""}ab ${sp.level+1} ${zIsBlood(sp)?"MP/LP":"MP"} · ${atkCost(2)} AP</div>
 </div>`;};
