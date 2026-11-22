@@ -2848,7 +2848,7 @@ function zIsoSvg(h){
 }
 /* Erdmasse: N Würfel à 1×1×1 m, eine Schachfigur im ersten Würfel als Maßstab */
 function zCubeSvg(n){n=Math.max(1,Math.min(40,Math.round(n)||1));
-  /* Würfel wachsen nach oben (Türme bis 4 hoch), daneben eine Figur in Menschengröße (≈1,8 m) als Maßstab */
+  /* Würfel wachsen nach oben (Türme bis 4 hoch); die Figur steht im ersten Turm und wächst mit ihm */
   const H=4,cols=Math.ceil(n/H),hts=Array.from({length:cols},(_,c)=>Math.min(H,n-c*H));
   const c30=Math.cos(Math.PI/6),s30=.5,top=Math.max(...hts,2),sc=Math.min(30,150/(top+ (cols+2)*s30+.5));
   const P=(x,y,z)=>[(x-y)*c30*sc,((x+y)*s30-z)*sc],pts=a=>a.map(([x,y,z])=>P(x,y,z)).map(([u,v])=>`${u.toFixed(1)},${v.toFixed(1)}`).join(" ");
@@ -2856,12 +2856,12 @@ function zCubeSvg(n){n=Math.max(1,Math.min(40,Math.round(n)||1));
     g+=`<polygon class="fl" points="${pts([[x,y+1,z],[x+1,y+1,z],[x+1,y+1,z+1],[x,y+1,z+1]])}"/>`+
        `<polygon class="fr" points="${pts([[x+1,y,z],[x+1,y+1,z],[x+1,y+1,z+1],[x+1,y,z+1]])}"/>`+
        `<polygon class="ft" points="${pts([[x,y,z+1],[x+1,y,z+1],[x+1,y+1,z+1],[x,y+1,z+1]])}"/>`;}});
-  const fh=1.8,[px,py]=P(.45,2.1,0),h=fh*sc,w=.2*sc;
+  const fh=hts[0]*.92,[px,py]=P(.5,.5,0),h=fh*sc,w=Math.min(.3,.16+.04*hts[0])*sc;
   const pawn=`<g class="pawn"><ellipse cx="${px}" cy="${py}" rx="${w*1.6}" ry="${w*.6}"/><path d="M${px-w*1.1},${py} L${px-w*.5},${py-h*.66} L${px+w*.5},${py-h*.66} L${px+w*1.1},${py} Z"/><ellipse cx="${px}" cy="${py-h*.66}" rx="${w*.85}" ry="${w*.3}"/><circle cx="${px}" cy="${py-h*.82}" r="${w*.75}"/></g>`;
-  const all=[P(.45,2.1,0),[px-w*1.6,py],[px,py-h]];hts.forEach((hh,x)=>{for(const xx of [x,x+1])for(const y of [0,1])for(const z of [0,hh])all.push(P(xx,y,z));});
+  const all=[];hts.forEach((hh,x)=>{for(const xx of [x,x+1])for(const y of [0,1])for(const z of [0,hh])all.push(P(xx,y,z));});
   const pad=8,minX=Math.min(...all.map(p=>p[0]))-pad,maxX=Math.max(...all.map(p=>p[0]))+pad,minY=Math.min(...all.map(p=>p[1]))-pad,maxY=Math.max(...all.map(p=>p[1]))+pad;
-  return `<div class="zaoe ziso zcube"><svg viewBox="${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX-minX).toFixed(1)} ${(maxY-minY).toFixed(1)}" width="${Math.round(maxX-minX)}" role="img" aria-label="${n} Kubikmeter Erde">${g}${pawn}</svg>
-    <div class="hint">${n} m³ · jeder Würfel 1×1×1 m · Figur etwa 1,8 m groß</div></div>`;}
+  return `<div class="zaoe ziso zcube"><svg viewBox="${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX-minX).toFixed(1)} ${(maxY-minY).toFixed(1)}" width="${Math.round(maxX-minX)}" role="img" aria-label="${n} Kubikmeter Erde">${pawn}${g}</svg>
+    <div class="hint">${n} m³ · jeder Würfel 1×1×1 m</div></div>`;}
 function zCubeOf(f){const m=String(f&&f.w||"").match(/^(\d+)\s*m³$/);return m&&/erd/i.test(f.a||"")?+m[1]:0;}
 /* Gebäude statt Wall: Festung, Tempel, Schild */
 function zBauKind(z,f){if(!z||!f||!f.sh||!zBauF(f))return null;const t=(z.n||"")+" "+(f.t||"");
