@@ -1149,7 +1149,7 @@ function renderBogen(){
     <div class="hfoot">${ib("stufe")}<button class="btn small${apts?" acc2":""}" id="learnopen">${apts?`${apts} Ausbildungspunkte verteilen`:"Lernen"}</button>${lvl>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvl-1}?`:"Stufe zurück"}</button>`:""}</div>
   </div>`;
   const herkunft=`<div class="grid2">${choiceFld("volk","Volk",Object.keys(VOLK))}${fld("alter","Alter (Jahre)",{num:true})}${choiceFld("beruf","Beruf",Object.keys(BERUF))}${fld("ausbildung","Ausbildungspunkte",{num:true,full:true})}</div>
-    <p class="note" style="margin:8px 0 0">${VOLK[cur.volk]?"Ein Volkswechsel verschiebt die Attribute um die Volksanpassung. ":""}${hasB?`LP, Mana und Kosten richten sich nach ${esc(cur.beruf)}.`:"Bei eigenem Beruf trägst du LP und Mana unter „Kampfwerte & Boni“ selbst ein."}</p>`;
+    <p class="note" style="margin:8px 0 0">${VOLK_IND.has(cur.volk)?`${esc(cur.volk)}: Die Volksanpassung ist individuell, trag sie unter Attribute über das Zahnrad ein. `:VOLK[cur.volk]?"Ein Volkswechsel verschiebt die Attribute um die Volksanpassung. ":""}${hasB?`LP, Mana und Kosten richten sich nach ${esc(cur.beruf)}.`:"Bei eigenem Beruf trägst du LP und Mana unter „Kampfwerte & Boni“ selbst ein."}</p>`;
   const ruest=`<label class="fld"><span class="lab">Rüstung${ib("ruestung")}</span><select id="f-armortype" data-k="armorType" data-prev="${esc(cur.armorType||"")}"><option value="" ${a?"":"selected"}>Eigene / keine Vorlage</option>${ARMOR.map(x=>`<option value="${esc(x[0])}" ${a&&a[0]===x[0]?"selected":""}>${esc(x[0])} · ${x[1]}${x[2]?` · Malus ${x[2]}`:""}</option>`).join("")}</select></label>
     <div class="grid2" style="margin-top:10px"><label class="fld"><span class="lab">Anpassung (±)</span><input type="number" inputmode="numeric" id="f-armoradj" data-k="armorAdj" data-num value="${esc(cur.armorAdj||0)}"></label>
       ${fld("ruestungMalus","Malus (Ini)",{num:true})}</div>
@@ -4315,7 +4315,9 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&tb&&!tb.el.hidden)t
 const ATTR_PRICE=[0,1,2,3,4,5,6,8,10,12,16];                 // Kaufpreis für Wert 0–10
 const ATTR_BONUS=[-3,-3,-2,-1,-1,0,1,1,2,2,3,3,4,4,5];        // Bonus für Wert 0–14
 function attrBonus(w){w=Math.round(num(w));if(w<0)return -3;if(w>14)return 5+Math.floor((w-14)/2);return ATTR_BONUS[w];}
-const VOLK={Mensch:[0,0,0,0,0],Elf:[-1,1,-1,0,1],Zwerg:[0,-1,2,0,-1],Halbling:[-2,1,0,0,1],Gnom:[0,1,-2,1,0]};
+const VOLK={Mensch:[0,0,0,0,0],Elf:[-1,1,-1,0,1],Halbelf:[0,0,0,0,0],Zwerg:[0,-1,2,0,-1],Halbling:[-2,1,0,0,1],Gnom:[0,1,-2,1,0]};
+/* Völker ohne feste Anpassung: Die Spielerin trägt sie nach dem Erstellen selbst unter Attribute ein */
+const VOLK_IND=new Set(["Halbelf"]);
 const CW_SKILLS=["Athletik","Einflussnahme","Gezielte Sprüche","Kunst","List","Magie entwickeln","Natur","Reiten","Schwimmen","Spruchlisten","Waffen","Wahrnehmung","Wissen"];
 const BERUF={
   Barde:     {tp:6, mp:"Cha",k:["2","1","3","1","2","3/4","2","2","2","3/4","3/5","1","1"]},
@@ -4417,7 +4419,7 @@ function cwRender(keepScroll){
     h=`<div class="seg cwmode" role="group" aria-label="Art"><button class="${cwT()?"":"on"}" data-cwmode="neu" aria-pressed="${!cwT()}">Neu erstellen</button><button class="${cwT()?"on":""}" data-cwmode="ueb" aria-pressed="${cwT()}">Charakter übertragen</button></div>
       <p class="note" style="margin-top:6px">${ib("cwmode")}${cwT()?"Für einen Charakter, den es schon auf Papier gibt: Du trägst Attribute und Ränge direkt ab, ohne Punkte zu rechnen.":"Mit Punkten nach den Regeln, auf Wunsch gleich auf höherer Stufe."}</p>
       <label class="fld"><span class="lab">Name</span><input id="cw-name" value="${esc(cw.name)}" placeholder="Name deines Charakters"></label>
-      <div class="lab cwh">Volk</div><div class="cwopts">${Object.keys(VOLK).map(v=>`<button class="cwopt${cw.volk===v?" on":""}" data-cwvolk="${v}"><b>${v}</b><small>${VOLK[v].map((x,i)=>x?`${ATTR[i]} ${x>0?"+":"−"}${Math.abs(x)}`:"").filter(Boolean).join(" · ")||"keine Anpassung"}${v==="Mensch"?" · 10 Ausbildungspunkte":""}</small></button>`).join("")}</div>
+      <div class="lab cwh">Volk</div><div class="cwopts">${Object.keys(VOLK).map(v=>`<button class="cwopt${cw.volk===v?" on":""}" data-cwvolk="${v}"><b>${v}</b><small>${VOLK[v].map((x,i)=>x?`${ATTR[i]} ${x>0?"+":"−"}${Math.abs(x)}`:"").filter(Boolean).join(" · ")||(VOLK_IND.has(v)?"Anpassung individuell":"keine Anpassung")}${v==="Mensch"?" · 10 Ausbildungspunkte":""}</small></button>`).join("")}</div>
       <div class="lab cwh">Beruf</div><div class="cwopts">${Object.keys(BERUF).map(k=>`<button class="cwopt${cw.beruf===k?" on":""}" data-cwberuf="${k}"><b>${k}</b><small>${BERUF[k].tp} TP pro Stufe · Magie über ${BERUF[k].mp==="Int"?"Intelligenz":"Charisma"}</small></button>`).join("")}</div>
       <div class="lab cwh">${cwT()?"Stufe":"Startstufe"}</div>
       <div class="cwlvl"><div class="step"><button data-cwlvl="-1" ${cw.startLevel<=1?"disabled":""} aria-label="Startstufe senken">−</button><output>${cw.startLevel}</output><button data-cwlvl="1" ${cw.startLevel>=20?"disabled":""} aria-label="Startstufe erhöhen">+</button></div>
@@ -4426,7 +4428,7 @@ function cwRender(keepScroll){
       <p class="note">Nur mal reinschauen? <button class="linkbtn" data-cwexample="1">Beispielcharakter laden</button></p>`;
   }else if(s===1&&cwT()){
     if(!cw.tw)cw.tw=Object.fromEntries(ATTR.map(a=>[a,cwFinal(a)]));
-    h=`<p class="note">Trag die Attributwerte von deinem Bogen ein, so wie sie dort stehen (mit Volksanpassung). Der Bonus ergibt sich aus der Tabelle.</p><p class="note rplink">Zur Inspiration: <button class="linkbtn" data-info="attrrp">Tipps fürs Rollenspiel</button></p>
+    h=`<p class="note">Trag die Attributwerte von deinem Bogen ein, so wie sie dort stehen (mit Volksanpassung). Der Bonus ergibt sich aus der Tabelle.</p>${VOLK_IND.has(cw.volk)?`<p class="note cwind"><b>${esc(cw.volk)}:</b> Die Volksanpassung ist individuell. Trag die Werte so ein, wie sie auf deinem Bogen stehen. Ändern kannst du sie später jederzeit unter <b>Attribute</b> über das Zahnrad.</p>`:""}<p class="note rplink">Zur Inspiration: <button class="linkbtn" data-info="attrrp">Tipps fürs Rollenspiel</button></p>
       <div class="cwattr">${ATTR.map(a=>{const w=num(cw.tw[a]),bo=attrBonus(w);
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b></div>
           <div class="step"><button data-cwtw="${a}" data-d="-1" ${w<=0?"disabled":""} aria-label="${ATTR_LONG[a]} senken">−</button><output>${w}</output><button data-cwtw="${a}" data-d="1" ${w>=20?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
@@ -4440,6 +4442,7 @@ function cwRender(keepScroll){
           <div class="step"><button data-cwattr="${a}" data-d="-1" ${v<=1?"disabled":""} aria-label="${ATTR_LONG[a]} senken">−</button><output>${v}</output><button data-cwattr="${a}" data-d="1" ${v>=10||nextCost>ep?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
           <div class="cwres">${adj[i]?`<small>${adj[i]>0?"+":"−"}${Math.abs(adj[i])} ${esc(cw.volk)}</small>`:"<small>Wert</small>"}<b>${f}</b><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>
       <p class="note rplink">Zur Inspiration: <button class="linkbtn" data-info="attrrp">Tipps fürs Rollenspiel</button>, wie hohe und niedrige Werte im Spiel wirken können.</p>
+      ${VOLK_IND.has(cw.volk)?`<p class="note cwind"><b>${esc(cw.volk)}:</b> Die Volksanpassung ist individuell. Verteil hier deine Punkte ohne Anpassung und trag deine eigenen Boni nach dem Erstellen unter <b>Attribute</b> über das Zahnrad ein.</p>`:""}
       <p class="note">Werte über 5 sind überdurchschnittlich. Gib alle Punkte aus, sie verfallen nach der Erstellung. Rechts steht der Endwert mit Volksanpassung und darunter der Bonus, mit dem du später würfelst.</p>`;
   }else if(s===2&&cwT()){
     const names=spellListNames(),N=cw.startLevel||1;
