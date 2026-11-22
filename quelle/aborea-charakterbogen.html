@@ -3213,7 +3213,7 @@ function zauberCardHtml(){
       calc.fx.forEach((f,j)=>{if(ZDEF.test(f.d||"")||zWbFx(f)||zAllyFx(f)||(zTrgFx(f)&&!/jede Runde/i.test(f.t||"")))req=req.filter(r=>r.k!=="f"+j);});
       const calc1=zbCalc(z,1,null),fxh1=zbFxHtml(sp,z,calc1,1),prh1=zbProbeHtml(sp,z,calc1),cost1=sp.level+1;
       if(!open){const castH=zCastRow(sp,st,cs,cost,gz,req);
-        const bits=calc1.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
+        const bits=calc1.fx.filter(f=>f.t||f.dice).slice(0,2).map(f=>{const main=f.dice&&!/wettertabelle/i.test(f.a||"")?`<b>${esc(zbDiceTxt(f.dice))}</b> ${esc(f.a)}`:esc(f.t.length>48?f.t.slice(0,46)+"…":f.t);const ex=[f.f,f.d].filter(Boolean).map(esc).join(" · ");return main+(ex?` <span class="hint">${ex}</span>`:"");});
         const tg=[z.rw&&z.rw!=="Selbst"?z.rw:z.o?"von dir":"",z.gz?"Gezielt":"",z.k?"Konzentration":"",z.fl?"Fluch":"",z.re?"Reaktion":""].filter(Boolean);
         return compact(bits.join("<br>"),castH,tg.map(esc).join(" · "));}
       const S1=zIsBlood(sp)&&z.p?zSplit(z,calc1):null,zdu=((S1?z.fx.filter((f,i)=>!S1.calcU.fx[i]._hideD):z.fx).find(f=>f.d&&!ZDEF.test(f.d)&&!/^(bis |solange)/i.test(f.d))||{}).d;
