@@ -688,6 +688,8 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zm i{font-style:normal;opacity:.75}.zm.up{border-color:var(--mp,#3b7dd8);color:var(--ink,#2b2118);font-weight:600}.zm em,.zvup em{font-style:normal;font-size:.72rem;font-weight:700;color:var(--mp,#3b7dd8);margin-left:4px}
 .zakbody ul{margin:4px 0 2px;padding-left:18px}.zakbody .hint{margin:2px 0}
 .zrnext{display:grid;gap:6px}
+.rph{margin:14px 0 2px}.rpt{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.9rem}.rpt ul{margin:2px 0;padding-left:16px}.rpt li{margin:2px 0}
+@media (max-width:360px){.rpt{grid-template-columns:1fr}}.note.rplink{margin-top:8px}
 .wxm{display:inline-flex}.wxm>span{display:inline-block;transition:transform .55s cubic-bezier(.2,.8,.2,1)}.wxm .wxa{transform:translateX(-.55em)}.wxm .wxb{transform:translateX(.55em)}.wxm.go>span{transform:none}.wxm.go{animation:wxpop .35s .5s ease-out}
 @keyframes wxpop{50%{transform:scale(1.18)}}
 @media (prefers-reduced-motion:reduce){.wxm>span{transition:none}.wxm.go{animation:none}}
@@ -1048,6 +1050,7 @@ function renderAttr(){
     <span class="name"></span>
     <button class="die" data-roll="attr:${a}" aria-label="${ATTR_LONG[a]} würfeln">${DIE6}</button></div>`}).join("")}
     <div class="afoot"><span class="hint">${attrEdit?"Von Hand: Wert eintragen, der Bonus folgt aus der Tabelle. „Extra“ kommt obendrauf, z. B. durch einen Ring, und zählt nicht in den Kaufpreis.":"Steigern über Stufenaufstieg und Lernen."}</span><button class="gearmini" data-rhopen aria-label="Würfel-Verlauf" title="Würfel-Verlauf">${ICON_HIST}</button><button class="gearmini${attrEdit?" on":""}" id="attrgear" aria-pressed="${attrEdit}" aria-label="${attrEdit?"Fertig":"Attribute von Hand ändern"}">${ICON_GEAR}</button></div></div>
+    <p class="note rplink"><button class="linkbtn" data-info="attrrp">Tipps fürs Rollenspiel</button>: Wie hohe und niedrige Werte im Spiel wirken können.</p>
     <p class="note">Würfeln auf ein Attribut: so viele W6 wie der Bonus. Bei Bonus 0 ein Plus- und ein Minus-W6, bei −1 ein Plus- und zwei Minus-W6 usw. Minus-Würfel sind rot.</p>`;
 }
 const SB_DEFAULT_LISTS=["Elementare Magie","Zeichen & Wunder","Wilde Magie","Blutmagie","Weiße Magie","Freie Magie"];
@@ -1307,6 +1310,19 @@ const INFO={
     <p>Hier verteilst du die Punkte mehrerer Stufen auf einmal. Die App nimmt dabei immer zuerst die günstigen Kreuze. Wer früher in einer Stufe zweimal gelernt und den höheren Preis bezahlt hat, hätte so am Ende ein paar Punkte mehr übrig als auf dem Papier.</p>
     <p>Ganz genau ginge es nur, wenn man jede Stufe einzeln nachspielt. Versuch deshalb, so nah wie möglich an deinem echten Verlauf zu bleiben.</p>
     <p><b>Später anpassen:</b> Kreuze änderst du im Reiter Fertigkeiten (Fertigkeit antippen), die übrigen Ausbildungspunkte im Bogen unter „Volk & Beruf“.</p>`],
+  attrrp:["Attribute im Rollenspiel",`<p>Deine Werte entscheiden nicht nur über Würfe. Sie färben auch, wie dein Charakter an eine Situation herangeht. Das hier sind nur Ideen zur Inspiration, kein Muss. Deine Werte legen die Persönlichkeit nicht fest.</p>
+    <h4 class="rph">Stärke</h4><p class="hint">Ein umgestürzter Baum versperrt den Weg.</p>
+    <div class="rpt"><div><b>Hoch</b><ul><li>packt zuerst an und versucht es mit Kraft</li><li>zögert nicht lange</li><li>sucht die direkte, körperliche Lösung</li></ul></div><div><b>Niedrig</b><ul><li>schätzt erst ab, ob es überhaupt geht</li><li>sucht einen Hebel, eine Lücke oder einen anderen Weg</li><li>holt sich Hilfe, statt sich zu verausgaben</li></ul></div></div>
+    <h4 class="rph">Geschick</h4><p class="hint">Ein Trinkhorn rutscht vom vollen Tisch.</p>
+    <div class="rpt"><div><b>Hoch</b><ul><li>fängt es auf, bevor es aufschlägt</li><li>bewegt sich schnell, ohne etwas anderes umzustoßen</li><li>reagiert, ohne nachzudenken</li></ul></div><div><b>Niedrig</b><ul><li>greift einen Moment zu spät</li><li>stößt den Tisch an oder erwischt das Falsche</li><li>geht bei feiner Arbeit lieber langsam und vorsichtig vor</li></ul></div></div>
+    <h4 class="rph">Konstitution</h4><p class="hint">Die Gruppe wandert seit Stunden durch eisigen Regen.</p>
+    <div class="rpt"><div><b>Hoch</b><ul><li>läuft weiter, ohne viel zu klagen</li><li>ist nach einer kurzen Rast wieder fit</li><li>nimmt Unbequemes als Teil der Reise hin</li></ul></div><div><b>Niedrig</b><ul><li>spürt die Kälte schnell in den Knochen</li><li>braucht öfter eine Pause</li><li>merkt früher und deutlicher, wenn der Körper nicht mehr will</li></ul></div></div>
+    <h4 class="rph">Intelligenz</h4><p class="hint">Die Gruppe findet ein seltsames Gerät voller Runen.</p>
+    <div class="rpt"><div><b>Hoch</b><ul><li>schaut sich alles genau an, bevor etwas angefasst wird</li><li>verknüpft Zeichen, Aufbau und Zweck</li><li>sucht das Muster dahinter</li></ul></div><div><b>Niedrig</b><ul><li>hält sich an das, was offensichtlich ist</li><li>probiert einfach aus</li><li>versteht es am besten, wenn es jemand vormacht</li></ul></div></div>
+    <h4 class="rph">Charisma</h4><p class="hint">Eine Torwache soll die Gruppe durchlassen.</p>
+    <div class="rpt"><div><b>Hoch</b><ul><li>liest die Wache und passt den Ton an</li><li>weiß, wann Selbstsicherheit, Respekt oder Dringlichkeit wirkt</li><li>merkt, wenn etwas an der Wache nicht stimmt</li></ul></div><div><b>Niedrig</b><ul><li>hat ein gutes Argument, bringt es aber nicht rüber</li><li>wirkt steif, unbeholfen oder zu direkt</li><li>meint es ehrlich, überzeugt aber nicht unbedingt</li></ul></div></div>
+    <h4 class="rph">Frag dich bei deinem höchsten und niedrigsten Wert</h4><ul><li>Wie geht mein Charakter mit Druck um?</li><li>Worauf verlässt er sich zuerst?</li><li>Wo tut er sich von Natur aus schwer?</li></ul>
+    <p class="hint">Angelehnt an einen Beitrag von @dnd_elementalawakening.</p>`],
   wetter:["Wettertabelle (W4 + W10)",()=>`<p>Würfle einen W4 und einen W10: Der W4 ist die Zehnerstelle, der W10 die Einerstelle (die 0 zählt als 0). W4 2 und W10 7 ergeben also 27. Jedes Wetter ist gleich wahrscheinlich, und Nachbarn haben nichts miteinander zu tun. Die Tabelle ist ein Kreis: Nach 49 kommt wieder 10.</p>${[1,2,3,4].map(b=>`<h4 class="wxh">W4: ${b}</h4><table class="wxt">${WXT.filter(r=>Math.floor(r[0]/10)===b).map(r=>`<tr><td>${r[0]}</td><td><b>${esc(r[2])}</b><br><span class="hint">${esc(r[3])}</span></td></tr>`).join("")}</table>`).join("")}`],
   cwmode:["Neu erstellen oder übertragen",`<p><b>Neu erstellen:</b> nach den Regeln mit Punkten, auch gleich auf höherer Stufe.</p>
     <p><b>Charakter übertragen:</b> für einen Charakter, den es schon auf Papier gibt. Du schreibst Stufe, Attributwerte und Kreuze direkt ab, ohne Punkte zu rechnen, und trägst die übrigen Ausbildungspunkte ein.</p>`]
@@ -4428,7 +4444,7 @@ function cwRender(keepScroll){
       <p class="note">Nur mal reinschauen? <button class="linkbtn" data-cwexample="1">Beispielcharakter laden</button></p>`;
   }else if(s===1&&cwT()){
     if(!cw.tw)cw.tw=Object.fromEntries(ATTR.map(a=>[a,cwFinal(a)]));
-    h=`<p class="note">Trag die Attributwerte von deinem Bogen ein, so wie sie dort stehen (mit Volksanpassung). Der Bonus ergibt sich aus der Tabelle.</p>
+    h=`<p class="note">Trag die Attributwerte von deinem Bogen ein, so wie sie dort stehen (mit Volksanpassung). Der Bonus ergibt sich aus der Tabelle.</p><p class="note rplink">Zur Inspiration: <button class="linkbtn" data-info="attrrp">Tipps fürs Rollenspiel</button></p>
       <div class="cwattr">${ATTR.map(a=>{const w=num(cw.tw[a]),bo=attrBonus(w);
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b></div>
           <div class="step"><button data-cwtw="${a}" data-d="-1" ${w<=0?"disabled":""} aria-label="${ATTR_LONG[a]} senken">−</button><output>${w}</output><button data-cwtw="${a}" data-d="1" ${w>=20?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
@@ -4441,6 +4457,7 @@ function cwRender(keepScroll){
         return `<div class="cwar"><div class="cwan"><b>${ATTR_LONG[a]}</b><small>Wert ${v} kostet ${ATTR_PRICE[v]} EP${v<10?`<br>${v} → ${v+1}: <b class="cwc">+${nextCost} EP</b>`:"<br>Maximum"}</small></div>
           <div class="step"><button data-cwattr="${a}" data-d="-1" ${v<=1?"disabled":""} aria-label="${ATTR_LONG[a]} senken">−</button><output>${v}</output><button data-cwattr="${a}" data-d="1" ${v>=10||nextCost>ep?"disabled":""} aria-label="${ATTR_LONG[a]} erhöhen">+</button></div>
           <div class="cwres">${adj[i]?`<small>${adj[i]>0?"+":"−"}${Math.abs(adj[i])} ${esc(cw.volk)}</small>`:"<small>Wert</small>"}<b>${f}</b><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>
+      <p class="note rplink">Zur Inspiration: <button class="linkbtn" data-info="attrrp">Tipps fürs Rollenspiel</button>, wie hohe und niedrige Werte im Spiel wirken können.</p>
       <p class="note">Werte über 5 sind überdurchschnittlich. Gib alle Punkte aus, sie verfallen nach der Erstellung. Rechts steht der Endwert mit Volksanpassung und darunter der Bonus, mit dem du später würfelst.</p>`;
   }else if(s===2&&cwT()){
     const names=spellListNames(),N=cw.startLevel||1;
