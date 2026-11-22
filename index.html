@@ -688,6 +688,9 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zm i{font-style:normal;opacity:.75}.zm.up{border-color:var(--mp,#3b7dd8);color:var(--ink,#2b2118);font-weight:600}.zm em,.zvup em{font-style:normal;font-size:.72rem;font-weight:700;color:var(--mp,#3b7dd8);margin-left:4px}
 .zakbody ul{margin:4px 0 2px;padding-left:18px}.zakbody .hint{margin:2px 0}
 .zrnext{display:grid;gap:6px}
+.wxm{display:inline-flex}.wxm>span{display:inline-block;transition:transform .55s cubic-bezier(.2,.8,.2,1)}.wxm .wxa{transform:translateX(-.55em)}.wxm .wxb{transform:translateX(.55em)}.wxm.go>span{transform:none}.wxm.go{animation:wxpop .35s .5s ease-out}
+@keyframes wxpop{50%{transform:scale(1.18)}}
+@media (prefers-reduced-motion:reduce){.wxm>span{transition:none}.wxm.go{animation:none}}
 .zst .zsl{columns:auto}
 .zakc>.zakb{display:flow-root}.zakc .zak:not(.zsumc){display:block}.zakc .zak:not(.zsumc)>.zsumh{float:right;margin:2px 0 4px 10px}.zakc .zakbody>ul:first-child{margin-top:2px}
 .zwxi{display:flex;align-items:center;gap:6px;margin:4px 0}
@@ -1650,7 +1653,7 @@ function rollPool(title,spec,onDone){
   const run=++runId;
   const groups=spec.groups.filter(g=>g.n>0).map(g=>Object.assign({},g,{vals:[]}));
   const items=[];
-  const lab=(it,v)=>it.tens&&spec.wx?String(v*10):it.tens?String((v%10)*10).padStart(2,"0"):it.ones?String(v%10):String(v);
+  const lab=(it,v)=>it.tens&&spec.wx?String(v):it.ones&&spec.wx?String(v%10):it.tens?String((v%10)*10).padStart(2,"0"):it.ones?String(v%10):String(v);
   groups.forEach(g=>{for(let i=0;i<g.n;i++){const v=d(g.s);g.vals.push(v);items.push({s:g.s,v,neg:!!g.neg,tens:!!g.tens,ones:!!g.ones});}});
   let total=items.reduce((a,x)=>a+(x.neg?-x.v:x.v),0)+num(spec.flat);
   if(spec.wx){const tn=items.find(x=>x.tens).v,on=items.find(x=>x.ones).v%10;total=tn*10+on;}
@@ -1694,8 +1697,10 @@ function rollPool(title,spec,onDone){
   });
   function finish(){
     if(run!==runId)return;
-    const r=$("#rres");r.textContent=total;r.classList.remove("wait");r.classList.add("pop");
-    const lines=spec.d100?[`W100: ${lab({tens:1},groups[0].vals[0])} + ${lab({ones:1},groups[1].vals[0])} = ${(groups[0].vals[0]%10)*10+groups[1].vals[0]%10||100}`,...groups.filter(g=>!g.tens&&!g.ones).map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`)]:groups.map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`);
+    const r=$("#rres");r.classList.remove("wait");
+    if(spec.wx){const tn=groups[0].vals[0],on=groups[1].vals[0]%10;r.innerHTML=`<span class="wxm"><span class="wxa">${tn}</span><span class="wxb">${on}</span></span>`;setTimeout(()=>{const m=r.querySelector(".wxm");if(m)m.classList.add("go");},40);}
+    else{r.textContent=total;r.classList.add("pop");}
+    const lines=spec.wx?[`W4 ${groups[0].vals[0]} als Zehner, W10 ${groups[1].vals[0]%10} als Einer: ${total}`]:spec.d100?[`W100: ${lab({tens:1},groups[0].vals[0])} + ${lab({ones:1},groups[1].vals[0])} = ${(groups[0].vals[0]%10)*10+groups[1].vals[0]%10||100}`,...groups.filter(g=>!g.tens&&!g.ones).map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`)]:groups.map(g=>`${g.label} ${g.n}W${g.s}: ${g.vals.join("+")}`);
     if(spec.flat)lines.push(spec.flatLabel?spec.flatLabel+" "+num(spec.flat):"Bonus "+sgn(num(spec.flat)));
     const c=$("#rcalc");c.textContent=lines.join(" · ");c.hidden=false;
     const res=onDone?onDone(total,groups):null;
