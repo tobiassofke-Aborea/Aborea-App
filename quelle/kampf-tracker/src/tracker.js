@@ -642,6 +642,7 @@ function addFromTemplate(tpl, type, opts){
     manaMax: tpl.manaMax || 0,
     mana: tpl.manaMax || 0,
     dead: false,
+    turns: 0,
     history: []
   });
   if(opts && opts.skipRender) return;
@@ -699,6 +700,7 @@ $('#nextTurnBtn').addEventListener('click', () => {
   const sorted = sortedCombat();
   const active = sorted.find(c=>!c.dead);
   if(!active) return;
+  active.turns = turnsOf(active) + 1;
   active.currentInit += active.baseInit;
   turnCount++;
 
@@ -712,6 +714,34 @@ $('#nextTurnBtn').addEventListener('click', () => {
   }
 
   saveCombat(); render();
+});
+
+// Wie viele eigene Züge hatte der Charakter schon? Neue Einträge zählen mit;
+// bei älteren Einträgen wird es aus Gesamt-INI ÷ Basis-INI zurückgerechnet.
+function turnsOf(c){
+  if(typeof c.turns === 'number') return c.turns;
+  if(!c.baseInit) return 0;
+  return Math.max(0, Math.round(c.currentInit / c.baseInit) - 1);
+}
+
+// Gesamt-INI für alle neu berechnen: Basis-INI × (eigene Züge + 1).
+// So rutscht ein Charakter nach einer Änderung der Basis-INI sofort an die richtige Stelle.
+$('#sortIniBtn').addEventListener('click', () => {
+  if(combat.length===0) return;
+  let changed = 0;
+  combat.forEach(c => {
+    const t = turnsOf(c);
+    c.turns = t;
+    const total = c.baseInit * (t + 1);
+    if(total !== c.currentInit){
+      if(!c.history) c.history = [];
+      c.history.push(`Zug ${turnCount}: Gesamt-INI neu berechnet ${c.currentInit} → ${total} (Basis ${c.baseInit} × ${t + 1})`);
+      c.currentInit = total;
+      changed++;
+    }
+  });
+  saveCombat(); render();
+  setStatus(changed ? `INI neu sortiert — ${changed} Wert(e) angepasst.` : 'INI neu sortiert — alles war schon aktuell.');
 });
 
 $('#resetCombatBtn').addEventListener('click', async () => {
@@ -915,9 +945,10 @@ $('#combatList').addEventListener('click', (e) => {
       const num = parseInt(val, 10);
       if(isNaN(num)) return;
       const before = c.baseInit;
+      c.turns = turnsOf(c); // Zugzahl festhalten, bevor sich die Basis ändert
       c.baseInit = num;
       if(!c.history) c.history = [];
-      c.history.push(`Zug ${turnCount}: Basis-INI von ${before} auf ${num} geändert (wirkt sich ab dem nächsten Zug aus)`);
+      c.history.push(`Zug ${turnCount}: Basis-INI von ${before} auf ${num} geändert (wirkt ab dem nächsten Zug, sofort mit „INI sortieren“)`);
       saveCombat(); render();
     });
   }
