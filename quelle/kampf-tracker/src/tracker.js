@@ -358,13 +358,16 @@ function renderCombat(){
     const main = document.createElement('div');
     main.className = 'row-main';
 
+    const collapsed = isCollapsed(c);
     const top = document.createElement('div');
     top.className = 'row-top';
     top.innerHTML = `
+      <button class="collapse-btn" data-act="toggleCollapse" data-id="${c.id}" title="${collapsed ? 'Details ausklappen' : 'Details einklappen'}">${collapsed ? '▸' : '▾'}</button>
       <span class="badge ${c.type}">${c.type==='player' ? (c.icon||'⭐') : (c.instanceNum ?? '?')}</span>
       <span class="name ${c.dead?'kill-mark':''}">${c.dead?'💀 ':''}${c.disabled?'⏸️ ':''}${escapeHtml(c.name)}</span>
       <span class="ini-val">INI ${c.currentInit}</span>
       <span class="ini-base">(Basis ${c.baseInit} · ${turnsOf(c)}× dran)</span>
+      ${collapsed ? `<span class="hp-mini">❤️ ${c.hp}/${c.maxHp}</span>` : ''}
       ${c.id===activeId ? '<span class="turn-label">▶ Aktueller Zug</span>' : ''}
     `;
     main.appendChild(top);
@@ -462,9 +465,20 @@ function renderCombat(){
     `;
     main.appendChild(footer);
 
+    // Alles unterhalb der Kopfzeile ist einklappbar
+    const body = document.createElement('div');
+    body.className = 'row-body' + (collapsed ? ' collapsed' : '');
+    [...main.children].slice(1).forEach(el => body.appendChild(el));
+    main.appendChild(body);
+
     row.appendChild(main);
     list.appendChild(row);
   });
+}
+
+// Spieler starten eingeklappt, Gegner ausgeklappt – danach merkt sich jeder Eintrag seinen Zustand.
+function isCollapsed(c){
+  return typeof c.collapsed === 'boolean' ? c.collapsed : c.type === 'player';
 }
 
 function escapeHtml(s){
@@ -937,6 +951,9 @@ $('#combatList').addEventListener('click', (e) => {
       combat = combat.filter(x=>x.id!==id);
       saveCombat(); render();
     });
+  } else if(act==='toggleCollapse'){
+    c.collapsed = !isCollapsed(c);
+    saveCombat(); render();
   } else if(act==='toggleHistory'){
     if(expandedHistory.has(id)) expandedHistory.delete(id);
     else expandedHistory.add(id);

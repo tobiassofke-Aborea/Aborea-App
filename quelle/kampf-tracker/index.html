@@ -150,6 +150,14 @@
   .badge.npc{ background:color-mix(in srgb, var(--npc) 20%, transparent); color:var(--npc); border:1px solid var(--npc); }
 
   .row-main{ display:flex; flex-direction:column; gap:6px; }
+  .row-body{ display:flex; flex-direction:column; gap:6px; }
+  .row-body.collapsed{ display:none; }
+  .collapse-btn{
+    width:22px; height:22px; padding:0; border:1px solid var(--line); border-radius:4px;
+    background:var(--panel-2); color:var(--muted); cursor:pointer; font-size:12px; line-height:1; flex-shrink:0;
+  }
+  .collapse-btn:hover{ border-color:var(--accent-text); color:var(--accent-text); }
+  .hp-mini{ font-family:var(--mono); font-size:12px; color:var(--muted); }
   .row-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .name{ font-weight:600; font-size:14px; }
   .ini-val{ font-family:var(--mono); color:var(--accent-text); font-weight:700; font-size:13px; }
