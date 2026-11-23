@@ -58,6 +58,7 @@ let combat = [];          // aktive Kampfteilnehmer
 let turnCount = 0;
 let storageOk = true;
 let expandedHistory = new Set();
+let undoStack = []; // abgeschlossene Züge, damit sie sich zurücknehmen lassen
 let nextNum = 1; // globaler, fortlaufender Zähler für eindeutige Gegner-/Spieler-Nummern
 
 const $ = sel => document.querySelector(sel);
@@ -142,6 +143,7 @@ async function loadAll(){
       combat = parsed.combat || [];
       turnCount = parsed.turnCount || 0;
       nextNum = parsed.nextNum || 1;
+      undoStack = parsed.undo || [];
     }
   }catch(e){ combat = []; turnCount = 0; nextNum = 1; }
 
@@ -169,7 +171,7 @@ async function saveGroups(){
 async function saveCombat(){
   publishView();
   try{
-    await store.set('kampf-status', JSON.stringify({combat, turnCount, nextNum}), false);
+    await store.set('kampf-status', JSON.stringify({combat, turnCount, nextNum, undo: undoStack}), false);
   }catch(e){ setStatus('Speichern fehlgeschlagen — Änderungen evtl. nicht dauerhaft.'); }
 }
 
@@ -250,6 +252,7 @@ function render(){
   renderSettings();
   renderSelects();
   $('#turnCounter').textContent = turnCount ? ('· Zug ' + turnCount) : '';
+  $('#undoTurnBtn').disabled = undoStack.length === 0;
 }
 
 function sortedCombat(){
@@ -721,6 +724,7 @@ $('#nextTurnBtn').addEventListener('click', () => {
   const sorted = sortedCombat();
   const active = sorted.find(c=>!c.dead);
   if(!active) return;
+  const step = { activeId: active.id, added: active.baseInit, turnsBefore: turnsOf(active) };
   active.turns = turnsOf(active) + 1;
   active.currentInit += active.baseInit;
   turnCount++;
@@ -729,10 +733,15 @@ $('#nextTurnBtn').addEventListener('click', () => {
   const nextSorted = sortedCombat();
   const newActive = nextSorted.find(c=>!c.dead);
   if(newActive){
+    step.newActiveId = newActive.id;
+    step.apBefore = newActive.ap;
     newActive.ap = newActive.apMax || 0;
     if(!newActive.history) newActive.history = [];
     newActive.history.push(`Zug ${turnCount}: AP aufgefüllt auf ${newActive.ap}`);
+    step.apNote = newActive.history[newActive.history.length-1];
   }
+  undoStack.push(step);
+  if(undoStack.length > 100) undoStack.shift();
 
   saveCombat(); render();
 });
@@ -765,12 +774,33 @@ $('#sortIniBtn').addEventListener('click', () => {
   setStatus(changed ? `INI neu sortiert — ${changed} Wert(e) angepasst.` : 'INI neu sortiert — alles war schon aktuell.');
 });
 
+// Letzten „Zug abschließen“ zurücknehmen. Nur die Zugberechnung wird umgekehrt
+// (INI, Zugzähler, aufgefüllte AP) – Schaden, Heilung usw. bleiben erhalten.
+$('#undoTurnBtn').addEventListener('click', () => {
+  const step = undoStack.pop();
+  if(!step){ setStatus('Nichts zum Zurücknehmen.'); return; }
+  const a = combat.find(x=>x.id===step.activeId);
+  if(a){
+    a.currentInit -= step.added;
+    a.turns = step.turnsBefore;
+  }
+  const n = combat.find(x=>x.id===step.newActiveId);
+  if(n){
+    if(typeof step.apBefore === 'number') n.ap = step.apBefore;
+    if(n.history && n.history[n.history.length-1] === step.apNote) n.history.pop();
+  }
+  turnCount = Math.max(0, turnCount - 1);
+  saveCombat(); render();
+  setStatus(a ? `Zug zurückgenommen — ${a.name} ist wieder dran.` : 'Zug zurückgenommen.');
+});
+
 $('#resetCombatBtn').addEventListener('click', async () => {
   const ok = await openModal('Kampf wirklich zurücksetzen? Alle Teilnehmer werden entfernt.');
   if(!ok) return;
   combat = [];
   turnCount = 0;
   nextNum = 1;
+  undoStack = [];
   expandedHistory.clear();
   saveCombat(); render();
 });
@@ -820,6 +850,7 @@ $('#importAllInput').addEventListener('change', async (e) => {
       combat = data.combat;
       turnCount = data.turnCount || 0;
       nextNum = data.nextNum || (Math.max(0, ...combat.map(c => c.instanceNum || 0)) + 1);
+      undoStack = [];
       expandedHistory.clear();
       await saveCombat();
     }
