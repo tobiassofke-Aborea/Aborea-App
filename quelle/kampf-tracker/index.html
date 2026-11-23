@@ -261,24 +261,26 @@
   body:not(.role-gm) > header, body:not(.role-gm) > main,
   body:not(.role-gm) > .fab-settings, body:not(.role-gm) > footer.status{ display:none; }
   body:not(.role-player) #player-view{ display:none; }
-  body.role-player{ padding-bottom:0; }
-  #player-view{ padding:16px 18px; }
-  #player-view .pv-round{ font-family:var(--heading); font-size:15px; font-weight:600; margin-bottom:6px; }
-  #player-view .pv-label{ font-size:12px; color:var(--muted); margin-top:10px; }
-  #player-view .pv-who{ display:flex; align-items:center; gap:8px; margin-top:2px; }
-  #player-view .pv-who .name{ font-size:16px; }
-  #player-view .pv-who.big .name{ font-size:20px; }
-  #player-view .pv-empty{ color:var(--muted); }
+  body.role-player{ padding-bottom:0; background:var(--bg); }
+  #player-view{ display:flex; align-items:center; gap:10px; padding:8px 12px; white-space:nowrap; overflow-x:auto; scrollbar-width:none; }
+  #player-view::-webkit-scrollbar{ display:none; }
+  #player-view .pv-round{ font-family:var(--heading); font-size:13px; font-weight:600; color:var(--muted); flex-shrink:0; }
+  #player-view .pv-queue{ display:flex; align-items:center; gap:6px; }
+  #player-view .pv-item{ display:inline-flex; align-items:center; gap:5px; padding:3px 8px 3px 3px; border-radius:14px; border:1px solid transparent; flex-shrink:0; }
+  #player-view .pv-item.now{ border-color:var(--accent); background:var(--accent-dim); }
+  #player-view .pv-item .name{ font-size:14px; font-weight:600; }
+  #player-view .pv-item.now .name{ font-size:16px; font-weight:700; }
+  #player-view .pv-item:not(.now) .name{ color:var(--muted); }
+  #player-view .badge{ font-size:12px; padding:1px 6px; min-width:20px; }
+  #player-view .pv-sep{ color:var(--muted); font-size:12px; }
+  #player-view .pv-empty{ color:var(--muted); font-size:13px; }
 </style>
 </head>
 <body>
 
 <section id="player-view">
-  <div class="pv-round" id="pvRound">Kein Kampf aktiv</div>
-  <div class="pv-label">Am Zug</div>
-  <div class="pv-who big" id="pvActive"><span class="pv-empty">–</span></div>
-  <div class="pv-label">Als Nächstes</div>
-  <div class="pv-who" id="pvNext"><span class="pv-empty">–</span></div>
+  <span class="pv-round" id="pvRound"></span>
+  <span class="pv-queue" id="pvQueue"><span class="pv-empty">Kein Kampf aktiv</span></span>
 </section>
 
 <header>

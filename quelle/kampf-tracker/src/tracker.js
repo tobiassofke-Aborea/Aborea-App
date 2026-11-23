@@ -33,17 +33,17 @@ export function startGM(publish){
 // Schlanke Ansicht für die Spieler: nur wer dran ist und wer danach kommt.
 function publishView(){
   try{
-    const alive = arr => arr.filter(c=>!c.dead);
-    const byIni = arr => arr.sort((a,b)=> a.currentInit - b.currentInit);
-    const active = alive(byIni([...combat]))[0] || null;
-    let next = null;
-    if(active){
-      // Nächsten Zug simulieren: Aktiver bekommt seine Basis-INI drauf, dann neu sortieren.
-      const sim = combat.map(c => ({...c, currentInit: c.id===active.id ? c.currentInit + c.baseInit : c.currentInit}));
-      next = alive(byIni(sim))[0] || null;
+    // Die nächsten Züge simulieren: Wer dran ist, bekommt seine Basis-INI drauf, dann neu sortieren.
+    const sim = combat.filter(c=>!c.dead).map(c => ({...c}));
+    const queue = [];
+    for(let i=0; i<6 && sim.length; i++){
+      // Kopie sortieren, damit Gleichstände wie in der Spielleiter-Liste aufgelöst werden
+      const c = [...sim].sort((a,b)=> a.currentInit - b.currentInit)[0];
+      queue.push({ name: c.name, type: c.type, label: c.type==='player' ? (c.icon||'⭐') : String(c.instanceNum ?? '?') });
+      if(!c.baseInit) break; // ohne Basis-INI käme immer derselbe wieder
+      c.currentInit += c.baseInit;
     }
-    const slim = c => c ? { name: c.name, type: c.type, label: c.type==='player' ? (c.icon||'⭐') : String(c.instanceNum ?? '?') } : null;
-    publish({ turnCount, active: slim(active), next: slim(next) });
+    publish({ turnCount, queue, active: queue[0] || null, next: queue[1] || null });
   }catch(e){ /* Veröffentlichen ist nur Komfort */ }
 }
 
