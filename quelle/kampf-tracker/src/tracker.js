@@ -369,7 +369,6 @@ function renderCombat(){
       <span class="badge ${c.type}">${c.type==='player' ? (c.icon||'⭐') : (c.instanceNum ?? '?')}</span>
       <span class="name ${c.dead?'kill-mark':''}">${c.dead?'💀 ':''}${c.disabled?'⏸️ ':''}${escapeHtml(c.name)}</span>
       <span class="ini-val">INI ${c.currentInit}</span>
-      <span class="ini-base">(Basis ${c.baseInit} · ${turnsOf(c)}× dran)</span>
       ${collapsed ? `<span class="hp-mini">❤️ ${c.hp}/${c.maxHp}</span>` : ''}
       ${c.id===activeId ? '<span class="turn-label">▶ Aktueller Zug</span>' : ''}
     `;
@@ -436,7 +435,7 @@ function renderCombat(){
 
     const refRow = document.createElement('div');
     refRow.className = 'ref-row';
-    refRow.innerHTML = `<span class="ref-item">🛡️ Rüstung ${c.armor}</span><span class="ref-item">🎯 Krit ${c.kritThreshold ?? 5}</span>`;
+    refRow.innerHTML = `<span class="ref-item">🛡️ Rüstung ${c.armor}</span><span class="ref-item">🎯 Krit ${c.kritThreshold ?? 5}</span><span class="ref-item">⏱️ Basis-INI ${c.baseInit} · ${turnsOf(c)}× dran</span>`;
     main.appendChild(refRow);
 
     const hist = (c.history||[]);

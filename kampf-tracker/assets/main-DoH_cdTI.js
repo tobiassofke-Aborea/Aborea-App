@@ -3,7 +3,6 @@ var e=(e,t)=>()=>(t||(e((t={exports:{}}).exports,t,t.exports),e=null),t.exports)
       <span class="badge ${t.type}">${t.type===`player`?t.icon||`⭐`:t.instanceNum??`?`}</span>
       <span class="name ${t.dead?`kill-mark`:``}">${t.dead?`💀 `:``}${t.disabled?`⏸️ `:``}${j(t.name)}</span>
       <span class="ini-val">INI ${t.currentInit}</span>
-      <span class="ini-base">(Basis ${t.baseInit} · ${R(t)}× dran)</span>
       ${a?`<span class="hp-mini">❤️ ${t.hp}/${t.maxHp}</span>`:``}
       ${t.id===n?`<span class="turn-label">▶ Aktueller Zug</span>`:``}
     `,i.appendChild(o);let c=t.maxHp>0?Math.max(0,Math.min(100,Math.round(t.hp/t.maxHp*100))):0,l=c<=25?`crit`:c<=50?`warn`:``,u=document.createElement(`div`);u.className=`hp-row`,u.innerHTML=`
@@ -38,7 +37,7 @@ var e=(e,t)=>()=>(t||(e((t={exports:{}}).exports,t,t.exports),e=null),t.exports)
         <span class="counter-val">${t.mana}</span><span class="counter-max">/${t.manaMax||0}</span>
         <button class="counter-btn" data-act="mana+1" data-id="${t.id}">+</button>
       </span>
-    `,i.appendChild(m);let h=document.createElement(`div`);h.className=`ref-row`,h.innerHTML=`<span class="ref-item">🛡️ Rüstung ${t.armor}</span><span class="ref-item">🎯 Krit ${t.kritThreshold??5}</span>`,i.appendChild(h);let g=t.history||[];if(g.length){let e=document.createElement(`div`);e.className=`last-activity`,e.textContent=g[g.length-1],i.appendChild(e)}let _=document.createElement(`div`);_.className=`history`+(s.has(t.id)?` open`:``),_.innerHTML=g.length>1?`<ul>`+g.slice(0,-1).reverse().map(e=>`<li>${j(e)}</li>`).join(``)+`</ul>`:`<div class="empty-hist">Keine weiteren Einträge.</div>`,i.appendChild(_);let v=document.createElement(`div`);v.className=`row-footer`,v.innerHTML=`
+    `,i.appendChild(m);let h=document.createElement(`div`);h.className=`ref-row`,h.innerHTML=`<span class="ref-item">🛡️ Rüstung ${t.armor}</span><span class="ref-item">🎯 Krit ${t.kritThreshold??5}</span><span class="ref-item">⏱️ Basis-INI ${t.baseInit} · ${R(t)}× dran</span>`,i.appendChild(h);let g=t.history||[];if(g.length){let e=document.createElement(`div`);e.className=`last-activity`,e.textContent=g[g.length-1],i.appendChild(e)}let _=document.createElement(`div`);_.className=`history`+(s.has(t.id)?` open`:``),_.innerHTML=g.length>1?`<ul>`+g.slice(0,-1).reverse().map(e=>`<li>${j(e)}</li>`).join(``)+`</ul>`:`<div class="empty-hist">Keine weiteren Einträge.</div>`,i.appendChild(_);let v=document.createElement(`div`);v.className=`row-footer`,v.innerHTML=`
       ${g.length>1?`<button class="btn small" data-act="toggleHistory" data-id="${t.id}">${s.has(t.id)?`Verlauf ▲`:`Verlauf ▾`} (${g.length-1})</button>`:`<span></span>`}
       <span class="footer-actions">
         <button class="btn small" data-act="editIni" data-id="${t.id}">Basis-INI ändern</button>
