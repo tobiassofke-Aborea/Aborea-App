@@ -561,9 +561,13 @@ function renderPlayerTemplates(){
 }
 
 function renderSelects(){
+  // Auswahl merken, damit die Dropdowns nach dem Hinzufügen nicht zurückspringen
   const gs = $('#gegnerSelect');
+  const prevG = gs.value;
   gs.innerHTML = templates.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+  if(prevG && templates.some(t=>t.id===prevG)) gs.value = prevG;
   const ss = $('#spielerSelect');
+  const prevS = ss.value;
   const spielerOptions = playerTemplates.map(t=>`<option value="player|${t.id}">${escapeHtml(t.name)}</option>`).join('');
   const gruppenOptions = groups.filter(g=>groupMemberCount(g.id)>0)
     .map(g=>`<option value="group|${g.id}">👥 ${escapeHtml(g.name)} (${groupMemberCount(g.id)})</option>`).join('');
@@ -575,6 +579,7 @@ function renderSelects(){
     ss.innerHTML =
       (spielerOptions ? `<optgroup label="Spieler">${spielerOptions}</optgroup>` : '') +
       (gruppenOptions ? `<optgroup label="Gruppen">${gruppenOptions}</optgroup>` : '');
+    if(prevS && [...ss.options].some(o=>o.value===prevS)) ss.value = prevS;
   }
 }
 
