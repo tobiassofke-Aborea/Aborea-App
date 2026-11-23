@@ -1,7 +1,11 @@
 // Kampf-Tracker als Owlbear-Rodeo-Extension (Spielleiter-Ansicht).
-// Inhaltlich wie die Artifact-Version; die Speicherung läuft jetzt über
-// localStorage, und nach jeder Änderung am Kampf geht eine schlanke Ansicht
-// (wer ist dran, wer als Nächstes) an die Spieler im Raum.
+// Inhaltlich wie die Artifact-Version; die Speicherung läuft über localStorage,
+// und nach jeder Änderung am Kampf geht eine schlanke Ansicht (wer ist dran,
+// wer als Nächstes) an die Spieler im Raum.
+import SEED from './seed.json';
+
+// Erhöhen, wenn neue Vorlagen aus seed.json einmalig übernommen werden sollen.
+const SEED_VERSION = '2026-11-23';
 
 const store = {
   async get(key){
@@ -13,6 +17,16 @@ const store = {
     catch(e){ return false; }
   }
 };
+
+// Übernimmt Gegner-/Spieler-Vorlagen und Gruppen aus seed.json – einmal pro SEED_VERSION.
+async function applySeed(){
+  const v = await store.get('seed-version');
+  if(v && v.value === SEED_VERSION) return;
+  await store.set('gegner-vorlagen', JSON.stringify(SEED.templates));
+  await store.set('spieler-vorlagen', JSON.stringify(SEED.playerTemplates));
+  await store.set('gruppen', JSON.stringify(SEED.groups));
+  await store.set('seed-version', SEED_VERSION);
+}
 
 export function startGM(publish){
 
@@ -713,73 +727,58 @@ $('#resetCombatBtn').addEventListener('click', async () => {
 // ---------- Kampf als Datei speichern / laden ----------
 // Funktioniert unabhängig von der eingebauten Speicherung — auch wenn die Datei
 // später auf einem anderen Gerät oder außerhalb des Chats geöffnet wird.
-$('#exportCombatBtn').addEventListener('click', () => {
-  const data = { combat, turnCount, nextNum, exportedAt: new Date().toISOString() };
+$('#exportAllBtn').addEventListener('click', () => {
+  const data = {
+    app: 'kampf-tracker', version: 2, exportedAt: new Date().toISOString(),
+    templates, playerTemplates, groups, combat, turnCount, nextNum
+  };
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');
   a.href = url;
-  a.download = `kampf-spielstand-${stamp}.json`;
+  a.download = `kampf-tracker-${stamp}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 });
 
-$('#importCombatBtn').addEventListener('click', () => {
-  $('#importCombatInput').click();
-});
+$('#importAllBtn').addEventListener('click', () => { $('#importAllInput').click(); });
 
-$('#importCombatInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if(!file) return;
-  try{
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if(!Array.isArray(data.combat)) throw new Error('Ungültiges Format');
-    const ok = await openModal(`Gespeicherten Kampf laden (${data.combat.length} Teilnehmer)? Der aktuelle Kampf wird überschrieben.`);
-    if(!ok) return;
-    combat = data.combat || [];
-    turnCount = data.turnCount || 0;
-    nextNum = data.nextNum || 1;
-    expandedHistory.clear();
-    saveCombat(); render();
-  }catch(err){
-    await openModal('Diese Datei konnte nicht gelesen werden — ist es ein gültiger Kampf-Tracker-Spielstand?');
-  }
-});
-
-// ---------- Vorlagen als Datei speichern / laden ----------
-function downloadJson(data, filename){
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-$('#exportTplBtn').addEventListener('click', () => {
-  const stamp = new Date().toISOString().slice(0,10);
-  downloadJson({ templates, playerTemplates, groups, exportedAt: new Date().toISOString() }, `kampf-vorlagen-${stamp}.json`);
-});
-$('#importTplBtn').addEventListener('click', () => $('#importTplInput').click());
-$('#importTplInput').addEventListener('change', async (e) => {
+$('#importAllInput').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   e.target.value = '';
   if(!file) return;
   try{
     const data = JSON.parse(await file.text());
-    if(!Array.isArray(data.templates) && !Array.isArray(data.playerTemplates)) throw new Error('Ungültiges Format');
-    const ok = await openModal(`Vorlagen laden (${(data.templates||[]).length} Gegner, ${(data.playerTemplates||[]).length} Spieler, ${(data.groups||[]).length} Gruppen)? Die aktuellen Vorlagen werden ersetzt.`);
+    const has = k => Array.isArray(data[k]);
+    if(!data || typeof data !== 'object' || !(has('combat') || has('templates') || has('playerTemplates') || has('groups')))
+      throw new Error('Ungültiges Format');
+    const parts = [];
+    if(has('templates')) parts.push(`${data.templates.length} Gegner-Vorlagen`);
+    if(has('playerTemplates')) parts.push(`${data.playerTemplates.length} Spieler-Vorlagen`);
+    if(has('groups')) parts.push(`${data.groups.length} Gruppen`);
+    if(has('combat')) parts.push(`Kampf mit ${data.combat.length} Teilnehmern (Runde ${data.turnCount||0})`);
+    const ok = await openModal(`Datei laden: ${parts.join(', ')}. Die entsprechenden aktuellen Daten werden überschrieben. Fortfahren?`);
     if(!ok) return;
-    if(Array.isArray(data.templates) && data.templates.length) templates = data.templates;
-    if(Array.isArray(data.playerTemplates)) playerTemplates = data.playerTemplates;
-    if(Array.isArray(data.groups)) groups = data.groups;
-    saveTemplates(); savePlayerTemplates(); saveGroups(); render();
+    if(has('templates')){ templates = data.templates; await saveTemplates(); }
+    if(has('playerTemplates')){ playerTemplates = data.playerTemplates; await savePlayerTemplates(); }
+    if(has('groups')){ groups = data.groups; await saveGroups(); }
+    if(has('combat')){
+      combat = data.combat;
+      turnCount = data.turnCount || 0;
+      nextNum = data.nextNum || (Math.max(0, ...combat.map(c => c.instanceNum || 0)) + 1);
+      expandedHistory.clear();
+      await saveCombat();
+    }
+    render();
+    if(typeof renderTemplates==='function') renderTemplates();
+    if(typeof renderPlayerTemplates==='function') renderPlayerTemplates();
+    if(typeof renderSelects==='function') renderSelects();
+    if(typeof renderSettings==='function') renderSettings();
   }catch(err){
-    await openModal('Diese Datei konnte nicht gelesen werden — ist es eine Vorlagen-Datei vom Kampf-Tracker?');
+    await openModal('Diese Datei konnte nicht gelesen werden — ist es eine gültige Kampf-Tracker-Datei?');
   }
 });
 
@@ -979,5 +978,5 @@ subButtons.forEach(btn => {
 });
 
 
-loadAll();
+applySeed().then(loadAll);
 }

@@ -1,0 +1,355 @@
+{
+  "templates": [
+    {
+      "id": "427e786",
+      "name": "Gegner 1",
+      "hp": 16,
+      "initiative": 35,
+      "armor": 0,
+      "attack": "1W20+5",
+      "damage": "1W20+5",
+      "apMax": 3,
+      "kritThreshold": 50
+    },
+    {
+      "id": "t19fmb6",
+      "name": "Gegner 2",
+      "hp": 22,
+      "initiative": 12,
+      "armor": 1,
+      "attack": "1W20+3",
+      "damage": "1W6+0",
+      "apMax": 2
+    },
+    {
+      "id": "8wh31is",
+      "name": "Gegner 3",
+      "hp": 28,
+      "initiative": 13,
+      "armor": 1,
+      "attack": "1W20+3",
+      "damage": "1W6+1",
+      "apMax": 2
+    },
+    {
+      "id": "ajrfq6y",
+      "name": "Gegner 4",
+      "hp": 34,
+      "initiative": 14,
+      "armor": 2,
+      "attack": "1W20+4",
+      "damage": "1W6+1",
+      "apMax": 2
+    },
+    {
+      "id": "38u8bel",
+      "name": "Gegner 5",
+      "hp": 40,
+      "initiative": 15,
+      "armor": 2,
+      "attack": "1W20+4",
+      "damage": "1W6+1",
+      "apMax": 3
+    },
+    {
+      "id": "mvu92q4",
+      "name": "Gegner 6",
+      "hp": 46,
+      "initiative": 16,
+      "armor": 3,
+      "attack": "1W20+5",
+      "damage": "2W6+2",
+      "apMax": 3
+    },
+    {
+      "id": "dn5l02e",
+      "name": "Gegner 7",
+      "hp": 52,
+      "initiative": 17,
+      "armor": 3,
+      "attack": "1W20+5",
+      "damage": "2W6+2",
+      "apMax": 3
+    },
+    {
+      "id": "imh4scc",
+      "name": "Gegner 8",
+      "hp": 58,
+      "initiative": 18,
+      "armor": 4,
+      "attack": "1W20+6",
+      "damage": "2W6+2",
+      "apMax": 3
+    },
+    {
+      "id": "ugwrs1e",
+      "name": "Gegner 9",
+      "hp": 64,
+      "initiative": 19,
+      "armor": 4,
+      "attack": "1W20+6",
+      "damage": "2W6+3",
+      "apMax": 3
+    },
+    {
+      "id": "z918alk",
+      "name": "Gegner 10",
+      "hp": 70,
+      "initiative": 20,
+      "armor": 5,
+      "attack": "1W20+7",
+      "damage": "2W6+3",
+      "apMax": 4
+    },
+    {
+      "id": "3pqhf6v",
+      "name": "Gegner 11",
+      "hp": 76,
+      "initiative": 21,
+      "armor": 5,
+      "attack": "1W20+7",
+      "damage": "2W6+3",
+      "apMax": 4
+    },
+    {
+      "id": "pf4vcnn",
+      "name": "Gegner 12",
+      "hp": 82,
+      "initiative": 22,
+      "armor": 6,
+      "attack": "1W20+8",
+      "damage": "3W6+4",
+      "apMax": 4
+    },
+    {
+      "id": "at0aqxp",
+      "name": "Gegner 13",
+      "hp": 88,
+      "initiative": 23,
+      "armor": 6,
+      "attack": "1W20+8",
+      "damage": "3W6+4",
+      "apMax": 4
+    },
+    {
+      "id": "yt0cajk",
+      "name": "Gegner 14",
+      "hp": 94,
+      "initiative": 24,
+      "armor": 7,
+      "attack": "1W20+9",
+      "damage": "3W6+4",
+      "apMax": 4
+    },
+    {
+      "id": "1pccx4b",
+      "name": "Gegner 15",
+      "hp": 100,
+      "initiative": 25,
+      "armor": 7,
+      "attack": "1W20+9",
+      "damage": "3W6+5",
+      "apMax": 5
+    },
+    {
+      "id": "fuslza2",
+      "name": "Gegner 16",
+      "hp": 106,
+      "initiative": 26,
+      "armor": 8,
+      "attack": "1W20+10",
+      "damage": "3W6+5",
+      "apMax": 5
+    },
+    {
+      "id": "mlvigyo",
+      "name": "Gegner 17",
+      "hp": 112,
+      "initiative": 27,
+      "armor": 8,
+      "attack": "1W20+10",
+      "damage": "3W6+5",
+      "apMax": 5
+    },
+    {
+      "id": "1ld2426",
+      "name": "Gegner 18",
+      "hp": 118,
+      "initiative": 28,
+      "armor": 9,
+      "attack": "1W20+11",
+      "damage": "4W6+6",
+      "apMax": 5
+    },
+    {
+      "id": "bq0sr1e",
+      "name": "Gegner 19",
+      "hp": 124,
+      "initiative": 29,
+      "armor": 9,
+      "attack": "1W20+11",
+      "damage": "4W6+6",
+      "apMax": 5
+    },
+    {
+      "id": "u6a8nn4",
+      "name": "Gegner 20",
+      "hp": 130,
+      "initiative": 30,
+      "armor": 10,
+      "attack": "1W20+12",
+      "damage": "4W6+6",
+      "apMax": 6
+    }
+  ],
+  "playerTemplates": [
+    {
+      "id": "5buh17e",
+      "name": "Sturmhard",
+      "hp": 160,
+      "initiative": 33,
+      "armor": 13,
+      "attack": "1W20+10+1W12+3W6",
+      "damage": "",
+      "apMax": 8,
+      "groupId": "9pybpbc",
+      "icon": "🔨"
+    },
+    {
+      "id": "kak23da",
+      "name": "Jesel",
+      "hp": 20,
+      "initiative": 38,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "groupId": "9pybpbc",
+      "icon": "🛡️"
+    },
+    {
+      "id": "n0pd7qm",
+      "name": "Solena",
+      "hp": 20,
+      "initiative": 39,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "9pybpbc",
+      "icon": "🔥"
+    },
+    {
+      "id": "dp3y66t",
+      "name": "Ari",
+      "hp": 20,
+      "initiative": 38,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "9pybpbc",
+      "icon": "🦉"
+    },
+    {
+      "id": "m8h20oy",
+      "name": "Andaria",
+      "hp": 20,
+      "initiative": 10,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "2m51qf0",
+      "icon": "👑"
+    },
+    {
+      "id": "fpnox05",
+      "name": "Astari",
+      "hp": 20,
+      "initiative": 10,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "2m51qf0",
+      "icon": "🌙"
+    },
+    {
+      "id": "3tivruh",
+      "name": "Yuna",
+      "hp": 20,
+      "initiative": 10,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "2m51qf0",
+      "icon": "🍀"
+    },
+    {
+      "id": "b1k1jll",
+      "name": "Mael",
+      "hp": 20,
+      "initiative": 10,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "2m51qf0",
+      "icon": "🏹"
+    },
+    {
+      "id": "y6h0kj5",
+      "name": "Elia",
+      "hp": 20,
+      "initiative": 10,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "2m51qf0",
+      "icon": "⚔️"
+    },
+    {
+      "id": "iig82cp",
+      "name": "Fred",
+      "hp": 20,
+      "initiative": 10,
+      "armor": 0,
+      "attack": "1W20+0",
+      "damage": "1W6+0",
+      "apMax": 3,
+      "manaMax": 0,
+      "kritThreshold": 5,
+      "groupId": "2m51qf0",
+      "icon": "🍲"
+    }
+  ],
+  "groups": [
+    {
+      "id": "9pybpbc",
+      "name": "Bad Nauheim",
+      "members": []
+    },
+    {
+      "id": "2m51qf0",
+      "name": "Berlin",
+      "members": []
+    }
+  ]
+}

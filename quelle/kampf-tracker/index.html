@@ -345,19 +345,12 @@
     </div>
 
     <div id="sub-speichern" class="settings-sub" style="display:none;">
-      <div class="section-title">Kampf speichern / laden</div>
-      <div class="hint" style="margin-bottom:10px;">Der aktuelle Kampf wird ohnehin automatisch gespeichert. Für ein Backup oder um ihn auf einem anderen Gerät fortzusetzen, als Datei sichern.</div>
+      <div class="section-title">Speichern / Laden</div>
+      <div class="hint" style="margin-bottom:10px;">Alles wird ohnehin automatisch im Browser gespeichert. Für ein Backup oder um auf einem anderen Gerät weiterzumachen, als Datei sichern. Die Datei enthält Gegner-Vorlagen, Spieler-Vorlagen, Gruppen und den aktuellen Kampf (inkl. Verlauf, AP, Mana, Initiative, Runde).</div>
       <div class="toolbar">
-        <button class="btn" id="exportCombatBtn" title="Kampf als Datei speichern">💾 Kampf speichern</button>
-        <button class="btn" id="importCombatBtn" title="Gespeicherten Kampf laden">📂 Kampf laden</button>
-        <input type="file" id="importCombatInput" accept="application/json" style="display:none;">
-      </div>
-      <div class="section-title">Vorlagen speichern / laden</div>
-      <div class="hint" style="margin-bottom:10px;">Gegner- und Spieler-Vorlagen samt Gruppen als Datei sichern oder auf einem anderen Gerät bzw. in einem anderen Browser wieder einspielen.</div>
-      <div class="toolbar">
-        <button class="btn" id="exportTplBtn">💾 Vorlagen speichern</button>
-        <button class="btn" id="importTplBtn">📂 Vorlagen laden</button>
-        <input type="file" id="importTplInput" accept="application/json" style="display:none;">
+        <button class="btn" id="exportAllBtn" title="Vorlagen, Gruppen und Kampf als Datei speichern">💾 Alles speichern</button>
+        <button class="btn" id="importAllBtn" title="Gespeicherte Datei hochladen">📂 Datei hochladen</button>
+        <input type="file" id="importAllInput" accept="application/json,.json" style="display:none;">
       </div>
     </div>
   </section>

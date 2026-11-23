@@ -1,6 +1,6 @@
 {
   "name": "Kampf-Tracker",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "manifest_version": 1,
   "description": "Kampf-Tracker mit Vorlagen, INI, LP, AP/Mana und Würfeln. Spieler sehen, wer dran ist.",
   "author": "Tobias Sofke",
@@ -8,7 +8,7 @@
   "action": {
     "title": "Kampf-Tracker",
     "icon": "/Aborea-App/kampf-tracker/icon.svg",
-    "popover": "/Aborea-App/kampf-tracker/index.html?v=2",
+    "popover": "/Aborea-App/kampf-tracker/index.html?v=3",
     "height": 720,
     "width": 480
   }
