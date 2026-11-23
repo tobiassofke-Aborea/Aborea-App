@@ -34,14 +34,16 @@ export function startGM(publish){
 function publishView(){
   try{
     // Die nächsten Züge simulieren: Wer dran ist, bekommt seine Basis-INI drauf, dann neu sortieren.
-    const sim = combat.filter(c=>!c.dead).map(c => ({...c}));
+    const sim = combat.filter(c=>!c.dead).map(c => ({...c, t: turnsOf(c)}));
     const queue = [];
     for(let i=0; i<6 && sim.length; i++){
       // Kopie sortieren, damit Gleichstände wie in der Spielleiter-Liste aufgelöst werden
       const c = [...sim].sort((a,b)=> a.currentInit - b.currentInit)[0];
-      queue.push({ name: c.name, type: c.type, label: c.type==='player' ? (c.icon||'⭐') : String(c.instanceNum ?? '?') });
+      // n = der wievielte Zug das für diesen Charakter ist
+      queue.push({ name: c.name, type: c.type, n: c.t + 1, label: c.type==='player' ? (c.icon||'⭐') : String(c.instanceNum ?? '?') });
       if(!c.baseInit) break; // ohne Basis-INI käme immer derselbe wieder
       c.currentInit += c.baseInit;
+      c.t += 1;
     }
     publish({ turnCount, queue, active: queue[0] || null, next: queue[1] || null });
   }catch(e){ /* Veröffentlichen ist nur Komfort */ }
@@ -362,7 +364,7 @@ function renderCombat(){
       <span class="badge ${c.type}">${c.type==='player' ? (c.icon||'⭐') : (c.instanceNum ?? '?')}</span>
       <span class="name ${c.dead?'kill-mark':''}">${c.dead?'💀 ':''}${c.disabled?'⏸️ ':''}${escapeHtml(c.name)}</span>
       <span class="ini-val">INI ${c.currentInit}</span>
-      <span class="ini-base">(Basis ${c.baseInit})</span>
+      <span class="ini-base">(Basis ${c.baseInit} · ${turnsOf(c)}× dran)</span>
       ${c.id===activeId ? '<span class="turn-label">▶ Aktueller Zug</span>' : ''}
     `;
     main.appendChild(top);

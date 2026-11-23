@@ -4,7 +4,7 @@ import { startGM } from "./tracker.js";
 
 const KEY = "de.sofke.kampf-tracker/ansicht";
 
-interface Slim { name: string; type: "player" | "npc"; label: string }
+interface Slim { name: string; type: "player" | "npc"; label: string; n?: number }
 interface View { turnCount: number; queue?: Slim[]; active: Slim | null; next: Slim | null }
 
 function esc(s: string): string {
@@ -20,12 +20,12 @@ function renderPlayer(view: View | undefined) {
     out.innerHTML = `<span class="pv-empty">Kein Kampf aktiv</span>`;
     return;
   }
-  round.textContent = view.turnCount ? `Zug ${view.turnCount}` : "Start";
+  round.textContent = "";
   out.innerHTML = queue
     .map(
       (c, i) =>
         (i ? `<span class="pv-sep">›</span>` : "") +
-        `<span class="pv-item${i === 0 ? " now" : ""}"><span class="badge ${c.type}">${esc(c.label)}</span><span class="name">${esc(c.name)}</span></span>`,
+        `<span class="pv-item${i === 0 ? " now" : ""}"><span class="badge ${c.type}">${esc(c.label)}</span><span class="name">${esc(c.name)}</span>${c.n ? `<span class="pv-n">${c.n}. Zug</span>` : ""}</span>`,
     )
     .join("");
 }
