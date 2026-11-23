@@ -59,14 +59,13 @@
   main{ max-width:1100px; margin:0 auto; padding:20px; }
   .toolbar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center;}
   .add-toggle-bar{
-    width:100%; display:flex; align-items:center; gap:10px;
-    background:none; border:none; padding:2px 0; margin-bottom:8px; cursor:pointer;
+    margin-left:auto; display:flex; align-items:center;
+    background:none; border:none; padding:0; cursor:pointer;
   }
-  .add-toggle-line{ flex:1; height:1px; background:var(--line); }
   .add-toggle-icon{
-    width:20px; height:20px; border-radius:50%; border:1px solid var(--line);
+    width:26px; height:26px; border-radius:50%; border:1px solid var(--line);
     display:flex; align-items:center; justify-content:center; color:var(--muted);
-    font-size:13px; flex-shrink:0; transition:border-color .15s, color .15s;
+    font-size:16px; flex-shrink:0; transition:border-color .15s, color .15s;
   }
   .add-toggle-bar:hover .add-toggle-icon{ border-color:var(--accent-text); color:var(--accent-text); }
   #addControlsToolbar{ margin-bottom:8px; }
@@ -287,6 +286,9 @@
 
 <header>
   <h1>Kampf-Tracker <span class="rund" id="turnCounter"></span></h1>
+  <button class="add-toggle-bar" id="addToggleBtn" title="Hinzufügen-Leiste ein-/ausblenden">
+    <span class="add-toggle-icon" id="addToggleIcon">−</span>
+  </button>
 </header>
 
 <main>
@@ -302,11 +304,6 @@
       <button class="btn danger" id="resetCombatBtn">Kampf zurücksetzen</button>
       <button class="btn" id="sortIniBtn" title="Gesamt-INI aus Basis-INI × (eigene Züge + 1) neu berechnen und sortieren">⇅ INI sortieren</button>
     </div>
-    <button class="add-toggle-bar" id="addToggleBtn" title="Hinzufügen-Leiste ein-/ausblenden">
-      <span class="add-toggle-line"></span>
-      <span class="add-toggle-icon" id="addToggleIcon">−</span>
-      <span class="add-toggle-line"></span>
-    </button>
     <div id="miniQueue" class="mini-queue"></div>
     <div class="toolbar">
       <button class="btn primary" id="nextTurnBtn" style="width:100%; height:44px; font-size:15px;">Zug abschließen ▸</button>
