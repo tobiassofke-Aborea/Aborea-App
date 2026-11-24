@@ -76,12 +76,19 @@ jobs:
       - name: APK bauen
         run: |
           # Immer derselbe Schlüssel, damit Updates sich über die alte Version installieren lassen
-          mkdir -p ~/.android
-          cp android-assets/debug.keystore ~/.android/debug.keystore
+          # (fest im Gradle-Build eingetragen; nur nach ~/.android kopieren reichte nicht)
+          KS="$GITHUB_WORKSPACE/android-assets/debug.keystore"
           cd build/android
+          sed -i "0,/^android {/s##android {\n    signingConfigs {\n        debug {\n            storeFile file('$KS')\n            storePassword 'android'\n            keyAlias 'androiddebugkey'\n            keyPassword 'android'\n        }\n    }#" app/build.gradle
+          grep -n -A7 "signingConfigs" app/build.gradle
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
           cp app/build/outputs/apk/debug/app-debug.apk ../../Aborea.apk
+          # Prüfen, dass wirklich mit dem festen Schlüssel signiert wurde
+          SOLL=$(keytool -list -v -keystore "$KS" -storepass android | grep -m1 "SHA256:" | awk '{print $2}')
+          IST=$(keytool -printcert -jarfile ../../Aborea.apk | grep -m1 "SHA256:" | awk '{print $2}')
+          echo "Schlüssel soll: $SOLL"; echo "Schlüssel ist:  $IST"
+          test "$SOLL" = "$IST"
 
       - uses: actions/upload-artifact@v4
         with:
