@@ -3,9 +3,9 @@
 # Settings → Pages bei „Source“ den Punkt „GitHub Actions“ wählen.
 name: Web-App veröffentlichen
 
+# Vorerst nur von Hand starten (Actions → „Web-App veröffentlichen“ → Run workflow),
+# damit die Spieler-Version erst nach Ankündigung aktualisiert wird.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
