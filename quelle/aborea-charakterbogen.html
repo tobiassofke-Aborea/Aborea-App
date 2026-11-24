@@ -94,12 +94,9 @@ body.hasbg:is([data-mat="milch"],[data-mat="glas"]) .hp{background:var(--g-fill2
 body.hasbg:is([data-mat="milch"],[data-mat="glas"]) .zchips .chip:not(.on){background:color-mix(in srgb,var(--card-solid) 72%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);border-color:var(--g-edge);box-shadow:inset 0 1px 0 var(--g-edge)}
 /* Vollbild-Ansichten (Lernen, Charakter anlegen, Zauberbibliothek) zeigen das Bild genauso kräftig wie die App (Regler „Bild“) */
 body.hasbg :is(#learn,#cw,#spells)::before{content:"";position:absolute;inset:0;background:var(--bgurl) center/cover no-repeat;opacity:var(--bgop,.75);pointer-events:none}
-body.hasbg :is(#learn,#cw,#spells)>*{position:relative}
+body.hasbg :is(#learn,#cw,#spells)>:not(.sbtoast){position:relative}
 body.hasbg #sbframe{background:transparent}
-/* Zauberbibliothek mit Bild: Mana-Zeile und Kopf der Bibliothek sind eine durchgehende, deckende Kopfzeile (Gegenstück im Spruchbuch: SB_MAT_CSS) */
-body.hasbg #spells{padding-top:0}
-body.hasbg #spells .tbar{max-width:none;margin:0;padding:calc(8px + env(safe-area-inset-top,0px)) max(16px,calc((100% - 868px) / 2)) 8px;background:var(--card-solid)}
-body.hasbg #sbframe{border-top:0}
+
 body.hasbg :is(#learn,#cw,#spells) .tbar h1{text-shadow:0 0 2px var(--g-halo),0 0 12px var(--g-halo)}
 /* Bedienelemente der Einstellung */
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:3px;border-radius:11px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
@@ -605,9 +602,12 @@ body.kampf .wrap{padding-bottom:250px}
 #ovmenu button.on{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 #ovmenu button:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
 #spells{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-#spells .tbar{max-width:900px;width:100%;margin:0 auto;padding-inline:16px;padding-block:8px;flex-wrap:nowrap;position:relative}
-.sbmana{font-weight:700;color:var(--mp);background:var(--mp-soft);padding:4px 10px;border-radius:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
-#sbframe{flex:1;width:100%;border:0;border-top:1px solid var(--line);background:var(--bg)}
+/* Kopfzeile der Zauberbibliothek: dieselben Bausteine wie die Kopfzeile der Hauptseite (header, .hbar, .hp, nav) */
+#spells>header{flex:none}
+.sbttl{cursor:default}
+.hp .sbmp b{color:var(--mp);font-variant-numeric:tabular-nums}.hp .sbmp b i{font-style:normal;font-size:.72em;font-weight:600;color:var(--muted)}
+#spells nav .navinfo[aria-pressed=true]{color:var(--accent)}#spells nav .navinfo svg{width:22px;height:22px}
+#sbframe{flex:1;width:100%;border:0;background:var(--bg)}
 .sbtoast{position:absolute;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 60px);z-index:2;max-width:868px;margin:0 auto;box-shadow:0 6px 18px rgba(0,0,0,.2);padding:8px 12px;border-radius:8px;background:var(--mp-soft);color:var(--mp);font-weight:700}
 .sbtoast.bad{background:var(--lp-soft);color:var(--lp)}
 nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;gap:2px;touch-action:pan-y}
@@ -1444,7 +1444,7 @@ function renderEmpty(){
 function renderAll(){
   try{zWeapSync();}catch(e){}
   renderHeader();setTimeout(()=>{try{zDlgRender();}catch(e){}try{zObserve();}catch(e){}},0);
-  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false"));
+  document.querySelectorAll("nav button[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab?"true":"false"));
   const kt=document.querySelector('nav [data-tab="kampf"]');
   if(kt){kt.textContent="Aktionen";kt.removeAttribute("aria-label");}
   const app=$("#app"),bar=$("#apbar"),inK=tab==="kampf"&&!!cur;
@@ -2105,11 +2105,20 @@ html[data-mat="klar"] :is(.panel-title,.rules-toggle-btn,main>section>.section-t
 html[data-mat] .rules-toggle-btn.small{opacity:1;font-size:12px}
 html[data-mat] footer.status{color:var(--text)}
 html[data-mat] .points-note{color:var(--text)}
-html[data-mat] header{background:var(--panel);-webkit-backdrop-filter:none;backdrop-filter:none}
-/* Alles, was beim Scrollen stehen bleibt (Kopfzeile, Umschalter, Listen-Leiste, Statuszeile), ist deckend, damit nichts angeschnitten durchscheint */
-html[data-mat]{--plate:var(--panel)}
-html[data-mat] :is(.sticky-toolbar,footer.status){background:var(--panel);border-color:var(--line)}
-html[data-mat] .sticky-toolbar{border-bottom-color:transparent;box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(0 -100vmax)}`;
+/* Im Charakterbogen eingebettet: Titel, Umschalter und die Knöpfe stehen in der Kopfzeile der App. Hier bleibt nur das Menü (Speichern, Laden, Drucken) sichtbar, oben rechts. */
+header{position:fixed;top:0;left:auto;right:12px;height:0;min-height:0;padding:0;border:0;background:none;z-index:30}
+header :is(h1,#infoToggleBtn,#settingsMenuBtn,#verwaltungToggleBtn){display:none}
+.sbseg{display:none}
+html body .sticky-toolbar,html body.lib .sticky-toolbar{top:0}
+/* Stehende Leisten (Listen-Leiste, Statuszeile) folgen der Karten-Einstellung: Klar deckend, Milchglas und Glas durchscheinend mit Weichzeichner */
+html[data-mat="klar"] :is(.sticky-toolbar,footer.status){background:var(--panel);border-color:var(--line)}
+html[data-mat="klar"] .sticky-toolbar{border-bottom-color:transparent;box-shadow:0 0 0 100vmax var(--panel);clip-path:inset(0 -100vmax)}
+html[data-mat="milch"]{--bar:color-mix(in srgb,var(--panel) 72%,transparent);--barf:blur(22px) saturate(1.5)}
+html[data-mat="glas"]{--bar:color-mix(in srgb,var(--panel) 46%,transparent);--barf:blur(14px) saturate(1.7)}
+html[data-mat]:is([data-mat="milch"],[data-mat="glas"]) .sticky-toolbar::before{content:"";position:absolute;left:calc((100% - 100vw) / 2);right:calc((100% - 100vw) / 2);top:0;bottom:0;background:var(--bar);-webkit-backdrop-filter:var(--barf);backdrop-filter:var(--barf);border-bottom:1px solid var(--g-edge);z-index:-1;pointer-events:none}
+html[data-mat]:is([data-mat="milch"],[data-mat="glas"]) .sticky-toolbar{background:none;border-bottom:0}
+html[data-mat]:is([data-mat="milch"],[data-mat="glas"]) footer.status{background:var(--bar);-webkit-backdrop-filter:var(--barf);backdrop-filter:var(--barf);border-top-color:var(--g-edge)}
+html[data-mat="glas"] :is(.sticky-toolbar,footer.status){text-shadow:0 0 1px var(--g-halo),0 0 8px var(--g-halo)}`;
 function sbStyleSync(){const f=document.getElementById("sbframe"),d=f&&f.contentDocument;if(!d||!d.head)return;
   let st=d.getElementById("matcss");if(!st){st=d.createElement("style");st.id="matcss";d.head.appendChild(st);}st.textContent=SB_MAT_CSS;
   if(bgGet())d.documentElement.setAttribute("data-mat",bgMat());else d.documentElement.removeAttribute("data-mat");}
@@ -5620,20 +5629,43 @@ window.__sb={
 function sbBuild(){
   const el=document.createElement("div");el.id="spells";el.hidden=true;
   el.setAttribute("role","dialog");el.setAttribute("aria-label","Zauberbibliothek");
-  el.innerHTML=`<div class="tbar"><span class="sbmana" id="sbmana"></span><span class="ovspace"></span>
-<button class="btn small" id="sbclose">Schließen</button></div>
+  /* Kopfzeile wie auf der Hauptseite: Titel links, Mana und Schließen im Wertekasten rechts, darunter die Reiter.
+     Die Reiter und die beiden Knöpfe steuern das Spruchbuch im iframe (dessen eigene Kopfzeile ist ausgeblendet). */
+  el.innerHTML=`<header class="sbhd"><div class="hbar">
+  <div class="charbtn sbttl"><span class="n">Zauberbibliothek</span><span class="s" id="sbsub"></span></div>
+  <div class="mini"><div class="hp"><span class="gs sbmp" id="sbmana"></span><button class="a sw" id="sbclose" aria-label="Zauberbibliothek schließen" title="Schließen"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div></div>
+</div>
+<nav><div class="in" role="tablist" aria-label="Ansicht">
+  <button role="tab" data-sbv="book" aria-selected="true">Mein Spruchbuch</button>
+  <button role="tab" data-sbv="lib" aria-selected="false">Bibliothek</button>
+  <button class="navinfo" data-sbbtn="infoToggleBtn" aria-label="Regeln" aria-selected="false">${ICON_INFO}</button>
+  <button class="navinfo" data-sbbtn="settingsMenuBtn" aria-label="Speichern, Laden, Drucken" aria-pressed="false">${ICON_GEAR}</button>
+</div></nav></header>
     <div class="sbtoast" id="sbtoast" hidden></div>
     <iframe id="sbframe" title="Spruchbuch"></iframe>`;
-  document.body.appendChild(el);el.querySelector("#sbframe").addEventListener("load",sbStyleSync);
+  document.body.appendChild(el);el.querySelector("#sbframe").addEventListener("load",()=>{sbStyleSync();sbHeadWatch();});
   sbView=el;
 }
 function sbSource(){const s=document.getElementById("sbsrc");return s?JSON.parse(s.textContent):"<p>Spruchbuch fehlt.</p>";}
 function sbBar(){
   if(!sbView||!cur)return;
-  $("#sbmana").textContent=`Mana ${num(cur.mp.cur)} / ${num(cur.mp.max)}`;
+  $("#sbmana").innerHTML=`<small>MP</small><b>${num(cur.mp.cur)}<i> / ${num(cur.mp.max)}</i></b>`;
+  $("#sbmana").setAttribute("aria-label",`Mana ${num(cur.mp.cur)} von ${num(cur.mp.max)}`);
+  $("#sbsub").textContent=cur.name||"";
 }
+/* Reiter und Knöpfe oben zeigen den Zustand im iframe (Ansicht, Regeln offen, Menü offen) */
+function sbHeadSync(){const f=$("#sbframe"),d=f&&f.contentDocument;if(!d||!d.body||!sbView)return;
+  const lib=d.body.classList.contains("lib"),ip=d.getElementById("infoPanel"),sm=d.getElementById("settingsMenu");
+  const info=!!ip&&ip.style.display!=="none";
+  sbView.querySelectorAll("nav [data-sbv]").forEach(b=>b.setAttribute("aria-selected",String(!info&&(b.dataset.sbv==="lib")===lib)));
+  const bi=sbView.querySelector('[data-sbbtn="infoToggleBtn"]');if(bi)bi.setAttribute("aria-selected",String(info));
+  const bg=sbView.querySelector('[data-sbbtn="settingsMenuBtn"]');if(bg)bg.setAttribute("aria-pressed",String(!!sm&&sm.style.display!=="none"));}
+function sbHeadWatch(){const f=$("#sbframe"),d=f&&f.contentDocument;if(!d||!d.body)return;
+  const mo=new MutationObserver(sbHeadSync);mo.observe(d.body,{attributes:true,attributeFilter:["class"]});
+  ["infoPanel","settingsMenu"].forEach(id=>{const e=d.getElementById(id);if(e)mo.observe(e,{attributes:true,attributeFilter:["style"]});});
+  sbHeadSync();}
 let sbToastT;
-function sbToast(t,bad){const el=$("#sbtoast");if(!el)return;el.textContent=t;el.classList.toggle("bad",!!bad);el.hidden=false;clearTimeout(sbToastT);sbToastT=setTimeout(()=>{el.hidden=true;},3200);}
+function sbToast(t,bad){const el=$("#sbtoast");if(!el)return;const hd=sbView&&sbView.querySelector("header");if(hd)el.style.top=(hd.getBoundingClientRect().bottom+8)+"px";el.textContent=t;el.classList.toggle("bad",!!bad);el.hidden=false;clearTimeout(sbToastT);sbToastT=setTimeout(()=>{el.hidden=true;},3200);}
 async function sbOpen(){
   if(!cur){showMsg("Leg zuerst einen Charakter an.");return;}
   if(!sbView)sbBuild();histOpen();
@@ -5650,6 +5682,9 @@ document.addEventListener("click",e=>{
   if(!sbView||sbView.hidden)return;
   const b=e.target.closest("button");if(!b||!sbView.contains(b))return;
   if(b.id==="sbclose"){sbClose();return;}
+  const f=$("#sbframe"),d=f&&f.contentDocument;if(!d)return;
+  if(b.dataset.sbv){const x=d.querySelector(`.sbseg button[data-sbv="${b.dataset.sbv}"]`);if(x)x.click();return;}
+  if(b.dataset.sbbtn){const x=d.getElementById(b.dataset.sbbtn);if(x)x.click();sbHeadSync();return;}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sbView&&!sbView.hidden)sbClose();});
 
