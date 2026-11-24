@@ -774,6 +774,13 @@ nav .navinfo{flex:0 0 40px;display:grid;place-items:center;padding:0}
 @media (prefers-reduced-motion:reduce){.armor.hitfx{animation:none}}
 .valrow{align-items:baseline}
 .sico{color:var(--accent);display:inline-grid}
+.chip svg{width:16px;height:16px;vertical-align:-3px;margin-right:4px}
+.qpick{margin:0 0 10px}.qpick .lab{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.qpick .chips{margin:0 0 4px}.qpick .chip b{margin-left:4px}.qpick .chip.empty{opacity:.5}
+.qarrow{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:8px}.qarrow.on{border-color:var(--accent)}
+.qah{display:flex;align-items:center;gap:8px}.qah .qan{flex:1;min-width:0}.qah b.qan{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qsel{border:0;background:none;color:var(--accent);font-size:1.2rem;width:32px;height:38px;cursor:pointer;flex:none}
+.qaf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qarrow .hint{margin:0}
 textarea.wnote{min-height:64px;font-family:var(--body);font-size:.95rem}
 .wnote-s{margin:0;font-size:.88rem;color:var(--muted);font-style:italic;white-space:pre-line}
 .hitbtns{margin-left:auto;display:flex;gap:6px}
@@ -877,7 +884,7 @@ function blank(name){
     attr:Object.fromEntries(ATTR.map(a=>[a,{w:"",b:0}])),
     ini:[0,0,0],ap:[3,0,0],krit:[0,0],
     skills:FIXED.map(n=>({name:n,fixed:true,rang:0,boni:0,kosten:""})).concat(FREE.map(n=>({name:n,placeholder:n||"Eigene Fertigkeit",fixed:false,rang:0,boni:0,kosten:""}))),
-    weapons:[],kampf:{ap:null,main:null,off:null},
+    weapons:[],quivers:[],kampf:{ap:null,main:null,off:null},
     notes:"",updated:Date.now()};
 }
 function example(){
@@ -1088,7 +1095,7 @@ function kritWeapon(){
   const i=cur.kampf.main!=null?cur.kampf.main:cur.kampf.off;
   return i!=null&&cur.weapons[i]?{w:cur.weapons[i],off:cur.kampf.main==null}:null;
 }
-function kritVal(w){return (cur.kwManual?sum(cur.krit):wSkill(w)+num(w.krit))+wbuf().krit;}
+function kritVal(w){const ar=curArrow(w);return (cur.kwManual?sum(cur.krit):wSkill(w)+num(w.krit))+wbuf().krit+(ar&&!ar.std?num(ar.krit):0);}
 function syncKrit(){
   if(!cur)return;
   if(cur.kwManual)return;const k=kritWeapon();cur.krit[0]=k?wSkill(k.w):0;cur.krit[1]=k?num(k.w.krit):0;
@@ -1258,7 +1265,8 @@ const INFO={
     <p><b>Gezielt:</b> Dann musst du treffen: „Gezielte Sprüche“ als W10 + INT- oder CHA-Bonus als W6. Körper ab 15, Kopf ab 40.</p>
     <p><b>Lernen:</b> in der Zauberbibliothek (Buch oben). Pro Level einer Spruchliste gibt es 3 Punkte für ihre Zauber.</p>`],
   waffen:["Waffen",`<p><b>Eintragen:</b> Name, die passende Waffenfertigkeit, Trefferwürfel, Schadenswürfel, Krit-Wert und Malus (für die Initiative).</p>
-    <p><b>Haupt- und Nebenhand:</b> Hauptwaffe 2 AP, normaler Angriff. Nebenwaffe 1 AP, nur Waffenwerte und Waffenfertigkeit, ohne Würfel aus Stärke oder Geschick. Die schwerere Waffe gehört in die Haupthand.</p>`],
+    <p><b>Haupt- und Nebenhand:</b> Hauptwaffe 2 AP, normaler Angriff. Nebenwaffe 1 AP, nur Waffenwerte und Waffenfertigkeit, ohne Würfel aus Stärke oder Geschick. Die schwerere Waffe gehört in die Haupthand.</p>
+    <p><b>Köcher:</b> Darin liegen Pfeilsorten mit ihrer Anzahl. Standardpfeile haben keine eigenen Werte. Andere Pfeile können Treffer-, Schadens- und Krit-Werte und einen Effekt bei Treffer haben. Der ausgerüstete Pfeil gilt für Waffen, die Pfeile verschießen, und jeder Angriff verbraucht einen.</p>`],
   stufe:["Stufe und Lernen",`<p><b>Stufe aufsteigen:</b> +8 Ausbildungspunkte. LP, Mana und AP werden neu berechnet.</p>
     <p><b>Lernen:</b> Punkte auf Fertigkeiten und Attribute verteilen. Jede Fertigkeit einmal pro Stufe, bei zwei Preisen zweimal. Ein Rang kann nicht über deiner Stufe liegen. Übrige Punkte bleiben aufgespart.</p>
     <p><b>Stufe zurück:</b> nimmt den letzten Aufstieg samt allem, was du in dieser Stufe gelernt hast, wieder zurück.</p>`],
@@ -1519,7 +1527,7 @@ function undo(){
   if(!zArm||!zArm.show){const el=document.getElementById("zdlg");if(el)el.remove();if(typeof zAmbStop==="function")zAmbStop();}
   buzz(20);queueSave(cur);renderAll();showMsg("Rückgängig gemacht: "+u.label);
 }
-const UNDO_LABEL={zruneput:"Rune laden",zbagbleed:"Blutverlust",zwbtog:"Waffenzauber an/aus",zxmp:"Zusätzliches Mana",zst:"Stufe ändern",zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
+const UNDO_LABEL={zruneput:"Rune laden",zbagbleed:"Blutverlust",zwbtog:"Waffenzauber an/aus",zxmp:"Zusätzliches Mana",zst:"Stufe ändern",zgeist:"Schutzgeist",zcnt:"Zähler",zcnt0:"Zähler zurücksetzen",zlp:"LP ändern",zmboom:"Stein explodiert",zlater:"Zauber-Wurf",zfin:"Zauber wirken",zend:"Zauber beenden",zgo:"Zauber wirken",zroll:"Zauber wirken",zprobe:"Zauber wirken",sequip:"Schild anlegen",sunequip:"Schild ablegen",qequip:"Köcher anlegen",qunequip:"Köcher ablegen",qsel:"Pfeil wählen",spreact:"Spezialattacke",spreset:"Einsätze zurücksetzen",spsel:"Spezialattacke wählen",zcast:"Zauber wirken",round:"Neue Runde",reserve:"Verteidigung bereithalten",move:"Bewegen",bonus:"Bonusaktion",attack:"Treffen",zone:"Treffer-Auswahl",damage:"Schaden",krit:"Krit",reset:"Neuer Angriff",defend:"Verteidigen",equip:"Waffe anlegen",unequip:"Waffe ablegen"};
 /* ---------- Kampf (Würfelpools) ---------- */
 let atk={slot:"main",split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};
 let def=null,spell=null;
@@ -1531,6 +1539,9 @@ function migrate(c){
   if(!c.kampf)c.kampf={ap:null};
   if(!("main" in c.kampf)){c.kampf.main=c.weapons.length?0:null;c.kampf.off=null;}
   if(!Array.isArray(c.shields))c.shields=[];
+  if(!Array.isArray(c.quivers))c.quivers=[];
+  c.quivers.forEach(q=>{if(!Array.isArray(q.arrows)||!q.arrows.length)q.arrows=[qStd()];});
+  if(c.kampf.quiver!=null&&!c.quivers[c.kampf.quiver])c.kampf.quiver=null;
   if(c.kampf.shield!=null&&!c.shields[c.kampf.shield])c.kampf.shield=null;
   (c.skills||[]).forEach(sk=>{if(!sk.fixed&&!sk.kind&&sk.placeholder==="Spruchliste"){sk.kind="spell";
     let n=String(sk.name||"").trim();if(n==="Spruchliste")n="";n=n.replace(/^Spruchliste:\s*/,"");sk.name=n;}});
@@ -1620,16 +1631,17 @@ const isOff=()=>atk.slot==="off";
 function splitOf(w){const n=wKw(w);let k=atk.split==null?Math.ceil(n/2):atk.split;k=Math.max(0,Math.min(n,k));return [k,n-k];}
 function attrDice(a,use){return use?Math.max(0,num(cur.attr[a].b)+attrTmp(a)):0;}
 function hitGroups(w){
-  const [k]=splitOf(w),p=parseDice(w.hit),B=wbuf();
-  return {groups:[{label:"Waffenfertigkeit",n:k,s:10},{label:"GE",n:attrDice("Ge",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))).concat(B.hdice),flat:p.flat+B.hit,spFlat:B.hit};
+  const [k]=splitOf(w),p=parseDice(w.hit),B=wbuf(),ar=curArrow(w),pa=parseDice(ar&&!ar.std?ar.hit:"");
+  return {groups:[{label:"Waffenfertigkeit",n:k,s:10},{label:"GE",n:attrDice("Ge",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))).concat(pa.dice.map(x=>({label:"Pfeil",n:x.n,s:x.s}))).concat(B.hdice),flat:p.flat+pa.flat+B.hit,spFlat:B.hit,arFlat:pa.flat};
 }
 function dmgGroups(w){
-  const [,r]=splitOf(w),p=parseDice(w.dmg),B=wbuf();
-  return {groups:[{label:"Waffenfertigkeit",n:r,s:10},{label:"ST",n:attrDice("St",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))).concat(B.dice),flat:p.flat+B.dmg,spFlat:B.dmg};
+  const [,r]=splitOf(w),p=parseDice(w.dmg),B=wbuf(),ar=curArrow(w),pa=parseDice(ar&&!ar.std?ar.dmg:"");
+  return {groups:[{label:"Waffenfertigkeit",n:r,s:10},{label:"ST",n:attrDice("St",!isOff()),s:6}].concat(p.dice.map(x=>({label:"Waffe",n:x.n,s:x.s}))).concat(pa.dice.map(x=>({label:"Pfeil",n:x.n,s:x.s}))).concat(B.dice),flat:p.flat+pa.flat+B.dmg,spFlat:B.dmg,arFlat:pa.flat};
 }
 function poolChips(g){
   const items=g.groups.filter(x=>x.n>0).map(x=>`<span class="pc${/:/.test(x.label)?" tmp":""}"><b>${x.n} W${x.s}</b><small>${esc(x.label)}</small></span>`);
-  const wf=g.flat-num(g.spFlat);if(wf)items.push(`<span class="pc"><b>${sgn(wf)}</b><small>Waffe</small></span>`);
+  const wf=g.flat-num(g.spFlat)-num(g.arFlat);if(wf)items.push(`<span class="pc"><b>${sgn(wf)}</b><small>Waffe</small></span>`);
+  if(num(g.arFlat))items.push(`<span class="pc"><b>${sgn(num(g.arFlat))}</b><small>Pfeil</small></span>`);
   if(num(g.spFlat))items.push(`<span class="pc tmp"><b>${sgn(num(g.spFlat))}</b><small>Zauber</small></span>`);
   return `<div class="pcs">${items.join("")||'<span class="hint">keine Würfel</span>'}</div>`;
 }
@@ -1744,8 +1756,11 @@ function kampfDo(b){
     case "slot":atk={slot:b.dataset.v,split:null,phase:"ready",hit:null,zone:"",dmg:null,mult:1,krit:false};return renderAll();
     case "attack":{
       if(!w)return;
-      const spS=atk.special?spById(atk.special):null;
+      const spS=atk.special?spById(atk.special):null,ar=curArrow(w);
+      if(usesAmmo(w)){if(!curQuiver()){showMsg("Kein Köcher angelegt. Leg unten bei „Waffen“ einen an.");return;}
+        if(!ar||num(ar.n)<1){showMsg(`Keine ${ar?ar.name||"Pfeile":"Pfeile"} mehr im Köcher.`);return;}}
       if(!spendAp(atkCost(isOff()?1:2)+(spS?spCost():0)))return;
+      if(ar){ar.n=num(ar.n)-1;atk.arrow={name:ar.name||"Pfeil",note:String(ar.note||"").trim(),left:ar.n};}else atk.arrow=null;
       cur.kampf.att=num(cur.kampf.att)+1;
       if(spS){cur.kampf.spUses=spUses()+1;atk.spUsed=spS.id;atk.special=null;}else atk.spUsed=null;
       atk.phase="rolling";atk.hit=null;atk.zone="";atk.dmg=null;atk.krit=false;atk.kritRoll=null;renderAll();
@@ -1770,7 +1785,7 @@ function kampfDo(b){
         atk.kritRoll=total;atk.kritVal=kv;atk.krit=total<=kv;
         return {tag:atk.krit?`Krit! ${total} ≤ ${kv}: doppelter Schaden`:`Kein Krit: ${total} > ${kv}`};
       });return;}
-    case "reset":{atk.phase="ready";atk.hit=null;atk.zone="";atk.dmg=null;atk.krit=false;atk.kritRoll=null;atk.spUsed=null;renderAll();
+    case "reset":{atk.phase="ready";atk.hit=null;atk.zone="";atk.dmg=null;atk.krit=false;atk.kritRoll=null;atk.spUsed=null;atk.arrow=null;renderAll();
       const ch=$("#kpchips"),hd=ch&&ch.previousElementSibling,top=document.querySelector("header");
       if(hd){const y=hd.getBoundingClientRect().top+window.scrollY-(top?top.offsetHeight:0)-8;window.scrollTo({top:Math.max(0,y),behavior:calmMotion()?"auto":"smooth"});}
       return;}
@@ -1939,6 +1954,17 @@ function kampfDo(b){
     case "sadd":{const si=cur.skills.findIndex(s=>/schild/i.test(s.name||""));cur.shields.push({name:"",skill:si,tz:""});sOpen.add(cur.shields.length-1);return rerender();}
     case "sequip":cur.kampf.off=null;cur.kampf.shield=+b.dataset.i;if(atk.slot==="off")atk.slot="main";showMsg(`${cur.shields[+b.dataset.i].name||"Schild"} in der Nebenhand.`);return rerender();
     case "sunequip":cur.kampf.shield=null;return rerender();
+    case "qadd":{cur.quivers=cur.quivers||[];cur.quivers.push({name:"",arrows:[qStd()],sel:0});const k=cur.quivers.length-1;qOpen.add(k);if(cur.kampf.quiver==null)cur.kampf.quiver=k;return rerender();}
+    case "qequip":cur.kampf.quiver=i;showMsg(`${cur.quivers[i].name||"Köcher"} angelegt.`);return rerender();
+    case "qunequip":cur.kampf.quiver=null;return rerender();
+    case "qsel":{const q=cur.quivers[+b.dataset.q];if(!q)return;q.sel=+b.dataset.v;return rerender();}
+    case "qn":{const q=cur.quivers[+b.dataset.q],ar=q&&q.arrows[+b.dataset.a];if(!ar)return;ar.n=Math.max(0,num(ar.n)+(+b.dataset.d));return rerender();}
+    case "qaadd":{const q=cur.quivers[i];q.arrows.push({name:"",n:0,hit:"",dmg:"",krit:"",note:""});return rerender();}
+    case "qadel":{if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Wirklich löschen?";return;}
+      const q=cur.quivers[+b.dataset.q],j=+b.dataset.a;q.arrows.splice(j,1);if(num(q.sel)===j)q.sel=0;else if(num(q.sel)>j)q.sel=num(q.sel)-1;return rerender();}
+    case "qdel":{if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Wirklich löschen?";return;}
+      cur.quivers.splice(i,1);if(cur.kampf.quiver===i)cur.kampf.quiver=null;else if(cur.kampf.quiver>i)cur.kampf.quiver--;qOpen.clear();return rerender();}
+    case "wammo":{const x=cur.weapons[i];x.ammo=!usesAmmo(x);return rerender();}
     case "sdel":{if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Wirklich löschen?";return;}
       const k=+b.dataset.i;cur.shields.splice(k,1);if(cur.kampf.shield===k)cur.kampf.shield=null;else if(cur.kampf.shield>k)cur.kampf.shield--;sOpen.clear();return rerender();}
     case "wdel":{
@@ -1951,6 +1977,15 @@ function kampfDo(b){
 
 const ICON_SHIELD='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 5.8v5.6c0 4.6 3.2 8 7.5 9.6 4.3-1.6 7.5-5 7.5-9.6V5.8z"/></svg>';
 const sOpen=new Set();
+/* Köcher: Pfeilsorten mit Anzahl; die ausgerüstete Sorte gilt für Waffen, die Pfeile verschießen */
+const qOpen=new Set();
+const ICON_QUIVER='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 9h9l-1.3 12H8.8z"/><path d="M10 9V3.5M14 9V3.5M12 9V2.5"/><path d="M9 4.5 10 3l1 1.5M13 4.5 14 3l1 1.5"/></svg>';
+function qStd(){return {name:"Standardpfeile",std:true,n:0,hit:"",dmg:"",krit:"",note:""};}
+function curQuiver(){const i=cur&&cur.kampf&&cur.kampf.quiver;return i!=null&&cur.quivers&&cur.quivers[i]||null;}
+function usesAmmo(w){return !!w&&(w.ammo!=null?!!w.ammo:/bogen|armbrust/i.test(w.name||""));}
+function curArrow(w){if(!usesAmmo(w))return null;const q=curQuiver();if(!q)return null;return q.arrows[num(q.sel)]||q.arrows[0]||null;}
+const qTotal=q=>(q.arrows||[]).reduce((t,a)=>t+Math.max(0,num(a.n)),0);
+const arrowBon=a=>!!a&&!a.std&&(String(a.hit||"").trim()||String(a.dmg||"").trim()||num(a.krit));
 function curShield(){const i=cur.kampf&&cur.kampf.shield;return i!=null&&cur.shields&&cur.shields[i]?cur.shields[i]:null;}
 function shieldRang(sh){const sk=sh&&sh.skill>=0?cur.skills[sh.skill]:null;return sk?Math.max(0,num(sk.rang)):0;}
 function shieldBonus(){const sh=curShield();if(!sh)return {tz:0,r:0,rang:0};const r=shieldRang(sh);return {tz:num(sh.tz)+r,r,rang:r};}
@@ -3499,13 +3534,18 @@ function renderKampf(){
         <div class="wsl-track" style="grid-template-columns:repeat(${n},1fr);--p:${k/n*100}%">${Array.from({length:n},(_,i)=>`<i class="${i<k?"t":"s"}"></i>`).join("")}<span class="wsl-knob" style="left:${k/n*100}%"></span></div>
       </div></div>`
       :`<p class="hint">Diese Waffe hat noch keinen Rang in ihrer Waffenfertigkeit, also gibt es keine W10 zum Aufteilen.</p>`;
+    if(usesAmmo(w)){const q=curQuiver();
+      h+=q?`<div class="qpick"><div class="lab">Pfeile${(cur.quivers||[]).length>1?" · "+esc(q.name||"Köcher"):""}</div><div class="chips">${q.arrows.map((a,j)=>`<button class="chip${j===num(q.sel)?" on":""}${num(a.n)<1?" empty":""}" data-act="qsel" data-q="${cur.kampf.quiver}" data-v="${j}">${esc(a.name||"Pfeil")} <b>${Math.max(0,num(a.n))}</b></button>`).join("")}</div>${(()=>{const a=curArrow(w);if(!a)return "";const t=[a.hit&&"Treffen "+a.hit,a.dmg&&"Schaden "+a.dmg,num(a.krit)&&"Krit "+sgn(num(a.krit))].filter(Boolean);return !a.std&&(t.length||a.note)?`<div class="hint">${esc(t.concat(a.note?[a.note]:[]).join(" · "))}</div>`:"";})()}</div>`
+        :`<p class="hint">Diese Waffe verschießt Pfeile, aber es ist kein Köcher angelegt. Leg unten bei „Waffen“ einen an.</p>`;}
     h+=`<div class="stepbox${atk.phase==="ready"||atk.phase==="rolling"?" act":""}">
       <div class="sh"><span class="num">${n?2:1}</span><b>Treffen</b>${isOff()?'<span class="hint">Nebenhand: ohne GE-Würfel</span>':""}</div>
       ${poolChips(hg)}
       ${atk.hit==null?`<button class="btn pri big" data-act="attack">Treffen würfeln: ${ord(num(cur.kampf.att)+1)} Angriff, ${atkCost(isOff()?1:2)+(atk.special?spCost():0)} AP</button>`:
       `<div class="result"><div class="rl">Treffen: <b class="big">${atk.hit}</b></div><div class="hint">Kopf ab 40, Körper ab 15, jeweils plus erweiterte Trefferzone des Ziels.</div>
         <div class="zbtns"><button class="btn small${atk.zone==="kopf"?" pri":""}" data-act="zone" data-v="kopf">Kopftreffer</button><button class="btn small${atk.zone==="koerper"?" pri":""}" data-act="zone" data-v="koerper">Körpertreffer</button><button class="btn small${atk.zone==="verfehlt"?" pri":""}" data-act="zone" data-v="verfehlt">Verfehlt</button></div>
-        ${atk.zone==="verfehlt"?`<div class="rz">${ZONE.verfehlt}</div>`:""}</div>`}
+        ${atk.zone==="verfehlt"?`<div class="rz">${ZONE.verfehlt}</div>`:""}
+        ${atk.arrow&&atk.arrow.note&&(atk.zone==="kopf"||atk.zone==="koerper")?`<div class="rz"><b>${esc(atk.arrow.name)}:</b> <span style="font-weight:400">${esc(atk.arrow.note)}</span></div>`:""}
+        ${atk.arrow?`<div class="hint">${esc(atk.arrow.name)} verschossen, noch ${atk.arrow.left} im Köcher.</div>`:""}</div>`}
     </div>
     <div class="stepbox${atk.phase==="hit"||atk.phase==="done"?" act":" off"}">
       <div class="sh"><span class="num">${n?3:2}</span><b>Schaden</b>${atk.zone==="kopf"?'<span class="hint">Kopftreffer ×2</span>':""}${isOff()?'<span class="hint">Nebenhand: ohne ST-Würfel</span>':""}</div>
@@ -3534,6 +3574,7 @@ function renderKampf(){
     <label class="fld"><span class="lab">Schadenswürfel</span><input id="w-${i}-d" data-k="weapons.${i}.dmg" value="${esc(x.dmg)}" placeholder="z. B. 1W8"></label>
     <label class="fld"><span class="lab">Krit-Wert</span><input id="w-${i}-k" data-k="weapons.${i}.krit" value="${esc(x.krit)}"></label>
     <label class="fld"><span class="lab">Waffenmalus (Ini)</span><input type="number" inputmode="numeric" id="w-${i}-m" data-k="weapons.${i}.malus" data-num value="${esc(x.malus||0)}"></label>
+    <div class="fld full"><button class="chip${usesAmmo(x)?" on":""}" data-act="wammo" data-i="${i}" aria-pressed="${usesAmmo(x)}">${ICON_QUIVER} Verschießt Pfeile aus dem Köcher</button></div>
     <label class="fld full"><span class="lab">Besonderheiten</span><textarea class="wnote" id="w-${i}-x" data-k="weapons.${i}.note" placeholder="z. B. Gift: +1W4 Schaden für 3 Runden">${esc(x.note||"")}</textarea></label>
     <div class="fld" style="align-self:end"><button class="btn small danger" data-act="wdel" data-i="${i}">Waffe löschen</button></div>`:(x.note?`<p class="wnote-s full">${esc(x.note)}</p>`:"")}
   </div>`}).join("")||'<p class="hint">Noch keine Waffen.</p>'}
@@ -3547,7 +3588,25 @@ ${(cur.shields||[]).map((x,i)=>{const on=cur.kampf.shield===i,rg=shieldRang(x);r
     <div class="fld" style="align-self:end"><button class="btn small danger" data-act="sdel" data-i="${i}">Schild löschen</button></div>
     <p class="note full" style="margin:0">Pro Rang in der gewählten Fertigkeit: +1 Trefferzone und +1 Rüstung, solange der Schild angelegt ist.</p>`:(x.note?`<p class="wnote-s full">${esc(x.note)}</p>`:"")}
   </div>`}).join("")}
-    <div class="row-actions" style="margin-top:12px"><button class="btn small" data-act="wadd">+ Waffe hinzufügen</button><button class="btn small" data-act="sadd">+ Schild hinzufügen</button></div></div>
+${(cur.quivers||[]).map((q,i)=>{const on=cur.kampf.quiver===i,t=qTotal(q);return `<div class="weapon${on?" eq":""}">
+    <button class="whead full" data-qtog="${i}" aria-expanded="${qOpen.has(i)}"><span class="wchev${qOpen.has(i)?" open":""}" aria-hidden="true">▸</span><span class="sico">${ICON_QUIVER}</span><b>${esc(q.name||"Köcher "+(i+1))}</b><span class="wsum">${t} Pfeil${t===1?"":"e"}</span>${on?`<span class="badge">angelegt</span>`:`<span class="hint">abgelegt</span>`}</button>
+    <div class="wbtns full">${on?`<button class="btn small" data-act="qunequip">Ablegen</button>`:`<button class="btn small pri" data-act="qequip" data-i="${i}">Anlegen</button>`}</div>
+    ${qOpen.has(i)?`<label class="fld full"><span class="lab">Name</span><input id="q-${i}-n" data-k="quivers.${i}.name" value="${esc(q.name||"")}" placeholder="z. B. Lederköcher"></label>
+    ${q.arrows.map((a,j)=>`<div class="qarrow full${j===num(q.sel)?" on":""}">
+      <div class="qah"><button class="qsel" data-act="qsel" data-q="${i}" data-v="${j}" aria-pressed="${j===num(q.sel)}" aria-label="${esc(a.name||"Pfeil")} ausrüsten"><span aria-hidden="true">${j===num(q.sel)?"●":"○"}</span></button>
+        ${a.std?`<b class="qan">${esc(a.name||"Standardpfeile")}</b>`:`<input class="qan" id="q-${i}-${j}-n" data-k="quivers.${i}.arrows.${j}.name" value="${esc(a.name||"")}" placeholder="z. B. Feuerpfeil" aria-label="Name der Pfeilsorte">`}
+        <div class="step"><button data-act="qn" data-q="${i}" data-a="${j}" data-d="-1" aria-label="ein Pfeil weniger">−</button><input type="number" inputmode="numeric" id="q-${i}-${j}-c" data-k="quivers.${i}.arrows.${j}.n" data-num value="${esc(a.n)}" aria-label="Anzahl"><button data-act="qn" data-q="${i}" data-a="${j}" data-d="1" aria-label="ein Pfeil mehr">+</button></div></div>
+      ${a.std?`<p class="hint">Ohne Zusatzwerte: Es zählen nur die Werte der Waffe.</p>`:`<div class="qaf"><label class="fld"><span class="lab">Treffen</span><input id="q-${i}-${j}-h" data-k="quivers.${i}.arrows.${j}.hit" value="${esc(a.hit||"")}" placeholder="z. B. +2"></label>
+        <label class="fld"><span class="lab">Schaden</span><input id="q-${i}-${j}-d" data-k="quivers.${i}.arrows.${j}.dmg" value="${esc(a.dmg||"")}" placeholder="z. B. 1W4"></label>
+        <label class="fld"><span class="lab">Krit</span><input type="number" inputmode="numeric" id="q-${i}-${j}-k" data-k="quivers.${i}.arrows.${j}.krit" data-num value="${esc(a.krit||"")}" placeholder="+0"></label></div>
+        <label class="fld"><span class="lab">Effekt bei Treffer</span><textarea class="wnote" id="q-${i}-${j}-x" data-k="quivers.${i}.arrows.${j}.note" placeholder="z. B. Ziel brennt 2 Runden">${esc(a.note||"")}</textarea></label>
+        <div><button class="btn small danger" data-act="qadel" data-q="${i}" data-a="${j}">Pfeilsorte löschen</button></div>`}
+    </div>`).join("")}
+    <div class="full wbtns"><button class="btn small" data-act="qaadd" data-i="${i}">+ Pfeilsorte</button><button class="btn small danger" data-act="qdel" data-i="${i}">Köcher löschen</button></div>
+    <p class="note full" style="margin:0">Der ausgerüstete Pfeil (●) gilt für Waffen, die Pfeile verschießen. Jeder Angriff verbraucht einen. Seine Werte kommen zu denen der Waffe dazu.</p>`
+    :`<p class="wnote-s full">${esc(q.arrows.map(a=>`${a.name||"Pfeil"} ${Math.max(0,num(a.n))}`).join(" · "))}</p>`}
+  </div>`}).join("")}
+    <div class="row-actions" style="margin-top:12px"><button class="btn small" data-act="wadd">+ Waffe hinzufügen</button><button class="btn small" data-act="sadd">+ Schild hinzufügen</button><button class="btn small" data-act="qadd">+ Köcher hinzufügen</button></div></div>
   <div class="card" style="margin-top:18px">
     <div id="inibox">${iniHtml()}</div>
   </div>
@@ -3732,6 +3791,7 @@ document.addEventListener("click",e=>{
   if(b.id==="openmoney"){ovOpen("money");return;}
   if(b.id==="openbook2"){ovOpen("book");return;}
   if(b.dataset.stog!=null){const i=+b.dataset.stog;sOpen.has(i)?sOpen.delete(i):sOpen.add(i);renderAll();return;}
+  if(b.dataset.qtog!=null){const i=+b.dataset.qtog;qOpen.has(i)?qOpen.delete(i):qOpen.add(i);renderAll();return;}
   if(b.dataset.ptog){const k=b.dataset.ptog;poolsCompact[k]=!poolsCompact[k];try{localStorage.setItem("aborea-compact",JSON.stringify(poolsCompact))}catch(x){}renderAll();return;}
   if(b.dataset.armor){cur.kampf.armorOn=!cur.kampf.armorOn;queueSave(cur);renderAll();return;}
   if(b.dataset.initog){iniOpen=!iniOpen;try{localStorage.setItem("aborea-iniopen",iniOpen?"1":"0")}catch(x){}const ib=$("#inibox");if(ib)ib.innerHTML=iniHtml();return;}
