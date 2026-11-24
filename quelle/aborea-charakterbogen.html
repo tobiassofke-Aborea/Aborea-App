@@ -462,7 +462,12 @@ select{width:100%;min-height:42px;background:var(--bg);border:1px solid var(--li
 .pc small{font-size:.72rem;color:var(--muted)}
 .zbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .btn:disabled{opacity:.5;cursor:default}
-.weapon.eq{background:color-mix(in srgb,var(--accent) 7%,transparent);margin-inline:-14px;padding-inline:14px}
+/* Ausgerüstete Waffe: getönte, abgerundete Kachel innerhalb der Karte (vorher randlos, oben blieb ein Streifen stehen) */
+.weapon.eq{background:color-mix(in srgb,var(--accent) 7%,transparent);margin-inline:-8px;padding-inline:8px;border-radius:10px;border-bottom-color:transparent}
+.weapon.eq:first-child{padding-top:10px}
+.weapon:has(+.weapon.eq){border-bottom-color:transparent}
+.weapon.eq+.weapon{margin-top:4px}
+.wadd{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.wadd .btn{justify-content:center;padding-inline:6px}
 .whead{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:1.1rem}
 .badge{font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:12px;background:var(--accent);color:var(--card)}
 .wbtns{display:flex;gap:8px;flex-wrap:wrap}
@@ -816,7 +821,7 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zchips{scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .zchips::-webkit-scrollbar{display:none}
 .kchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible}
-.kprow{align-items:center;margin-bottom:4px}.kprow .kchips{padding-bottom:0;margin-bottom:0}.kprow .kchips .chip{padding:4px 6px;min-height:44px}
+.kprow{align-items:center;margin:12px 0 8px}.kprow .kchips{padding-bottom:0;margin-bottom:0}.kprow .kchips .chip{padding:4px 6px;min-height:44px}
 .kseg{align-items:center;margin-bottom:12px}.kseg .seg{flex:1;min-width:0}.kseg .seg>*{min-height:40px;font-size:1rem}.kseg>.ib{margin:0 -6px 0 0;flex:none}
 .kchips .chip{position:relative;display:grid;place-items:center;align-content:center;gap:0;min-height:46px;padding:4px 6px;border-radius:12px;line-height:1.15;min-width:0}
 .kchips .chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -3880,8 +3885,8 @@ ${(cur.quivers||[]).map((q,i)=>{const on=cur.kampf.quiver===i,t=qTotal(q);return
     <p class="note full" style="margin:0">Der ausgerüstete Pfeil (●) gilt für Waffen, die Pfeile verschießen. Jeder Angriff verbraucht einen. Seine Werte kommen zu denen der Waffe dazu.</p>`
     :`<p class="wnote-s full">${esc(q.arrows.map(a=>`${a.name||"Pfeil"} ${Math.max(0,num(a.n))}`).join(" · "))}</p>`}
   </div>`}).join("")}
-    <div class="row-actions" style="margin-top:12px"><button class="btn small" data-act="wadd">+ Waffe hinzufügen</button><button class="btn small" data-act="sadd">+ Schild hinzufügen</button><button class="btn small" data-act="qadd">+ Köcher hinzufügen</button></div></div>
-  <div class="card" style="margin-top:18px">
+    <div class="wadd"><button class="btn small" data-act="wadd" aria-label="Waffe hinzufügen">+ Waffe</button><button class="btn small" data-act="sadd" aria-label="Schild hinzufügen">+ Schild</button><button class="btn small" data-act="qadd" aria-label="Köcher hinzufügen">+ Köcher</button></div></div>
+  <div class="card" style="margin-top:12px">
     <div id="inibox">${iniHtml()}</div>
   </div>
 `;
