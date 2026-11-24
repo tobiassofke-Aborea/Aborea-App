@@ -560,8 +560,8 @@ nav [data-tab="kampf"]{display:grid;justify-items:center;align-content:center;ga
 .srow .mv .btn{min-width:40px;padding:0 8px}
 #zres{position:fixed;inset:0;z-index:32;background:rgba(20,15,10,.5);display:flex;align-items:center;justify-content:center;padding:16px}.zresb{gap:14px}.zrn{font-size:1.25rem;font-weight:700}.zrst{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:var(--line)}.zrst b{font-size:1.1rem}.zrst span{font-size:.8rem;opacity:.8}.zrst.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}.zrst.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}.zrl{margin:0;padding-left:18px;display:grid;gap:6px}.zre{margin-top:4px}.zarea{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.zrl li.big{font-size:1.05rem;font-weight:700}.zresb .btn.pri{width:100%}
 .sktmp{color:#3b7dd8;font-weight:600}
-#zdlg{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
-@media (min-width:600px){#zdlg{align-items:center}}
+#zdlg,#wdlg{position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom))}
+@media (min-width:600px){#zdlg,#wdlg{align-items:center}}
 body.zdlgon #roll{z-index:35;top:calc(8px + env(safe-area-inset-top,0px));bottom:auto}
 body.zdlgon #roll .box{margin-top:0}
 .zdbox{width:100%;max-width:440px;max-height:85vh;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
@@ -615,6 +615,14 @@ body.zdlgon #roll .box{margin-top:0}
 .zdinner{display:contents}
 .zamb{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #zdlg .zdbox{position:relative;z-index:1}
+.wdgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+.wdic{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.wdic button{height:44px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.wdic button.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.wdx{border:0;background:none;font-size:1.1rem;width:36px;height:36px;cursor:pointer;color:var(--muted)}
+.fld.bad input,.fld.bad textarea{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--card))}
+.ferr{color:var(--bad);font-size:.78rem}
+.slot .sn .sico{vertical-align:-4px}
 #zdlg .zinfo{margin-top:2px}
 .ziso .gl{stroke:var(--line);stroke-width:1;fill:none}
 .zcube .fl,.zcube .fr,.zcube .ft{fill-opacity:.42}.zcube .cb{fill:color-mix(in srgb,var(--accent) 18%,var(--card));stroke:var(--accent);stroke-width:1}.zcube .pawn *{fill:var(--ink);stroke:var(--card);stroke-width:.8}.zcube svg{max-width:100%;height:auto}
@@ -1941,8 +1949,7 @@ function kampfDo(b){
     case "spreact":{const sp=spById(b.dataset.sp);if(!sp)return;const c=spCost();if(!spendAp(c))return;cur.kampf.spUses=spUses()+1;queueSave(cur);renderAll();showMsg(`${sp.n} eingesetzt: −${c} AP. ${sp.e.join(" · ")}`);return;}
     case "wadd":{
       const wi=cur.skills.findIndex(s=>/^waffe/i.test(s.name||""));
-      cur.weapons.push({name:"",skill:wi,rang:0,hit:"",dmg:"",krit:""});wOpen.add(cur.weapons.length-1);
-      return rerender();}
+      wdOpen(-1,wi);return;}
     case "equip":{
       const slot=b.dataset.v;unequip(i);
       if(slot==="main")cur.kampf.main=i;else{cur.kampf.off=i;cur.kampf.shield=null;}
@@ -1976,6 +1983,78 @@ function kampfDo(b){
 
 const ICON_SHIELD='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 5.8v5.6c0 4.6 3.2 8 7.5 9.6 4.3-1.6 7.5-5 7.5-9.6V5.8z"/></svg>';
 const sOpen=new Set();
+
+/* ---------- Waffe anlegen/bearbeiten im eigenen Fenster ---------- */
+const WICONS=[["schwert","Schwert",'<path d="M20 4 9 15"/><path d="M20 4h-3.5M20 4v3.5"/><path d="M6 12l6 6"/><path d="M4 20l3.5-3.5"/>'],
+ ["dolch","Dolch",'<path d="M18 6l-6.5 6.5"/><path d="M18 6h-2.5M18 6v2.5"/><path d="M8.5 10.5l5 5"/><path d="M5.5 18.5 9 15"/>'],
+ ["axt","Axt",'<path d="M4 20 15 9"/><path d="M12.5 6.5c2.5-2.5 6-3 7-2s.5 4.5-2 7z"/>'],
+ ["hammer","Hammer/Keule",'<path d="M4 20l9-9"/><path d="M11 6l4-4 6 6-4 4z"/>'],
+ ["speer","Speer",'<path d="M4 20 15.5 8.5"/><path d="M20 4l-1.8 6.2-4.4-4.4z"/>'],
+ ["stab","Stab",'<path d="M5 21 16.5 7.5"/><circle cx="18.5" cy="5.5" r="2.5"/>'],
+ ["bogen","Bogen",'<path d="M5 3c7 2 14 9 16 16"/><path d="M5 3 21 19"/><path d="M15 3h6v6M21 3 11 13"/>'],
+ ["armbrust","Armbrust",'<path d="M4 9c4-4 12-4 16 0"/><path d="M12 4v16"/><path d="M4 9l8 4 8-4"/><path d="M10 20h4"/>'],
+ ["schleuder","Schleuder",'<path d="M5 4c0 6 3 10 7 12"/><path d="M19 4c0 6-3 10-7 12"/><circle cx="12" cy="18" r="2"/>'],
+ ["faust","Faust",'<path d="M7 12V8a1.5 1.5 0 0 1 3 0v3M10 10.5V7a1.5 1.5 0 0 1 3 0v3.5M13 10.5V8a1.5 1.5 0 0 1 3 0v3M16 11v-1a1.5 1.5 0 0 1 3 0v4c0 3.6-2.9 6-6.5 6S7 17.6 7 14v-2"/>']];
+function wIconKey(w){if(w&&w.icon&&WICONS.some(x=>x[0]===w.icon))return w.icon;const n=String(w&&w.name||"").toLowerCase();
+  return /armbrust/.test(n)?"armbrust":/bogen/.test(n)?"bogen":/schleuder/.test(n)?"schleuder":/dolch|messer/.test(n)?"dolch":/axt|beil/.test(n)?"axt":/hammer|kolben|keule|flegel/.test(n)?"hammer":/speer|lanze|spie(ß|ss)|hellebarde|dreizack/.test(n)?"speer":/stab|stock/.test(n)?"stab":/faust|hand|klaue|biss/.test(n)?"faust":"schwert";}
+function wIcon(w,k){const d=WICONS.find(x=>x[0]===(k||wIconKey(w)))||WICONS[0];return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d[2]}</svg>`;}
+/* Eingaben prüfen: Würfel (1W6, 2W4+1, +2) und ganze Zahlen (10, −2, auch 10%) */
+const CHK={dice:[v=>/^([+-]?(\d*[wd]\d+|\d+))+$/i.test(v.replace(/\s/g,"").replace(/^\+?/,"+").replace(/^\+/,"")),"Nur Würfel und Zahlen, z. B. 1W6, 2W4+1 oder +2."],
+  int:[v=>/^[+\-−]?\d+\s*%?$/.test(v.trim()),"Nur eine ganze Zahl, z. B. 10 oder −2."]};
+function chkField(t){const k=t&&t.dataset&&t.dataset.chk;if(!k||!CHK[k])return true;const v=String(t.value||"").trim(),ok=!v||CHK[k][0](v);
+  const f=t.closest(".fld")||t.parentElement;if(f){f.classList.toggle("bad",!ok);let e=f.querySelector(".ferr");if(!ok&&!e){e=document.createElement("small");e.className="ferr";f.appendChild(e);}if(e){e.textContent=ok?"":CHK[k][1];if(ok)e.remove();}}
+  t.setAttribute("aria-invalid",ok?"false":"true");return ok;}
+const intOf=v=>{const m=/^\s*([+\-−]?)(\d+)/.exec(String(v||""));return m?(m[1]&&m[1]!=="+"?-1:1)*+m[2]:0;};
+document.addEventListener("input",e=>{if(e.target&&e.target.dataset&&e.target.dataset.chk)chkField(e.target);});
+document.addEventListener("focusout",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.chk&&!chkField(t))showMsg("Das kann die App nicht verarbeiten: "+CHK[t.dataset.chk][1]);});
+let wd=null;
+function wdOpen(i,skillDef){
+  const src=i>=0?cur.weapons[i]:null;
+  wd={i,d:src?JSON.parse(JSON.stringify(src)):{name:"",skill:skillDef!=null?skillDef:-1,rang:0,hit:"",dmg:"",krit:"",malus:0,note:"",icon:""},sure:false};
+  if(wd.d.krit!==""&&wd.d.krit!=null)wd.d.krit=String(wd.d.krit);
+  wdRender(true);}
+function wdClose(){wd=null;const el=$("#wdlg");if(el)el.remove();document.body.classList.remove("zdlgon");}
+function wdRender(first){
+  let el=$("#wdlg");if(!el){el=document.createElement("div");el.id="wdlg";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Waffe");document.body.appendChild(el);}
+  document.body.classList.add("zdlgon");
+  const d=wd.d,ik=wIconKey(d),ammo=usesAmmo(d);
+  el.innerHTML=`<div class="zdbox wdbox"><div class="zdh"><h3>${wd.i<0?"Neue Waffe":"Waffe bearbeiten"}</h3><button class="wdx" data-wd="cancel" aria-label="Schließen">✕</button></div>
+  <div class="wdgrid">
+    <label class="fld full"><span class="lab">Name</span><input id="wd-name" data-wdf="name" value="${esc(d.name||"")}" placeholder="z. B. Kurzschwert" autocomplete="off"></label>
+    <div class="fld full"><span class="lab">Symbol</span><div class="wdic">${WICONS.map(([k,t])=>`<button class="${k===ik?"on":""}" data-wdic="${k}" aria-pressed="${k===ik}" title="${t}" aria-label="${t}">${wIcon(null,k)}</button>`).join("")}</div>${d.icon?"":`<small class="hint">Passt sich an den Namen an, bis du eins auswählst.</small>`}</div>
+    <label class="fld full"><span class="lab">Waffenfertigkeit</span><select id="wd-skill" data-wdf="skill"><option value="-1" ${+d.skill<0?"selected":""}>keine</option>${cur.skills.map((x,j)=>`<option value="${j}" ${+d.skill===j?"selected":""}>${esc(x.name||x.placeholder||"Fertigkeit "+(j+1))} (${skillTotal(x)})</option>`).join("")}</select></label>
+    <label class="fld"><span class="lab">Trefferwürfel</span><input id="wd-hit" data-wdf="hit" data-chk="dice" value="${esc(d.hit||"")}" placeholder="z. B. 1W6" autocomplete="off"></label>
+    <label class="fld"><span class="lab">Schadenswürfel</span><input id="wd-dmg" data-wdf="dmg" data-chk="dice" value="${esc(d.dmg||"")}" placeholder="z. B. 1W8" autocomplete="off"></label>
+    <label class="fld"><span class="lab">Krit-Wert</span><input id="wd-krit" data-wdf="krit" data-chk="int" inputmode="numeric" value="${esc(d.krit??"")}" placeholder="z. B. 5" autocomplete="off"></label>
+    <label class="fld"><span class="lab">Waffenmalus (Ini)</span><input id="wd-malus" data-wdf="malus" data-chk="int" inputmode="numeric" value="${esc(d.malus||"")}" placeholder="0" autocomplete="off"></label>
+    <div class="fld full"><button class="chip${ammo?" on":""}" data-wd="ammo" aria-pressed="${ammo}">${ICON_QUIVER} Verschießt Pfeile aus dem Köcher</button></div>
+    <label class="fld full"><span class="lab">Besonderheiten</span><textarea class="wnote" id="wd-note" data-wdf="note" placeholder="z. B. Gift: +1W4 Schaden für 3 Runden">${esc(d.note||"")}</textarea></label>
+  </div>
+  <div class="row-actions">${wd.i>=0?`<button class="btn small danger" data-wd="del">${wd.sure?"Wirklich löschen?":"Löschen"}</button>`:""}<button class="btn small" data-wd="cancel">Abbrechen</button><button class="btn small pri" data-wd="save">Speichern</button></div></div>`;
+  el.querySelectorAll("[data-chk]").forEach(t=>{if(t.value)chkField(t);});
+  if(first){const n=$("#wd-name");if(n&&wd.i<0)setTimeout(()=>n.focus(),50);}
+}
+document.addEventListener("input",e=>{const t=e.target;if(!wd||!t.closest||!t.closest("#wdlg"))return;const f=t.dataset.wdf;if(f)wd.d[f]=f==="skill"?+t.value:t.value;
+  if(f==="name"&&!wd.d.icon){const box=$("#wdlg .wdic"),k=wIconKey(wd.d);if(box)box.querySelectorAll("button").forEach(b=>{b.classList.toggle("on",b.dataset.wdic===k);b.setAttribute("aria-pressed",b.dataset.wdic===k);});}
+  if(f==="name"&&wd.d.ammo==null){const c=$('#wdlg [data-wd="ammo"]'),on=usesAmmo(wd.d);if(c){c.classList.toggle("on",on);c.setAttribute("aria-pressed",on);}}});
+document.addEventListener("change",e=>{const t=e.target;if(wd&&t.closest&&t.closest("#wdlg")&&t.dataset.wdf==="skill")wd.d.skill=+t.value;});
+document.addEventListener("click",e=>{if(!wd)return;const el=$("#wdlg");if(!el)return;
+  if(e.target===el){e.stopPropagation();return;}
+  const b=e.target.closest&&e.target.closest("#wdlg button");if(!b)return;e.stopPropagation();e.preventDefault();
+  if(b.dataset.wdic){wd.d.icon=b.dataset.wdic;wdRender();return;}
+  const a=b.dataset.wd;
+  if(a==="cancel"){wdClose();return;}
+  if(a==="ammo"){wd.d.ammo=!usesAmmo(wd.d);wdRender();return;}
+  if(a==="del"){if(!wd.sure){wd.sure=true;wdRender();return;}const i=wd.i;snap("Waffe löschen");unequip(i);cur.weapons.splice(i,1);
+    ["main","off"].forEach(k=>{if(cur.kampf[k]!=null&&cur.kampf[k]>i)cur.kampf[k]--;});wdClose();queueSave(cur);renderAll();return;}
+  if(a==="save"){const bad=[...el.querySelectorAll("[data-chk]")].filter(t=>!chkField(t));
+    if(bad.length){showMsg("Das kann die App nicht verarbeiten. Bitte die rot markierten Felder prüfen.");bad[0].focus();return;}
+    const d=wd.d;d.name=String(d.name||"").trim();d.hit=String(d.hit||"").trim();d.dmg=String(d.dmg||"").trim();
+    d.krit=String(d.krit??"").trim()===""?"":intOf(d.krit);d.malus=intOf(d.malus);d.skill=+d.skill;
+    if(wd.i<0){cur.weapons.push(d);showMsg(`${d.name||"Waffe"} angelegt. Leg sie mit „In Haupthand“ an.`);}else cur.weapons[wd.i]=d;
+    wdClose();queueSave(cur);renderAll();return;}
+},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&wd){e.stopPropagation();wdClose();}},true);
 /* Köcher: Pfeilsorten mit Anzahl; die ausgerüstete Sorte gilt für Waffen, die Pfeile verschießen */
 const qOpen=new Set();
 const ICON_QUIVER='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 9h9l-1.3 12H8.8z"/><path d="M10 9V3.5M14 9V3.5M12 9V2.5"/><path d="M9 4.5 10 3l1 1.5M13 4.5 14 3l1 1.5"/></svg>';
@@ -2001,7 +2080,7 @@ function slotLine(slot,label){
       <button class="btn small" data-act="sunequip">Ablegen</button></div>`;}
   const i=slotIdx(slot),x=i==null?null:cur.weapons[i];
   return `<div class="slot${x?" full":""}"><div><span class="lab">${label}</span>
-    <div class="sn">${x?esc(x.name||"Waffe "+(i+1)):"leer"}</div></div>
+    <div class="sn">${x?`<span class="sico">${wIcon(x)}</span> `+esc(x.name||"Waffe "+(i+1)):"leer"}</div></div>
     ${x?`<button class="btn small" data-act="unequip" data-i="${i}">Ablegen</button>`:`<span class="hint">unten bei Waffen anlegen</span>`}</div>`;
 }
 const ICON_AREA='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/></svg>';
@@ -3563,19 +3642,11 @@ function renderKampf(){
   <h2>Waffen${ib("waffen")}</h2><div class="card">${cur.weapons.map((x,i)=>{
     const where=cur.kampf.main===i?"main":cur.kampf.off===i?"off":null;
     return `<div class="weapon${where?" eq":""}">
-    <button class="whead full" data-wtog="${i}" aria-expanded="${wOpen.has(i)}"><span class="wchev${wOpen.has(i)?" open":""}" aria-hidden="true">▸</span><b>${esc(x.name||"Waffe "+(i+1))}</b>${x.zk?`<span class="hint">Zauber</span>`:""}<span class="wsum">${esc([x.hit,x.dmg].filter(Boolean).join(" / "))}</span>${where?`<span class="badge">${where==="main"?"Haupthand":"Nebenhand"}</span>`:`<span class="hint">abgelegt</span>`}</button>
+    <button class="whead full" data-wedit="${i}" aria-label="${esc(x.name||"Waffe "+(i+1))} bearbeiten"><span class="sico">${wIcon(x)}</span><b>${esc(x.name||"Waffe "+(i+1))}</b>${x.zk?`<span class="hint">Zauber</span>`:""}<span class="wsum">${esc([x.hit,x.dmg].filter(Boolean).join(" / "))}</span>${where?`<span class="badge">${where==="main"?"Haupthand":"Nebenhand"}</span>`:`<span class="hint">abgelegt</span>`}</button>
     <div class="wbtns full">${where?`<button class="btn small" data-act="unequip" data-i="${i}">Ablegen</button>`:""}
       ${where!=="main"?`<button class="btn small pri" data-act="equip" data-v="main" data-i="${i}">In Haupthand</button>`:""}
       ${where!=="off"?`<button class="btn small${where?"":" pri"}" data-act="equip" data-v="off" data-i="${i}">In Nebenhand</button>`:""}</div>
-    ${wOpen.has(i)?`<label class="fld full"><span class="lab">Name</span><input id="w-${i}-n" data-k="weapons.${i}.name" value="${esc(x.name)}" placeholder="z. B. Kurzschwert"></label>
-    <label class="fld full"><span class="lab">Waffenfertigkeit</span><select id="w-${i}-s" data-k="weapons.${i}.skill" data-num>${cur.skills.map((s,j)=>`<option value="${j}" ${+x.skill===j?"selected":""}>${esc(s.name||s.placeholder||"Fertigkeit "+(j+1))} (${skillTotal(s)})</option>`).join("")}</select></label>
-    <label class="fld"><span class="lab">Trefferwürfel</span><input id="w-${i}-h" data-k="weapons.${i}.hit" value="${esc(x.hit)}" placeholder="z. B. 1W6"></label>
-    <label class="fld"><span class="lab">Schadenswürfel</span><input id="w-${i}-d" data-k="weapons.${i}.dmg" value="${esc(x.dmg)}" placeholder="z. B. 1W8"></label>
-    <label class="fld"><span class="lab">Krit-Wert</span><input id="w-${i}-k" data-k="weapons.${i}.krit" value="${esc(x.krit)}"></label>
-    <label class="fld"><span class="lab">Waffenmalus (Ini)</span><input type="number" inputmode="numeric" id="w-${i}-m" data-k="weapons.${i}.malus" data-num value="${esc(x.malus||0)}"></label>
-    <div class="fld full"><button class="chip${usesAmmo(x)?" on":""}" data-act="wammo" data-i="${i}" aria-pressed="${usesAmmo(x)}">${ICON_QUIVER} Verschießt Pfeile aus dem Köcher</button></div>
-    <label class="fld full"><span class="lab">Besonderheiten</span><textarea class="wnote" id="w-${i}-x" data-k="weapons.${i}.note" placeholder="z. B. Gift: +1W4 Schaden für 3 Runden">${esc(x.note||"")}</textarea></label>
-    <div class="fld" style="align-self:end"><button class="btn small danger" data-act="wdel" data-i="${i}">Waffe löschen</button></div>`:(x.note?`<p class="wnote-s full">${esc(x.note)}</p>`:"")}
+    ${x.note?`<p class="wnote-s full">${esc(x.note)}</p>`:""}
   </div>`}).join("")||'<p class="hint">Noch keine Waffen.</p>'}
 ${(cur.shields||[]).map((x,i)=>{const on=cur.kampf.shield===i,rg=shieldRang(x);return `<div class="weapon${on?" eq":""}">
     <button class="whead full" data-stog="${i}" aria-expanded="${sOpen.has(i)}"><span class="wchev${sOpen.has(i)?" open":""}" aria-hidden="true">▸</span><span class="sico">${ICON_SHIELD}</span><b>${esc(x.name||"Schild "+(i+1))}</b><span class="wsum">+${num(x.tz)+rg} TZ · +${rg} Rüstung</span>${on?`<span class="badge">Nebenhand</span>`:`<span class="hint">abgelegt</span>`}</button>
@@ -3595,8 +3666,8 @@ ${(cur.quivers||[]).map((q,i)=>{const on=cur.kampf.quiver===i,t=qTotal(q);return
       <div class="qah"><button class="qsel" data-act="qsel" data-q="${i}" data-v="${j}" aria-pressed="${j===num(q.sel)}" aria-label="${esc(a.name||"Pfeil")} ausrüsten"><span aria-hidden="true">${j===num(q.sel)?"●":"○"}</span></button>
         ${a.std?`<b class="qan">${esc(a.name||"Standardpfeile")}</b>`:`<input class="qan" id="q-${i}-${j}-n" data-k="quivers.${i}.arrows.${j}.name" value="${esc(a.name||"")}" placeholder="z. B. Feuerpfeil" aria-label="Name der Pfeilsorte">`}
         <div class="step"><button data-act="qn" data-q="${i}" data-a="${j}" data-d="-1" aria-label="ein Pfeil weniger">−</button><input type="number" inputmode="numeric" id="q-${i}-${j}-c" data-k="quivers.${i}.arrows.${j}.n" data-num value="${esc(a.n)}" aria-label="Anzahl"><button data-act="qn" data-q="${i}" data-a="${j}" data-d="1" aria-label="ein Pfeil mehr">+</button></div></div>
-      ${a.std?`<p class="hint">Ohne Zusatzwerte: Es zählen nur die Werte der Waffe.</p>`:`<div class="qaf"><label class="fld"><span class="lab">Treffen</span><input id="q-${i}-${j}-h" data-k="quivers.${i}.arrows.${j}.hit" value="${esc(a.hit||"")}" placeholder="z. B. +2"></label>
-        <label class="fld"><span class="lab">Schaden</span><input id="q-${i}-${j}-d" data-k="quivers.${i}.arrows.${j}.dmg" value="${esc(a.dmg||"")}" placeholder="z. B. 1W4"></label>
+      ${a.std?`<p class="hint">Ohne Zusatzwerte: Es zählen nur die Werte der Waffe.</p>`:`<div class="qaf"><label class="fld"><span class="lab">Treffen</span><input id="q-${i}-${j}-h" data-chk="dice" data-k="quivers.${i}.arrows.${j}.hit" value="${esc(a.hit||"")}" placeholder="z. B. +2"></label>
+        <label class="fld"><span class="lab">Schaden</span><input id="q-${i}-${j}-d" data-chk="dice" data-k="quivers.${i}.arrows.${j}.dmg" value="${esc(a.dmg||"")}" placeholder="z. B. 1W4"></label>
         <label class="fld"><span class="lab">Krit</span><input type="number" inputmode="numeric" id="q-${i}-${j}-k" data-k="quivers.${i}.arrows.${j}.krit" data-num value="${esc(a.krit||"")}" placeholder="+0"></label></div>
         <label class="fld"><span class="lab">Effekt bei Treffer</span><textarea class="wnote" id="q-${i}-${j}-x" data-k="quivers.${i}.arrows.${j}.note" placeholder="z. B. Ziel brennt 2 Runden">${esc(a.note||"")}</textarea></label>
         <div><button class="btn small danger" data-act="qadel" data-q="${i}" data-a="${j}">Pfeilsorte löschen</button></div>`}
@@ -3794,7 +3865,7 @@ document.addEventListener("click",e=>{
   if(b.dataset.ptog){const k=b.dataset.ptog;poolsCompact[k]=!poolsCompact[k];try{localStorage.setItem("aborea-compact",JSON.stringify(poolsCompact))}catch(x){}renderAll();return;}
   if(b.dataset.armor){cur.kampf.armorOn=!cur.kampf.armorOn;queueSave(cur);renderAll();return;}
   if(b.dataset.initog){iniOpen=!iniOpen;try{localStorage.setItem("aborea-iniopen",iniOpen?"1":"0")}catch(x){}const ib=$("#inibox");if(ib)ib.innerHTML=iniHtml();return;}
-  if(b.dataset.wtog!=null){const i=+b.dataset.wtog;wOpen.has(i)?wOpen.delete(i):wOpen.add(i);renderAll();return;}
+  if(b.dataset.wedit!=null){wdOpen(+b.dataset.wedit);return;}
   if(b.dataset.kpage){setKpage(b.dataset.kpage);return;}
   if(b.dataset.spmenu){const now=performance.now();if(now-lastSpTap<320){lastSpTap=0;closeOvMenu();setKpage("spezial");return;}lastSpTap=now;toggleSpMenu(b);return;}
   if(b.dataset.spart!=null){closeOvMenu();setSpArt(b.dataset.spart||null);if(kpage!=="spezial")setKpage("spezial");else renderAll();return;}
