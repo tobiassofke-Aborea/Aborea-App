@@ -291,7 +291,9 @@ nav button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--acc
 .acc{padding:0;overflow:hidden;margin-top:14px}
 .accrow+.accrow{border-top:1px solid var(--line)}
 .acchead{width:100%;display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 14px;background:none;border:0;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
-.acct{font-weight:700}.accs{flex:1;text-align:right;color:var(--muted);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.acct{font-weight:700}
+.acchead:has(.accd){display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:10px;row-gap:2px}
+.accd{grid-column:1/3;font-size:.8rem;color:var(--muted);font-weight:400;line-height:1.25}.accs{flex:1;text-align:right;color:var(--muted);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .acchead i{font-style:normal;color:var(--muted);font-size:.8rem;width:14px;text-align:center}
 .accrow.open .acchead{background:color-mix(in srgb,var(--accent) 6%,var(--card))}
 .accbody{padding:4px 14px 16px;display:grid;gap:4px}
@@ -1182,8 +1184,8 @@ function askSteps(steps,onOk){let i=0;let el=$("#cdlg");if(!el){el=document.crea
 function doLevelUp(){const r=levelUp();renderAll();buzz(20);
   lnOpen(`Stufe ${cur.level} erreicht: ${cur.lp.max} LP${r.dl?` (+${r.dl})`:""}${cur.mp.max?`, ${cur.mp.max} Mana${r.dm?` (+${r.dm})`:""}`:""}, ${sum(cur.ap)} AP. +8 Ausbildungspunkte.`);}
 document.addEventListener("keydown",e=>{const el=$("#cdlg");if(e.key==="Escape"&&el&&!el.hidden)el.hidden=true;});
-function bogRow(key,title,summary,body){const open=bogOpen===key;
-  return `<div class="accrow${open?" open":""}"><button class="acchead" data-bog="${key}" aria-expanded="${open}"><span class="acct">${title}</span><span class="accs">${summary}</span>${chev(open)}</button>${open?`<div class="accbody">${body}</div>`:""}</div>`;}
+function bogRow(key,title,summary,body,desc){const open=bogOpen===key;
+  return `<div class="accrow${open?" open":""}"><button class="acchead" data-bog="${key}" aria-expanded="${open}"><span class="acct">${title}</span><span class="accs">${summary}</span>${chev(open)}${desc?`<small class="accd">${desc}</small>`:""}</button>${open?`<div class="accbody">${body}</div>`:""}</div>`;}
 function renderBogen(){
   armorSync();syncKrit();
   const a=armorOf(),lvl=lvlNow(),apts=num(cur.ausbildung),hasB=!!BERUF[cur.beruf];
@@ -1220,12 +1222,12 @@ function renderBogen(){
   const p=purse();
   return `${hero}
   <div class="card acc">
-    ${bogRow("herkunft","Volk & Beruf",esc([cur.volk||"–",cur.alter!==""&&cur.alter!=null?cur.alter+" Jahre":"",cur.beruf||"–"].filter(Boolean).join(" · ")),herkunft)}
-    ${bogRow("ruestung","Rüstung",`${esc(a?a[0]:"Eigene")} · ${num(cur.ruestung)}`,ruest)}
-    ${bogRow("werte","Kampfwerte & Boni",`AP ${sum(cur.ap)} · Krit ${sum(cur.krit)}`,werte)}
-    <div class="accrow"><button class="acchead" id="openmoney"><span class="acct">Geldsack</span><span class="accs">${COINS.map(c=>`${fmtN(p[c.k])} ${c.short}`).join(" · ")}</span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i></button></div>
-    ${bogRow("notizen","Details & Notizen",esc(String(cur.details||cur.notes||"").split("\n")[0].slice(0,32)||"–"),notizen)}
-    <div class="accrow"><button class="acchead" id="openprint"><span class="acct">Papierbogen</span><span class="accs">PDF zum Ausdrucken</span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i></button></div>
+    ${bogRow("herkunft","Volk & Beruf",esc([cur.volk||"–",cur.alter!==""&&cur.alter!=null?cur.alter+" Jahre":"",cur.beruf||"–"].filter(Boolean).join(" · ")),herkunft,"Volk, Alter, Beruf, Ausbildungspunkte")}
+    ${bogRow("ruestung","Rüstung",`${esc(a?a[0]:"Eigene")} · ${num(cur.ruestung)}`,ruest,"Rüstungsart, Anpassung, Malus (Ini)")}
+    ${bogRow("werte","Kampfwerte & Boni",`AP ${sum(cur.ap)} · Krit ${sum(cur.krit)}`,werte,"Aktionspunkte, Krit, Trefferzone, LP und Mana")}
+    <div class="accrow"><button class="acchead" id="openmoney"><span class="acct">Geldsack</span><span class="accs">${COINS.map(c=>`${fmtN(p[c.k])} ${c.short}`).join(" · ")}</span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i><small class="accd">Münzen einzahlen, bezahlen, Wechselkurse</small></button></div>
+    ${bogRow("notizen","Details & Notizen",esc(String(cur.details||cur.notes||"").split("\n")[0].slice(0,32)||"–"),notizen,"Details und Notizen, z. B. Ausrüstung, Kontakte")}
+    <div class="accrow"><button class="acchead" id="openprint"><span class="acct">Papierbogen</span><span class="accs"></span><i class="chev side" aria-hidden="true">${ICON_CHEV}</i><small class="accd">Der Charakter als PDF zum Ausdrucken</small></button></div>
   </div>
   <h2>Charaktere</h2><div class="card">
     <div class="clist">${chars.map(c=>`<button data-pick="${c.id}" class="${c.id===selId()?"on":""}" aria-pressed="${c.id===selId()}"><span><b>${esc(c.name||"Ohne Namen")}</b><br><span class="hint">${esc([c.volk,c.beruf,"Stufe "+(c.level||1)].filter(Boolean).join(" · "))}</span></span><span class="hint">${c.id===cur.id?"aktiv":num(c.lp.cur)+" LP"}</span></button>`).join("")}</div>
