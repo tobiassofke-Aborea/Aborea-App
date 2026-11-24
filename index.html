@@ -44,13 +44,32 @@ button,input,textarea,select{font:inherit;color:inherit}
 .wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:8px 120px}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 #bgimg{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;pointer-events:none}
-body.hasbg header,body.hasbg nav{background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-body.hasbg header{margin-inline:-8px;padding-inline:8px}body.hasbg header nav{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
-.bgrow{display:flex;gap:14px;align-items:center}
-.bgprev{width:54px;height:96px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--bg) center/cover no-repeat;display:grid;place-items:center;font-size:.7rem;color:var(--muted);text-align:center}
-.bgact{display:flex;gap:8px;flex-wrap:wrap}
-#bgop,#cardop{width:100%;accent-color:var(--accent)}
-body.glass .card{background:color-mix(in srgb,var(--card) var(--cardop,100%),transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+/* Materialien (nur mit eigenem Bild) */
+body.hasbg{margin-top:0;--mat-edge:rgba(255,255,255,.55);--mat-hi:rgba(255,255,255,.6);--mat-shadow:0 1px 2px rgba(60,40,15,.06),0 8px 24px rgba(60,40,15,.10);--mat-sep:rgba(60,40,15,.12)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body.hasbg{--mat-edge:rgba(255,255,255,.09);--mat-hi:rgba(255,255,255,.08);--mat-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);--mat-sep:rgba(0,0,0,.35)}}
+:root[data-theme="dark"] body.hasbg{--mat-edge:rgba(255,255,255,.09);--mat-hi:rgba(255,255,255,.08);--mat-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);--mat-sep:rgba(0,0,0,.35)}
+/* Kopfzeile und Leiste unten: Bar-Material über die volle Breite, statt harter Linie ein weicher Übergang */
+body.hasbg header{margin-inline:-8px;padding-inline:8px;padding-top:4px;border-bottom:0;background:color-mix(in srgb,var(--bg) 70%,transparent);-webkit-backdrop-filter:blur(28px) saturate(1.8);backdrop-filter:blur(28px) saturate(1.8);box-shadow:0 1px 0 var(--mat-sep),0 6px 16px -10px rgba(0,0,0,.25)}
+body.hasbg header nav{background:transparent}
+body.hasbg #apbar{background:color-mix(in srgb,var(--card) 74%,transparent);-webkit-backdrop-filter:blur(28px) saturate(1.8);backdrop-filter:blur(28px) saturate(1.8);border-top-color:var(--mat-edge)}
+body.hasbg[data-mat="klar"] header{background:var(--bg)}body.hasbg[data-mat="klar"] #apbar{background:var(--card)}
+/* Überschriften direkt auf dem Bild: Lichthof in Hintergrundfarbe für Kontrast */
+body.hasbg #app h2{text-shadow:0 0 2px color-mix(in srgb,var(--bg) 90%,transparent),0 0 12px color-mix(in srgb,var(--bg) 85%,transparent),0 0 24px color-mix(in srgb,var(--bg) 60%,transparent)}
+/* Karten: Milchglas und Glas */
+body.hasbg[data-mat="milch"] .card,body.hasbg[data-mat="glas"] .card{border-color:var(--mat-edge);box-shadow:inset 0 1px 0 var(--mat-hi),var(--mat-shadow);--muted:color-mix(in srgb,var(--ink) 72%,var(--card));--line:color-mix(in srgb,var(--ink) 16%,transparent)}
+body.hasbg[data-mat="milch"] .card{background:color-mix(in srgb,var(--card) 80%,transparent);-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6)}
+body.hasbg[data-mat="glas"] .card{background:color-mix(in srgb,var(--card) 55%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.8);backdrop-filter:blur(16px) saturate(1.8)}
+body.hasbg[data-mat="glas"] .card :is(input[type=text],input[type=number],input:not([type]),textarea,select){background:color-mix(in srgb,var(--bg) 62%,transparent)}
+body.hasbg[data-mat="glas"] .skrk{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+/* Bedienelemente der Einstellung */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:3px;border-radius:11px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.seg>*{display:grid;place-items:center;min-height:38px;border:0;border-radius:8px;background:none;color:var(--ink);font:inherit;font-weight:600;cursor:pointer;padding:0 8px;text-align:center}
+.seg>.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.seg.sm>*{min-height:32px;font-size:.9rem}
+.bgrow{display:flex;gap:14px;align-items:flex-start}
+.bgctl{flex:1;min-width:0;display:grid;gap:12px}
+.bgprev{width:60px;height:107px;flex:none;border-radius:10px;border:1px solid var(--line);background:var(--bg) center/cover no-repeat}
+#bgop{width:100%;accent-color:var(--accent)}
 .hbar{max-width:560px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
 .charbtn{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:0;text-align:left;cursor:pointer}
 .charbtn .n{font-family:var(--display);font-size:clamp(1.2rem,5.4vw,1.45rem);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -1196,7 +1215,7 @@ function renderBogen(){
       <button class="btn small danger" id="delc">${confirmDel?"Wirklich „"+esc((chars.find(c=>c.id===selId())||cur).name)+"“ löschen?":"Auswahl löschen"}</button>
       <button class="btn small" id="newc">Neuer Charakter</button></div>
   </div>
-  <h2>Hintergrund</h2><div class="card">${bgCard()}</div>
+  <h2>Darstellung</h2><div class="card">${bgCard()}</div>
   <h2>Sichern</h2><div class="card">
     <div class="row-actions"><button class="btn small" id="expfile">Als Datei senden, z. B. per E-Mail</button><button class="btn small" id="exp">Charakter als Text kopieren</button><button class="btn small" id="imp">Charakter einfügen</button></div>
     <div id="impbox" hidden style="margin-top:10px"><label class="btn small" style="display:inline-flex;align-items:center;margin-bottom:8px;cursor:pointer">Sicherungsdatei öffnen<input type="file" id="impfile" accept=".txt,.json,text/plain,application/json" hidden></label><textarea id="imptext" placeholder="… oder kopierten Charakter hier einfügen"></textarea><div class="row-actions" style="margin-top:8px"><button class="btn small pri" id="impgo">Als neuen Charakter anlegen</button></div></div>
@@ -1997,25 +2016,29 @@ function kampfDo(b){
 const ICON_SHIELD='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4.5 5.8v5.6c0 4.6 3.2 8 7.5 9.6 4.3-1.6 7.5-5 7.5-9.6V5.8z"/></svg>';
 const sOpen=new Set();
 
-/* ---------- Eigenes Hintergrundbild (nur auf diesem Gerät) ---------- */
-const BG_KEY="aborea-bg",BG_OP="aborea-bgop",BG_CARD="aborea-cardop";
-function cardOp(){try{const v=parseFloat(localStorage.getItem(BG_CARD));return isNaN(v)?1:Math.max(.4,Math.min(1,v));}catch(e){return 1;}}
-function cardApply(){const v=bgGet()?cardOp():1;document.documentElement.style.setProperty("--cardop",Math.round(v*100)+"%");document.body.classList.toggle("glass",v<1);}
+/* ---------- Darstellung: eigenes Hintergrundbild mit Material-Stufen (nur auf diesem Gerät) ----------
+   Angelehnt an Apples „Materials“: durchscheinende Flächen mit Weichzeichner und Sättigung, feine helle Kante,
+   kräftigere Nebenschrift auf Glas. „Original“ setzt alles zurück auf das ursprüngliche Design. */
+const BG_KEY="aborea-bg",BG_OP="aborea-bgop",BG_MAT="aborea-mat";
+const BG_MATS=[["klar","Klar"],["milch","Milchglas"],["glas","Glas"]];
 function bgGet(){try{return localStorage.getItem(BG_KEY)||"";}catch(e){return "";}}
-function bgOp(){try{const v=parseFloat(localStorage.getItem(BG_OP));return isNaN(v)?.6:Math.max(.15,Math.min(1,v));}catch(e){return .6;}}
+function bgOp(){try{const v=parseFloat(localStorage.getItem(BG_OP));return isNaN(v)?.75:Math.max(.15,Math.min(1,v));}catch(e){return .75;}}
+function bgMat(){try{const v=localStorage.getItem(BG_MAT);return BG_MATS.some(m=>m[0]===v)?v:"milch";}catch(e){return "milch";}}
+let bgSure=false;
 function bgApply(){const src=bgGet();let el=document.getElementById("bgimg");
-  cardApply();
-  if(!src){if(el)el.remove();document.body.classList.remove("hasbg");return;}
+  if(!src){if(el)el.remove();document.body.classList.remove("hasbg");document.body.removeAttribute("data-mat");return;}
   if(!el){el=document.createElement("div");el.id="bgimg";el.setAttribute("aria-hidden","true");document.body.prepend(el);}
-  el.style.backgroundImage=`url(${src})`;el.style.opacity=bgOp();document.body.classList.add("hasbg");}
+  el.style.backgroundImage=`url(${src})`;el.style.opacity=bgOp();document.body.classList.add("hasbg");document.body.setAttribute("data-mat",bgMat());}
 function bgSet(data){try{data?localStorage.setItem(BG_KEY,data):localStorage.removeItem(BG_KEY);}catch(e){showMsg("Das Bild ist zu groß zum Speichern. Bitte ein kleineres Bild nehmen.");return false;}
-  bgApply();renderAll();if(!data)showMsg("Hintergrundbild entfernt.");return true;}
-function bgCard(){const src=bgGet(),op=Math.round(bgOp()*100);
-  return `<div class="bgrow"><div class="bgprev"${src?` style="background-image:url(${src})"`:""}>${src?"":"kein Bild"}</div>
-    <div class="bgact"><label class="btn small${src?"":" pri"}">${src?"Anderes Bild":"Bild wählen"}<input type="file" id="bgfile" accept="image/*" hidden></label>${src?`<button class="btn small" id="bgdel">Entfernen</button>`:""}</div></div>
-    ${src?`<label class="fld" style="margin-top:12px"><span class="lab">Sichtbarkeit <b id="bgopv">${op} %</b></span><input type="range" id="bgop" min="15" max="100" step="5" value="${op}"></label>
-    <label class="fld" style="margin-top:12px"><span class="lab">Deckkraft der Karten <b id="cardopv">${Math.round(cardOp()*100)} %</b></span><input type="range" id="cardop" min="40" max="100" step="5" value="${Math.round(cardOp()*100)}"></label>`:""}
-    <p class="hint" style="margin:10px 0 0">Am besten passt ein Bild im Hochformat 9:16, z. B. 1080 × 1920 Pixel, wie ein Handy-Hintergrund. Andere Formate werden mittig zugeschnitten. Das Bild bleibt nur auf diesem Gerät und wird nicht mit dem Charakter gesichert.</p>`;}
+  bgApply();renderAll();return true;}
+function bgReset(){try{[BG_KEY,BG_OP,BG_MAT,"aborea-cardop"].forEach(k=>localStorage.removeItem(k));}catch(e){}bgSure=false;bgApply();renderAll();showMsg("Ursprüngliches Design wiederhergestellt.");}
+function bgCard(){const src=bgGet(),op=Math.round(bgOp()*100),mat=bgMat();
+  const seg=`<div class="seg" role="group" aria-label="Darstellung"><button class="${src?"":"on"}" id="bgorig" aria-pressed="${!src}">${src&&bgSure?"Wirklich zurücksetzen?":"Original"}</button><label class="${src?"on":""}" aria-pressed="${!!src}">Eigenes Bild<input type="file" id="bgfile" accept="image/*" hidden></label></div>`;
+  if(!src)return seg+`<p class="hint" style="margin:10px 0 0">Original ist das Design der App ohne Bild. Mit „Eigenes Bild“ wählst du ein Foto als Hintergrund, am besten im Hochformat 9:16, z. B. 1080 × 1920 Pixel. Das Bild bleibt nur auf diesem Gerät.</p>`;
+  return seg+`<div class="bgrow" style="margin-top:12px"><div class="bgprev" style="background-image:url(${src})"></div>
+    <div class="bgctl"><label class="fld"><span class="lab">Bild <b id="bgopv">${op} %</b></span><input type="range" id="bgop" min="15" max="100" step="5" value="${op}" aria-label="Wie kräftig das Bild zu sehen ist"></label>
+    <div class="fld"><span class="lab">Karten</span><div class="seg sm" role="group" aria-label="Karten">${BG_MATS.map(([k,t])=>`<button data-bgmat="${k}" class="${k===mat?"on":""}" aria-pressed="${k===mat}">${t}</button>`).join("")}</div></div></div></div>
+    <p class="hint" style="margin:10px 0 0">Klar: Karten wie im Original. Milchglas: Das Bild schimmert durch. Glas: Das Bild ist deutlich zu sehen. Über „Eigenes Bild“ wählst du ein anderes, „Original“ setzt alles zurück. Das Bild bleibt nur auf diesem Gerät.</p>`;}
 function bgLoad(f){
   if(!f)return;
   if(f.type&&!/^image\//.test(f.type)){showMsg("Das ist kein Bild. Bitte ein Foto oder Bild wählen, z. B. JPG oder PNG.");return;}
@@ -2029,9 +2052,11 @@ function bgLoad(f){
     if(bgSet(data))showMsg(W>H?"Hintergrund gesetzt. Querformat wird auf dem Handy mittig zugeschnitten, ein Hochformat-Bild passt besser.":"Hintergrund gesetzt.");};
   img.onerror=()=>{URL.revokeObjectURL(url);showMsg("Dieses Bildformat kann die App nicht lesen. Bitte ein JPG oder PNG nehmen.");};
   img.src=url;}
-document.addEventListener("change",e=>{const t=e.target;if(t&&t.id==="bgfile"){bgLoad(t.files&&t.files[0]);t.value="";}});
-document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bgop"){const v=num(t.value)/100;try{localStorage.setItem(BG_OP,String(v));}catch(x){}const el=document.getElementById("bgimg");if(el)el.style.opacity=v;const o=document.getElementById("bgopv");if(o)o.textContent=Math.round(v*100)+" %";}
-  if(t&&t.id==="cardop"){const v=num(t.value)/100;try{localStorage.setItem(BG_CARD,String(v));}catch(x){}cardApply();const o=document.getElementById("cardopv");if(o)o.textContent=Math.round(v*100)+" %";}});
+document.addEventListener("change",e=>{const t=e.target;if(t&&t.id==="bgfile"){bgSure=false;bgLoad(t.files&&t.files[0]);t.value="";}});
+document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bgop"){const v=num(t.value)/100;try{localStorage.setItem(BG_OP,String(v));}catch(x){}const el=document.getElementById("bgimg");if(el)el.style.opacity=v;const o=document.getElementById("bgopv");if(o)o.textContent=Math.round(v*100)+" %";}});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#bgorig,[data-bgmat]");if(!b)return;
+  if(b.id==="bgorig"){if(!bgGet())return;if(!bgSure){bgSure=true;renderAll();return;}bgReset();return;}
+  try{localStorage.setItem(BG_MAT,b.dataset.bgmat);}catch(x){}bgApply();renderAll();});
 if(document.body)bgApply();else document.addEventListener("DOMContentLoaded",bgApply);
 
 /* ---------- Waffe anlegen/bearbeiten im eigenen Fenster ---------- */
@@ -4943,7 +4968,6 @@ async function pbOpen(){let el=$("#pbview");if(!el){el=document.createElement("d
 function pbClose(){const el=$("#pbview");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";pbPages=null;}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("button");if(!b)return;
   if(b.id==="openprint"){pbOpen();return;}
-  if(b.id==="bgdel"){bgSet(null);return;}
   if(b.id==="pbclose"){pbClose();return;}
   if(b.dataset.pbstyle!=null){PB.parch=b.dataset.pbstyle==="1";try{localStorage.setItem("aborea-pbparch",PB.parch?"1":"0");}catch(x){}pbOpen();return;}
   if(b.id==="pbsave"&&pbPages){b.disabled=true;b.textContent="Wird gespeichert …";const m=$("#pbview .pbmsg");
