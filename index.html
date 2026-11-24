@@ -49,7 +49,8 @@ body.hasbg header{margin-inline:-8px;padding-inline:8px}body.hasbg header nav{ba
 .bgrow{display:flex;gap:14px;align-items:center}
 .bgprev{width:54px;height:96px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--bg) center/cover no-repeat;display:grid;place-items:center;font-size:.7rem;color:var(--muted);text-align:center}
 .bgact{display:flex;gap:8px;flex-wrap:wrap}
-#bgop{width:100%;accent-color:var(--accent)}
+#bgop,#cardop{width:100%;accent-color:var(--accent)}
+body.glass .card{background:color-mix(in srgb,var(--card) var(--cardop,100%),transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .hbar{max-width:560px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
 .charbtn{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:0;text-align:left;cursor:pointer}
 .charbtn .n{font-family:var(--display);font-size:clamp(1.2rem,5.4vw,1.45rem);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -1997,10 +1998,13 @@ const ICON_SHIELD='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" s
 const sOpen=new Set();
 
 /* ---------- Eigenes Hintergrundbild (nur auf diesem Gerät) ---------- */
-const BG_KEY="aborea-bg",BG_OP="aborea-bgop";
+const BG_KEY="aborea-bg",BG_OP="aborea-bgop",BG_CARD="aborea-cardop";
+function cardOp(){try{const v=parseFloat(localStorage.getItem(BG_CARD));return isNaN(v)?1:Math.max(.4,Math.min(1,v));}catch(e){return 1;}}
+function cardApply(){const v=bgGet()?cardOp():1;document.documentElement.style.setProperty("--cardop",Math.round(v*100)+"%");document.body.classList.toggle("glass",v<1);}
 function bgGet(){try{return localStorage.getItem(BG_KEY)||"";}catch(e){return "";}}
 function bgOp(){try{const v=parseFloat(localStorage.getItem(BG_OP));return isNaN(v)?.6:Math.max(.15,Math.min(1,v));}catch(e){return .6;}}
 function bgApply(){const src=bgGet();let el=document.getElementById("bgimg");
+  cardApply();
   if(!src){if(el)el.remove();document.body.classList.remove("hasbg");return;}
   if(!el){el=document.createElement("div");el.id="bgimg";el.setAttribute("aria-hidden","true");document.body.prepend(el);}
   el.style.backgroundImage=`url(${src})`;el.style.opacity=bgOp();document.body.classList.add("hasbg");}
@@ -2009,7 +2013,8 @@ function bgSet(data){try{data?localStorage.setItem(BG_KEY,data):localStorage.rem
 function bgCard(){const src=bgGet(),op=Math.round(bgOp()*100);
   return `<div class="bgrow"><div class="bgprev"${src?` style="background-image:url(${src})"`:""}>${src?"":"kein Bild"}</div>
     <div class="bgact"><label class="btn small${src?"":" pri"}">${src?"Anderes Bild":"Bild wählen"}<input type="file" id="bgfile" accept="image/*" hidden></label>${src?`<button class="btn small" id="bgdel">Entfernen</button>`:""}</div></div>
-    ${src?`<label class="fld" style="margin-top:12px"><span class="lab">Sichtbarkeit <b id="bgopv">${op} %</b></span><input type="range" id="bgop" min="15" max="100" step="5" value="${op}"></label>`:""}
+    ${src?`<label class="fld" style="margin-top:12px"><span class="lab">Sichtbarkeit <b id="bgopv">${op} %</b></span><input type="range" id="bgop" min="15" max="100" step="5" value="${op}"></label>
+    <label class="fld" style="margin-top:12px"><span class="lab">Deckkraft der Karten <b id="cardopv">${Math.round(cardOp()*100)} %</b></span><input type="range" id="cardop" min="40" max="100" step="5" value="${Math.round(cardOp()*100)}"></label>`:""}
     <p class="hint" style="margin:10px 0 0">Am besten passt ein Bild im Hochformat 9:16, z. B. 1080 × 1920 Pixel, wie ein Handy-Hintergrund. Andere Formate werden mittig zugeschnitten. Das Bild bleibt nur auf diesem Gerät und wird nicht mit dem Charakter gesichert.</p>`;}
 function bgLoad(f){
   if(!f)return;
@@ -2025,7 +2030,8 @@ function bgLoad(f){
   img.onerror=()=>{URL.revokeObjectURL(url);showMsg("Dieses Bildformat kann die App nicht lesen. Bitte ein JPG oder PNG nehmen.");};
   img.src=url;}
 document.addEventListener("change",e=>{const t=e.target;if(t&&t.id==="bgfile"){bgLoad(t.files&&t.files[0]);t.value="";}});
-document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bgop"){const v=num(t.value)/100;try{localStorage.setItem(BG_OP,String(v));}catch(x){}const el=document.getElementById("bgimg");if(el)el.style.opacity=v;const o=document.getElementById("bgopv");if(o)o.textContent=Math.round(v*100)+" %";}});
+document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bgop"){const v=num(t.value)/100;try{localStorage.setItem(BG_OP,String(v));}catch(x){}const el=document.getElementById("bgimg");if(el)el.style.opacity=v;const o=document.getElementById("bgopv");if(o)o.textContent=Math.round(v*100)+" %";}
+  if(t&&t.id==="cardop"){const v=num(t.value)/100;try{localStorage.setItem(BG_CARD,String(v));}catch(x){}cardApply();const o=document.getElementById("cardopv");if(o)o.textContent=Math.round(v*100)+" %";}});
 if(document.body)bgApply();else document.addEventListener("DOMContentLoaded",bgApply);
 
 /* ---------- Waffe anlegen/bearbeiten im eigenen Fenster ---------- */
