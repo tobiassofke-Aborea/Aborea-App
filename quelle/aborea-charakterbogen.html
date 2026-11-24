@@ -821,8 +821,8 @@ body.zshake .wrap{animation:zsh .42s linear}
 .zchips{scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .zchips::-webkit-scrollbar{display:none}
 .kchips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible}
-.kprow{align-items:center;margin:12px 0 8px}.kprow .kchips{padding-bottom:0;margin-bottom:0}.kprow .kchips .chip{padding:4px 6px;min-height:44px}
-.kseg{align-items:center;margin-bottom:12px}.kseg .seg{flex:1;min-width:0}.kseg .seg>*{min-height:40px;font-size:1rem}.kseg>.ib{margin:0 -6px 0 0;flex:none}
+.kprow{align-items:center;margin:12px 0 8px}.kprow .kchips{padding-bottom:0;margin-bottom:0}.kprow .kchips .chip{padding:4px 6px;min-height:44px}.kprow>.ib{margin:0 -6px 0 -2px;flex:none}
+.kseg{align-items:center;margin-bottom:12px}.kseg .seg{flex:1;min-width:0}.kseg .seg>*{min-height:40px;font-size:1rem}
 .kchips .chip{position:relative;display:grid;place-items:center;align-content:center;gap:0;min-height:46px;padding:4px 6px;border-radius:12px;line-height:1.15;min-width:0}
 .kchips .chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .kchips .chip small{font-size:.72rem;font-weight:500;opacity:.8}
@@ -3508,7 +3508,7 @@ function zauberCardHtml(){
   const known=lists.filter(l=>learned.some(sp=>sp.listId===l.id));
   const act=known.find(l=>l.id===ch.activeList)||known[0];
   const shown=learned.filter(sp=>sp.listId===act.id).sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
-  const zbk=`<button class="ib zbook" data-zbook="${act.id}" aria-label="${esc(act.name)} in der Zauberbibliothek öffnen" title="Zauberbibliothek">${ICON_BOOK}</button>`;
+  const zbk=`<button class="ib zbook" data-zbook="${act.id}" aria-label="${esc(act.name)} in der Zauberbibliothek öffnen" title="Zauberbibliothek">${ICON_BOOK}</button>${ib("magie")}`;
   return `${known.length>1?"":`<div class="zhd"><h2>${esc(act.name)}${zbk}</h2></div>`}
   ${known.length>1?`<div class="zlrow"><div class="zchips ichips${zSlide?" "+zSlide:""}" id="zlchips" data-for="zlist">${known.map(l=>`<button class="chip${l.id===act.id?" on":""}" data-zlist="${l.id}">${esc(l.name)}</button>`).join("")}</div>${zbk}</div>`:""}
   <div class="card zlist${zSlide?" "+zSlide:""}" id="zlist">${shown.map(sp=>{
@@ -3718,10 +3718,10 @@ kmode=kpage==="magie"?"magie":"kampf";
 const KSUB=KPAGES.filter(k=>k[0]!=="magie");
 let kpBack=(()=>{try{const v=localStorage.getItem("aborea-kpage-k");if(KSUB.some(k=>k[0]===v))return v;}catch(e){}return kpage!=="magie"?kpage:"angriff";})();
 function kSegHtml(){const mag=kpage==="magie";
-  return `<div class="zlrow kseg"><div class="seg" role="tablist" aria-label="Aktionen"><button role="tab" class="${mag?"":"on"}" aria-selected="${!mag}" data-kseg="kampf">Kampf</button><button role="tab" class="${mag?"on":""}" aria-selected="${mag}" data-kpage="magie">Magie</button></div>${ib(kpage)}</div>`;}
+  return `<div class="zlrow kseg"><div class="seg" role="tablist" aria-label="Aktionen"><button role="tab" class="${mag?"":"on"}" aria-selected="${!mag}" data-kseg="kampf">Kampf</button><button role="tab" class="${mag?"on":""}" aria-selected="${mag}" data-kpage="magie">Magie</button></div></div>`;}
 function kpHead(){
   const r=num(cur.kampf.defRes),pages=KSUB;
-  return `<div class="zlrow kprow"><div class="zchips kchips ichips${kSlide?" "+kSlide:""}" id="kpchips" data-for="kpages">${pages.map(([k,t])=>`<button class="chip${k===kpage?" on":""}" ${k==="spezial"?'data-spmenu="1"':`data-kpage="${k}"`}>${k==="spezial"?`<span>Spezial ${ICON_CHEV}</span><small>${curSpArt(curWeapon())}</small>`:`<span>${t}</span>`}${k==="verteidigen"&&r?`<small class="cb">${r} bereit</small>`:""}${k==="spezial"&&atk.special?`<i class="cdot" aria-label="gewählt"></i>`:""}</button>`).join("")}</div></div>`;
+  return `<div class="zlrow kprow"><div class="zchips kchips ichips${kSlide?" "+kSlide:""}" id="kpchips" data-for="kpages">${pages.map(([k,t])=>`<button class="chip${k===kpage?" on":""}" ${k==="spezial"?'data-spmenu="1"':`data-kpage="${k}"`}>${k==="spezial"?`<span>Spezial ${ICON_CHEV}</span><small>${curSpArt(curWeapon())}</small>`:`<span>${t}</span>`}${k==="verteidigen"&&r?`<small class="cb">${r} bereit</small>`:""}${k==="spezial"&&atk.special?`<i class="cdot" aria-label="gewählt"></i>`:""}</button>`).join("")}</div>${ib(kpage)}</div>`;
 }
 function setKpage(pg){if(pg===kpage)return;const ix=k=>KPAGES.findIndex(x=>x[0]===k),dir=ix(pg)>ix(kpage)?1:-1;kpage=pg;kmode=pg==="magie"?"magie":"kampf";if(pg!=="magie")kpBack=pg;try{localStorage.setItem("aborea-kpage",pg);if(pg!=="magie")localStorage.setItem("aborea-kpage-k",pg);}catch(e){}kSlide=calmMotion()?"":(dir>0?"slidel":"slider");renderAll();kSlide="";}
 
