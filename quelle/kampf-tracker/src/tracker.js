@@ -40,7 +40,8 @@ function publishView(){
       // Kopie sortieren, damit Gleichstände wie in der Spielleiter-Liste aufgelöst werden
       const c = [...sim].sort((a,b)=> a.currentInit - b.currentInit)[0];
       // n = der wievielte Zug das für diesen Charakter ist
-      queue.push({ name: c.name, type: c.type, n: c.t + 1, label: c.type==='player' ? (c.icon||'⭐') : String(c.instanceNum ?? '?') });
+      // Spieler sehen bei Gegnern nur „Gegner“ plus die eindeutige Nummer im Badge, nicht den Vorlagennamen (z. B. dreimal „Gegner 1“)
+      queue.push({ name: c.type==='player' ? c.name : 'Gegner', type: c.type, n: c.t + 1, label: c.type==='player' ? (c.icon||'⭐') : String(c.instanceNum ?? '?') });
       if(!c.baseInit) break; // ohne Basis-INI käme immer derselbe wieder
       c.currentInit += c.baseInit;
       c.t += 1;
