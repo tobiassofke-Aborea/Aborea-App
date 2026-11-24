@@ -333,6 +333,7 @@ input.ro{background:transparent;border-color:transparent;color:var(--muted);poin
 .cwwho{font-family:var(--display);font-size:1.15rem;color:var(--accent)}
 .cwh{margin-top:16px!important}
 .cwopts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.cwopts.cwmodes{grid-template-columns:1fr;margin-bottom:4px}
 .cwopt{display:grid;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer;min-height:56px}
 .cwopt b{font-size:1.02rem}.cwopt small{color:var(--muted);font-size:.8rem;line-height:1.25}
 .cwopt.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}
@@ -1196,6 +1197,7 @@ function doLevelUp(){const r=levelUp();renderAll();buzz(20);
 document.addEventListener("keydown",e=>{const el=$("#cdlg");if(e.key==="Escape"&&el&&!el.hidden)el.hidden=true;});
 function bogRow(key,title,summary,body,desc){const open=bogOpen===key;
   return `<div class="accrow${open?" open":""}"><button class="acchead" data-bog="${key}" aria-expanded="${open}"><span class="acct">${title}</span><span class="accs">${summary}</span>${chev(open)}${desc?`<small class="accd">${desc}</small>`:""}</button>${open?`<div class="accbody">${body}</div>`:""}</div>`;}
+let aptsSure=false;
 function renderBogen(){
   armorSync();syncKrit();
   const a=armorOf(),lvl=lvlNow(),apts=num(cur.ausbildung),hasB=!!BERUF[cur.beruf];
@@ -1215,6 +1217,7 @@ function renderBogen(){
     <div class="hfoot">${ib("stufe")}<button class="btn small${apts?" acc2":""}" id="learnopen">${apts?`${apts} Ausbildungspunkte verteilen`:"Lernen"}</button>${lvl>1?`<button class="btn small ghost${lvConfirm?" warn":""}" id="leveldown">${lvConfirm?`Wirklich zurück auf Stufe ${lvl-1}?`:"Stufe zurück"}</button>`:""}</div>
   </div>`;
   const herkunft=`<div class="grid2">${choiceFld("volk","Volk",Object.keys(VOLK))}${fld("alter","Alter (Jahre)",{num:true})}${choiceFld("beruf","Beruf",Object.keys(BERUF))}${fld("ausbildung","Ausbildungspunkte",{num:true,full:true})}</div>
+    ${apts>0?`<button class="btn small ghost${aptsSure?" warn":""}" id="aptsdrop" style="margin-top:10px">${aptsSure?`Wirklich ${apts} Punkte löschen?`:`Übrige ${apts} Ausbildungspunkte verfallen lassen`}</button>`:""}
     <p class="note" style="margin:8px 0 0">${VOLK_IND.has(cur.volk)?`${esc(cur.volk)}: Die Volksanpassung ist individuell, trag sie unter Attribute über das Zahnrad ein. `:VOLK[cur.volk]?"Ein Volkswechsel verschiebt die Attribute um die Volksanpassung. ":""}${hasB?`LP, Mana und Kosten richten sich nach ${esc(cur.beruf)}.`:"Bei eigenem Beruf trägst du LP und Mana unter „Kampfwerte & Boni“ selbst ein."}</p>`;
   const ruest=`<label class="fld"><span class="lab">Rüstung${ib("ruestung")}</span><select id="f-armortype" data-k="armorType" data-prev="${esc(cur.armorType||"")}"><option value="" ${a?"":"selected"}>Eigene / keine Vorlage</option>${ARMOR.map(x=>`<option value="${esc(x[0])}" ${a&&a[0]===x[0]?"selected":""}>${esc(x[0])} · ${x[1]}${x[2]?` · Malus ${x[2]}`:""}</option>`).join("")}</select></label>
     <div class="grid2" style="margin-top:10px"><label class="fld"><span class="lab">Anpassung (±)</span><input type="number" inputmode="numeric" id="f-armoradj" data-k="armorAdj" data-num value="${esc(cur.armorAdj||0)}"></label>
@@ -4660,6 +4663,7 @@ function cwPreview(){
   recalcChar(c);return c;
 }
 const CW_STEPS=["Volk & Beruf","Attribute","Fertigkeiten","Abschluss"];
+const cwFreeMax=()=>crossesForRank(30);
 function cwOpen(){cw=cwNew();let el=$("#cw");if(!el){el=document.createElement("div");el.id="cw";el.setAttribute("role","dialog");el.setAttribute("aria-label","Neuer Charakter");document.body.appendChild(el);}
   el.hidden=false;document.documentElement.style.overflow="hidden";histOpen();cwRender();}
 function cwClose(){const el=$("#cw");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";cw=null;}
@@ -4667,14 +4671,19 @@ function cwRender(keepScroll){
   const el=$("#cw");if(!el||!cw)return;const body=el.querySelector(".cwbody"),st=keepScroll&&body?body.scrollTop:0;
   const s=cw.step;let h="";
   if(s===0){
-    h=`<div class="seg cwmode" role="group" aria-label="Art"><button class="${cwT()?"":"on"}" data-cwmode="neu" aria-pressed="${!cwT()}">Neu erstellen</button><button class="${cwT()?"on":""}" data-cwmode="ueb" aria-pressed="${cwT()}">Charakter übertragen</button></div>
-      <p class="note" style="margin-top:6px">${ib("cwmode")}${cwT()?"Für einen Charakter, den es schon auf Papier gibt: Du trägst Attribute und Ränge direkt ab, ohne Punkte zu rechnen.":"Mit Punkten nach den Regeln, auf Wunsch gleich auf höherer Stufe."}</p>
+    const T=cwT(),ownV=cw.volk&&!VOLK[cw.volk],ownB=cw.beruf&&!BERUF[cw.beruf];
+    h=`<div class="cwopts cwmodes" role="group" aria-label="Wie möchtest du anfangen?">
+        <button class="cwopt${T?"":" on"}" data-cwmode="neu" aria-pressed="${!T}"><b>Neu auf Stufe 1</b><small>Nach den Regeln: Du verteilst Punkte, die App rechnet LP, Mana und AP aus.</small></button>
+        <button class="cwopt${T?" on":""}" data-cwmode="ueb" aria-pressed="${T}"><b>Frei eintragen</b><small>Für einen Charakter, den es schon gibt, z. B. auf Papier: Du trägst alles so ein, wie es dort steht. Keine Punkte, keine Grenzen, jede Stufe.</small></button></div>
       <label class="fld"><span class="lab">Name</span><input id="cw-name" value="${esc(cw.name)}" placeholder="Name deines Charakters"></label>
       <div class="lab cwh">Volk</div><div class="cwopts">${Object.keys(VOLK).map(v=>`<button class="cwopt${cw.volk===v?" on":""}" data-cwvolk="${v}"><b>${v}</b><small>${VOLK[v].map((x,i)=>x?`${ATTR[i]} ${x>0?"+":"−"}${Math.abs(x)}`:"").filter(Boolean).join(" · ")||(VOLK_IND.has(v)?"Anpassung individuell":"keine Anpassung")}${v==="Mensch"?" · 10 Ausbildungspunkte":""}</small></button>`).join("")}</div>
+      ${T?`<label class="fld" style="margin-top:8px"><span class="lab">Oder anderes Volk</span><input id="cw-volkown" value="${ownV?esc(cw.volk):""}" placeholder="Name des Volks" autocomplete="off"></label>`:""}
       <div class="lab cwh">Beruf</div><div class="cwopts">${Object.keys(BERUF).map(k=>`<button class="cwopt${cw.beruf===k?" on":""}" data-cwberuf="${k}"><b>${k}</b><small>${BERUF[k].tp} TP pro Stufe · Magie über ${BERUF[k].mp==="Int"?"Intelligenz":"Charisma"}</small></button>`).join("")}</div>
-      <div class="lab cwh">${cwT()?"Stufe":"Startstufe"}</div>
-      <div class="cwlvl"><div class="step"><button data-cwlvl="-1" ${cw.startLevel<=1?"disabled":""} aria-label="Startstufe senken">−</button><output>${cw.startLevel}</output><button data-cwlvl="1" ${cw.startLevel>=20?"disabled":""} aria-label="Startstufe erhöhen">+</button></div>
-        <small>${cwT()?"Die Stufe deines Charakters auf dem Papierbogen.":cw.startLevel>1?`Pro Stufe über 1 gibt es 8 Ausbildungspunkte mehr, hier ${(cw.startLevel-1)*8}. Du verteilst sie gleich bei den Fertigkeiten.`:"Die meisten fangen auf Stufe 1 an."}</small></div>
+      ${T?`<label class="fld" style="margin-top:8px"><span class="lab">Oder anderer Beruf</span><input id="cw-berufown" value="${ownB?esc(cw.beruf):""}" placeholder="Name des Berufs" autocomplete="off"></label>
+      <div class="lab cwh">Stufe und GS</div>
+      <div class="cwlvl"><div class="step"><button data-cwlvl="-1" ${cw.startLevel<=1?"disabled":""} aria-label="Stufe senken">−</button><output>${cw.startLevel}</output><button data-cwlvl="1" ${cw.startLevel>=30?"disabled":""} aria-label="Stufe erhöhen">+</button></div>
+        <label class="fld" style="max-width:120px"><span class="lab">GS</span><input id="cw-gs" inputmode="numeric" data-chk="int" value="${esc(cw.gs||"")}" placeholder="–"></label></div>
+      <p class="note">Stufe und Geistige Stabilität so, wie sie auf deinem Bogen stehen.</p>`:""}
       <p class="note">Lieber alles selbst eintragen? <button class="linkbtn" data-cwblank="1">Leeren Bogen anlegen</button></p>
       <p class="note">Nur mal reinschauen? <button class="linkbtn" data-cwexample="1">Beispielcharakter laden</button></p>`;
   }else if(s===1&&cwT()){
@@ -4697,15 +4706,15 @@ function cwRender(keepScroll){
       <p class="note">Werte über 5 sind überdurchschnittlich. Gib alle Punkte aus, sie verfallen nach der Erstellung. Rechts steht der Endwert mit Volksanpassung und darunter der Bonus, mit dem du später würfelst.</p>`;
   }else if(s===2&&cwT()){
     const names=spellListNames(),N=cw.startLevel||1;
-    h=`<p class="note">Trag die Kreuze von deinem Bogen ein, mit − und +. Der Rang ergibt sich daraus, auch halbe Ränge wie „5 und ein Kreuz zu 6“ gehen. Höher als deine Stufe (${N}) geht kein Rang; Boni kommen später im Bogen dazu.</p>
-      <div class="cwsk">${cw.rows.map((r,i)=>{const x=num(r.tx),q=rankFromCrosses(x),rk=q.r,mx=crossesForRank(N);
+    h=`<p class="note">Trag die Kreuze von deinem Bogen ein, mit − und +. Der Rang ergibt sich daraus, auch halbe Ränge wie „5 und ein Kreuz zu 6“ gehen. Boni trägst du später im Bogen ein.</p>
+      <div class="cwsk">${cw.rows.map((r,i)=>{const x=num(r.tx),q=rankFromCrosses(x),rk=q.r,mx=cwFreeMax();
         const spec=r.type==="spell"?`<select data-cwspec="${i}" aria-label="Spruchliste wählen"><option value="">Liste wählen …</option>${names.map(n=>`<option ${n===r.spec?"selected":""}>${esc(n)}</option>`).join("")}</select>`
           :r.type==="weapon"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Waffengruppe, z. B. Bogen" aria-label="Waffengruppe">`
           :r.type==="spec"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Bereich (optional)" aria-label="${esc(r.label)}: Bereich">`:r.type==="own"?`<input data-cwspec="${i}" value="${esc(r.spec)}" placeholder="Name der Fertigkeit" aria-label="Name der Fertigkeit"><input data-cwcost="${i}" value="${esc(r.cost||"")}" placeholder="Kosten, z. B. 2 oder 2/4" aria-label="Kosten" style="margin-top:6px">`:"";
         const rm=r.added?`<button class="linkbtn cwrm" data-cwrm="${i}">Zeile entfernen</button>`:"";
-        return skLvRow({label:esc(r.label),x,spec:spec+rm,minus:`data-cwtx="${i}" data-d="-1"`,plus:`data-cwtx="${i}" data-d="1"`,canMinus:x>0,canPlus:x<mx,note:x>=mx?`Rang ${N} ist auf Stufe ${N} das Höchste`:""});}).join("")}</div>
+        return skLvRow({label:esc(r.label),x,spec:spec+rm,minus:`data-cwtx="${i}" data-d="-1"`,plus:`data-cwtx="${i}" data-d="1"`,canMinus:x>0,canPlus:x<mx,note:""});}).join("")}</div>
       <div class="lab cwh">Weitere Fertigkeit</div><div class="row-actions"><button class="btn small" data-cwadd="spell">+ Spruchliste</button><button class="btn small" data-cwadd="weapon">+ Waffengruppe</button><button class="btn small" data-cwadd="Wissen">+ Wissen</button><button class="btn small" data-cwadd="Kunst">+ Kunst</button><button class="btn small" data-cwadd="own">+ Eigene</button></div>
-      <label class="fld" style="margin-top:12px"><span class="lab">Übrige Ausbildungspunkte laut Bogen</span><input type="number" inputmode="numeric" id="cw-left" value="${num(cw.left)||""}" placeholder="0"></label>`;
+`;
   }else if(s===2){
     const left=cwAPleft(),names=spellListNames();
     h=`<div class="cwpts${left<0?" bad":left===0?" done":""}"><b>${left}</b><span>von ${cwAPtotal()} Ausbildungspunkten übrig${left>0?" · Rest wird aufgespart":""}</span>${ib("cwskill")}</div>
@@ -4726,6 +4735,15 @@ function cwRender(keepScroll){
           <div class="step"><button data-cwraise="${a}" data-d="-1" ${cw.raise[a]?"":"disabled"} aria-label="${ATTR_LONG[a]} zurück">−</button><output>${w}</output><button data-cwraise="${a}" data-d="1" ${w>=10||cwAPleft()<c?"disabled":""} aria-label="${ATTR_LONG[a]} steigern">+</button></div>
           <div class="cwres"><small>${cw.raise[a]?`+${cw.raise[a]}`:"Wert"}</small><span class="cwbo${bo>0?" up":bo<0?" down":""}"><i>Bonus</i>${bo>0?"+":bo<0?"−":"±"}${Math.abs(bo)}</span></div></div>`;}).join("")}</div>`:""}
       <p class="note">Mit + gibst du einer Fertigkeit ein Kreuz, die Leiste zeigt den Fortschritt. Rang 1–5 brauchen je ein Kreuz, Rang 6–10 je zwei, ab Rang 11 je vier; angezeigt wird der letzte volle Rang. Ein Rang kann nicht über der Stufe liegen. Bei zwei Preisen (z. B. 2/4) ist ein zweites Kreuz in derselben Stufe teurer; die App nimmt immer zuerst die günstigen.</p>`;
+  }else if(cwT()){
+    const c=cwPreview();if(!cw.vals)cw.vals={lp:BERUF[cw.beruf]?c.lp.max:"",mp:BERUF[cw.beruf]?c.mp.max:"",ap:sum(c.ap),tz:c.trefferzone,ru:"",gf:"",tt:"",kl:"",mu:""};const v=cw.vals;
+    const f=(k,l,ph,chk,cls)=>`<label class="fld${cls?" "+cls:""}"><span class="lab">${l}</span><input id="cw-v-${k}" data-cwv="${k}" ${chk?`data-chk="${chk}" inputmode="numeric"`:""} value="${esc(v[k]??"")}" placeholder="${esc(ph)}" autocomplete="off"></label>`;
+    h=`<p class="note">Trag die Werte so ein, wie sie auf deinem Bogen stehen. Vorgeschlagen ist, was die Regeln ergeben würden. Was du änderst, übernimmt die App so.</p>
+      <div class="grid2">${f("lp","Lebenspunkte (max.)","z. B. 24","int")}${f("mp","Mana (max.)","0 = kein Mana","int")}${f("ap","Aktionspunkte","z. B. 6","int")}${f("tz","Trefferzone","Körper / Kopf, z. B. 17 / 42","")}${f("ru","Rüstung","0","int")}</div>
+      <div class="lab cwh">Geld</div><div class="grid2">${COINS.map(cn=>f(cn.k,cn.name,"0","int")).join("")}</div>
+      <label class="fld" style="margin-top:12px"><span class="lab">Übrige Ausbildungspunkte</span><input type="number" inputmode="numeric" id="cw-left" value="${num(cw.left)||""}" placeholder="0"></label>
+      <label class="fld"><span class="lab">Details (optional)</span><input id="cw-det" value="${esc(cw.details)}" placeholder="Geschlecht, Aussehen …"></label>
+      <p class="note">Waffen, Schilde und Rüstungsart legst du danach im Kampf und im Bogen an.</p>`;
   }else{
     const c=cwPreview(),hb=c.ap[1];
     h=`<div class="cwsum">
@@ -4739,9 +4757,9 @@ function cwRender(keepScroll){
       <label class="fld full"><span class="lab">Details (optional)</span><input id="cw-det" value="${esc(cw.details)}" placeholder="Geschlecht, Aussehen …"></label>
       <p class="note">Stufe ${cw.startLevel}. Initiative und Krit rechnet die App im Kampf selbst aus, sobald Waffen eingetragen sind.</p>`;
   }
-  const canNext=s===0?(cw.volk&&cw.beruf):true;
+  const canNext=s===0?(cwT()||(cw.volk&&cw.beruf)):true;
   el.innerHTML=`<div class="tbar"><h1>Neuer Charakter</h1><button class="btn small" id="cwclose">Abbrechen</button></div>
-    <div class="cwsteps">${CW_STEPS.map((t,i)=>`<span class="${i===s?"on":i<s?"done":""}"><i>${i+1}</i>${t}</span>`).join("")}</div>
+    <div class="cwsteps">${(cwT()?["Grunddaten","Attribute","Fertigkeiten","Werte"]:CW_STEPS).map((t,i)=>`<span class="${i===s?"on":i<s?"done":""}"><i>${i+1}</i>${t}</span>`).join("")}</div>
     <div class="cwbody">${cw.volk||cw.beruf?`<div class="cwwho">${esc([cw.name,cw.volk,cw.beruf].filter(Boolean).join(" · "))}</div>`:""}${h}</div>
     <div class="cwmsg" hidden></div><div class="cwfoot">${s?`<button class="btn" data-cwgo="-1">Zurück</button>`:""}<button class="btn pri" data-cwgo="1" ${canNext?"":"disabled"}>${s===3?"Charakter anlegen":"Weiter"}</button></div>`;
   const nb=el.querySelector(".cwbody");if(nb)nb.scrollTop=st;
@@ -4761,6 +4779,16 @@ function cwFinish(){
   c.lp={cur:0,max:0};c.mp={cur:0,max:0};recalcChar(c);c.lp.cur=c.lp.max;c.mp.cur=c.mp.max;
   c.ausbildung=cwT()?Math.max(0,num(cw.left)):Math.max(0,cwAPleft());
   c.money={gf:0,tt:cw.dice?cw.dice*5:0,kl:0,mu:0,rates:[10,10,10]};
+  if(cwT()){const v=cw.vals||{},has=x=>String(x??"").trim()!=="",iv=x=>intOf(x);
+    c.gs=String(cw.gs||"").trim();
+    /* LP und Mana: Bei bekanntem Beruf rechnet die App weiter, der Unterschied zum Bogen wird als Bonus gemerkt */
+    if(BERUF[c.beruf]){if(has(v.lp)){c.lpBonus=0;c.lp.max=0;recalcChar(c);c.lpBonus=iv(v.lp)-c.lp.max;}if(has(v.mp)){c.mpBonus=0;recalcChar(c);c.mpBonus=iv(v.mp)-c.mp.max;}recalcChar(c);}
+    else{c.lp.max=Math.max(0,iv(v.lp));c.mp.max=Math.max(0,iv(v.mp));}
+    c.lp.cur=c.lp.max;c.mp.cur=c.mp.max;
+    const apA=sum(c.ap),tzA=c.trefferzone,tz=String(v.tz??"").trim();
+    if((has(v.ap)&&iv(v.ap)!==apA)||(tz&&tz.replace(/\s/g,"")!==tzA.replace(/\s/g,""))){c.kwManual=true;c.ap=[(has(v.ap)?iv(v.ap):apA)-c.ap[1]-c.ap[2],c.ap[1],c.ap[2]];c.trefferzone=tz||tzA;}
+    c.armorType="";c.armorAdj=Math.max(0,iv(v.ru));c.ruestung=String(c.armorAdj);
+    c.money={gf:Math.max(0,iv(v.gf)),tt:Math.max(0,iv(v.tt)),kl:Math.max(0,iv(v.kl)),mu:Math.max(0,iv(v.mu)),rates:[10,10,10]};}
   cwClose();addChar(c);
   showMsg(`${c.name} ist angelegt: ${c.lp.max} LP${c.mp.max?`, ${c.mp.max} Mana`:""}, ${sum(c.ap)} AP${c.ausbildung?`, ${c.ausbildung} Ausbildungspunkte aufgespart`:""}.`);
 }
@@ -4775,10 +4803,10 @@ document.addEventListener("click",e=>{
   if(b.id==="cwclose"){cwClose();return;}
   if(b.dataset.cwblank){cwClose();addChar(blank());return;}
   if(b.dataset.cwexample){cwClose();addChar(example());return;}
-  if(b.dataset.cwmode){cw.mode=b.dataset.cwmode;cwRender(true);return;}
+  if(b.dataset.cwmode){cw.mode=b.dataset.cwmode;if(cw.mode==="neu"){cw.startLevel=1;ATTR.forEach(a=>cw.raise[a]=0);if(!VOLK[cw.volk])cw.volk="";if(!BERUF[cw.beruf])cw.beruf="";cw.rows.forEach(r=>{r.n=Math.min(r.n,cwRowMax(r));});}cwRender(true);return;}
   if(b.dataset.cwtw){const a=b.dataset.cwtw;cw.tw[a]=Math.max(0,Math.min(20,num(cw.tw[a])+ +b.dataset.d));cwRender(true);return;}
-  if(b.dataset.cwtx!=null){const r=cw.rows[+b.dataset.cwtx];r.tx=Math.max(0,Math.min(crossesForRank(cw.startLevel||1),num(r.tx)+ +b.dataset.d));cwRender(true);return;}
-  if(b.dataset.cwlvl){cw.startLevel=Math.max(1,Math.min(20,cw.startLevel+ +b.dataset.cwlvl));cw.rows.forEach(r=>{r.n=Math.min(r.n,cwRowMax(r));r.tx=Math.min(num(r.tx),crossesForRank(cw.startLevel));});if(cw.startLevel===1)ATTR.forEach(a=>cw.raise[a]=0);if(cwAPleft()<0){cw.rows.forEach(r=>r.n=0);ATTR.forEach(a=>cw.raise[a]=0);}cwRender(true);return;}
+  if(b.dataset.cwtx!=null){const r=cw.rows[+b.dataset.cwtx];r.tx=Math.max(0,Math.min(cwFreeMax(),num(r.tx)+ +b.dataset.d));cwRender(true);return;}
+  if(b.dataset.cwlvl){cw.startLevel=Math.max(1,Math.min(30,cw.startLevel+ +b.dataset.cwlvl));cw.rows.forEach(r=>{r.n=Math.min(r.n,cwRowMax(r));});if(cw.startLevel===1)ATTR.forEach(a=>cw.raise[a]=0);if(cwAPleft()<0){cw.rows.forEach(r=>r.n=0);ATTR.forEach(a=>cw.raise[a]=0);}cwRender(true);return;}
   if(b.dataset.cwvolk){if(cw.tw){const A=VOLK[cw.volk]||[0,0,0,0,0],B=VOLK[b.dataset.cwvolk]||[0,0,0,0,0];ATTR.forEach((x,i)=>{cw.tw[x]=Math.max(0,num(cw.tw[x])+B[i]-A[i]);});}cw.volk=b.dataset.cwvolk;if(cwAPleft()<0)cw.rows.forEach(r=>r.n=0);cwRender(true);return;}
   if(b.dataset.cwberuf){const nb=b.dataset.cwberuf;if(nb!==cw.beruf)cw.rows.forEach(r=>r.n=0);cw.beruf=nb;cwRender(true);return;}
   if(b.dataset.cwattr){const a=b.dataset.cwattr,v=cw.buy[a]+(+b.dataset.d);if(v<1||v>10)return;const ep=cwEP()-(ATTR_PRICE[v]-ATTR_PRICE[cw.buy[a]]);if(ep<0)return;cw.buy[a]=v;cwRender(true);return;}
@@ -4795,13 +4823,17 @@ document.addEventListener("click",e=>{
   if(b.dataset.cwgo){const d2=+b.dataset.cwgo;
     if(d2>0&&cw.step===2){const miss=cw.rows.find(r=>cwX(r)&&(r.type==="own"||r.type==="spell"||r.type==="weapon")&&!r.spec.trim());
       if(miss){cwToast(miss.type==="spell"?"Bitte wähle aus, welche Spruchliste du lernst.":miss.type==="own"?"Bitte gib deiner eigenen Fertigkeit einen Namen.":"Bitte trag ein, welche Waffengruppe du lernst.");return;}}
-    if(d2>0&&cw.step===3){cwFinish();return;}
+    if(d2>0&&cw.step===3){const bad=[...document.querySelectorAll("#cw [data-chk]")].filter(x=>!chkField(x));if(bad.length){cwToast("Das kann die App nicht verarbeiten. Bitte die rot markierten Felder prüfen.");bad[0].focus();return;}cwFinish();return;}
+    if(d2>0&&cw.step===0&&cwT()){const g=document.getElementById("cw-gs");if(g&&!chkField(g)){cwToast("GS: bitte nur eine Zahl eintragen.");return;}}
     cw.step=Math.max(0,Math.min(3,cw.step+d2));cwRender();return;}
 });
 document.addEventListener("input",e=>{
   if(!cw)return;const t=e.target;
   if(t.id==="cw-name"){cw.name=t.value;return;}
   if(t.id==="cw-det"){cw.details=t.value;return;}if(t.id==="cw-left"){cw.left=num(t.value);return;}
+  if(t.id==="cw-gs"){cw.gs=t.value;return;}
+  if(t.id==="cw-volkown"||t.id==="cw-berufown"){const k=t.id==="cw-volkown"?"volk":"beruf",v=t.value.trim();if(v){cw[k]=v;document.querySelectorAll(`#cw [data-cw${k}]`).forEach(x=>x.classList.remove("on"));}else if(!VOLK[cw.volk]&&k==="volk")cw.volk="";else if(!BERUF[cw.beruf]&&k==="beruf")cw.beruf="";const w=document.querySelector("#cw .cwwho");if(w)w.textContent=[cw.name,cw.volk,cw.beruf].filter(Boolean).join(" · ");return;}
+  if(t.dataset&&t.dataset.cwv){cw.vals[t.dataset.cwv]=t.value;return;}
   if(t.dataset&&t.dataset.cwspec!=null){cw.rows[+t.dataset.cwspec].spec=t.value;}if(t.dataset&&t.dataset.cwcost!=null){cw.rows[+t.dataset.cwcost].cost=t.value;}
 });
 document.addEventListener("change",e=>{if(!cw)return;const t=e.target;if(t.dataset&&t.dataset.cwspec!=null&&t.tagName==="SELECT"){cw.rows[+t.dataset.cwspec].spec=t.value;}if(t.dataset&&t.dataset.cwcost!=null){cw.rows[+t.dataset.cwcost].cost=t.value;cwRender(true);}});
@@ -4998,6 +5030,7 @@ async function pbOpen(){let el=$("#pbview");if(!el){el=document.createElement("d
 function pbClose(){const el=$("#pbview");if(!el||el.hidden)return;histClose();el.hidden=true;document.documentElement.style.overflow="";pbPages=null;}
 document.addEventListener("click",async e=>{const b=e.target.closest&&e.target.closest("button");if(!b)return;
   if(b.id==="openprint"){pbOpen();return;}
+  if(b.id==="aptsdrop"){if(!aptsSure){aptsSure=true;renderAll();return;}aptsSure=false;snap("Ausbildungspunkte gelöscht");cur.ausbildung=0;queueSave(cur);renderAll();showMsg("Übrige Ausbildungspunkte gelöscht.");return;}
   if(b.id==="pbclose"){pbClose();return;}
   if(b.dataset.pbstyle!=null){PB.parch=b.dataset.pbstyle==="1";try{localStorage.setItem("aborea-pbparch",PB.parch?"1":"0");}catch(x){}pbOpen();return;}
   if(b.id==="pbsave"&&pbPages){b.disabled=true;b.textContent="Wird gespeichert …";const m=$("#pbview .pbmsg");
