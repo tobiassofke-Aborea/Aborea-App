@@ -107,7 +107,7 @@ body.hasbg :is(#learn,#cw,#spells) .tbar h1{text-shadow:0 0 2px var(--g-halo),0 
 .bgctl{flex:1;min-width:0;display:grid;gap:12px}
 .bgprev{display:block;width:72px;height:128px;flex:none;border-radius:10px;border:1px solid var(--line);background:var(--bg) center/cover no-repeat;cursor:pointer}
 .bgpcol{display:grid;gap:8px;justify-items:center;flex:none}
-.bgnew{min-height:32px;padding:0 10px;font-size:.82rem;display:inline-grid;place-items:center;cursor:pointer;white-space:nowrap}
+.bgpcol{display:grid;gap:6px;justify-items:stretch}.bgnew{min-height:32px;padding:0 10px;font-size:.82rem;display:inline-grid;place-items:center;cursor:pointer;white-space:nowrap}
 #bgop{width:100%;accent-color:var(--accent)}
 .hbar{max-width:560px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
 .charbtn{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:0;text-align:left;cursor:pointer}
@@ -2075,13 +2075,17 @@ const sOpen=new Set();
 /* ---------- Darstellung: eigenes Hintergrundbild mit Material-Stufen (nur auf diesem Gerät) ----------
    Angelehnt an Apples „Materials“: durchscheinende Flächen mit Weichzeichner und Sättigung, feine helle Kante,
    kräftigere Nebenschrift auf Glas. „Original“ setzt alles zurück auf das ursprüngliche Design. */
-const BG_KEY="aborea-bg",BG_OP="aborea-bgop",BG_MAT="aborea-mat";
+const BG_KEY="aborea-bg",BG_OP="aborea-bgop",BG_MAT="aborea-mat",BG_ON="aborea-bgon";
 const BG_MATS=[["klar","Klar"],["milch","Milchglas"],["glas","Glas"]];
 function bgGet(){try{return localStorage.getItem(BG_KEY)||"";}catch(e){return "";}}
+/* Das Bild bleibt gespeichert, auch wenn „Original“ gewählt ist; BG_ON="0" heißt nur: gerade nicht anzeigen */
+function bgOn(){try{return localStorage.getItem(BG_ON)!=="0";}catch(e){return true;}}
+function bgShow(){return bgOn()?bgGet():"";}
+function bgSwitch(on){try{localStorage.setItem(BG_ON,on?"1":"0");}catch(e){}bgApply();renderAll();}
 function bgOp(){try{const v=parseFloat(localStorage.getItem(BG_OP));return isNaN(v)?.75:Math.max(.15,Math.min(1,v));}catch(e){return .75;}}
 function bgMat(){try{const v=localStorage.getItem(BG_MAT);return BG_MATS.some(m=>m[0]===v)?v:"milch";}catch(e){return "milch";}}
 let bgSure=false;
-function bgApply(){const src=bgGet();let el=document.getElementById("bgimg");
+function bgApply(){const src=bgShow();let el=document.getElementById("bgimg");
   if(!src){if(el)el.remove();document.body.classList.remove("hasbg");document.body.removeAttribute("data-mat");document.body.style.removeProperty("--bgurl");sbStyleSync();return;}
   if(!el){el=document.createElement("div");el.id="bgimg";el.setAttribute("aria-hidden","true");document.body.prepend(el);}
   el.style.backgroundImage=`url(${src})`;el.style.opacity=bgOp();document.body.classList.add("hasbg");document.body.setAttribute("data-mat",bgMat());
@@ -2126,17 +2130,20 @@ html[data-mat]:is([data-mat="milch"],[data-mat="glas"]) footer.status{background
 html[data-mat="glas"] :is(.sticky-toolbar,footer.status){text-shadow:0 0 1px var(--g-halo),0 0 8px var(--g-halo)}`;
 function sbStyleSync(){const f=document.getElementById("sbframe"),d=f&&f.contentDocument;if(!d||!d.head)return;
   let st=d.getElementById("matcss");if(!st){st=d.createElement("style");st.id="matcss";d.head.appendChild(st);}st.textContent=SB_MAT_CSS;
-  if(bgGet())d.documentElement.setAttribute("data-mat",bgMat());else d.documentElement.removeAttribute("data-mat");}
-function bgSet(data){try{data?localStorage.setItem(BG_KEY,data):localStorage.removeItem(BG_KEY);}catch(e){showMsg("Das Bild ist zu groß zum Speichern. Bitte ein kleineres Bild nehmen.");return false;}
+  if(bgShow())d.documentElement.setAttribute("data-mat",bgMat());else d.documentElement.removeAttribute("data-mat");}
+function bgSet(data){try{data?localStorage.setItem(BG_KEY,data):localStorage.removeItem(BG_KEY);if(data)localStorage.setItem(BG_ON,"1");}catch(e){showMsg("Das Bild ist zu groß zum Speichern. Bitte ein kleineres Bild nehmen.");return false;}
   bgApply();renderAll();return true;}
-function bgReset(){try{[BG_KEY,BG_OP,BG_MAT,"aborea-cardop"].forEach(k=>localStorage.removeItem(k));}catch(e){}bgSure=false;bgApply();renderAll();showMsg("Ursprüngliches Design wiederhergestellt.");}
-function bgCard(){const src=bgGet(),op=Math.round(bgOp()*100),mat=bgMat();
-  const seg=`<div class="seg" role="group" aria-label="Darstellung"><button class="${src?"":"on"}" id="bgorig" aria-pressed="${!src}">${src&&bgSure?"Wirklich zurücksetzen?":"Original"}</button><label class="${src?"on":""}" aria-pressed="${!!src}">Eigenes Bild<input type="file" id="bgfile" accept="image/*" hidden></label></div>`;
-  if(!src)return seg+`<p class="hint" style="margin:10px 0 0">Original ist das Design der App ohne Bild. Mit „Eigenes Bild“ wählst du ein Foto als Hintergrund, am besten im Hochformat 9:16, z. B. 1080 × 1920 Pixel. Das Bild bleibt nur auf diesem Gerät.</p>`;
-  return seg+`<div class="bgrow" style="margin-top:12px"><div class="bgpcol"><label class="bgprev" style="background-image:url(${src})" aria-label="Anderes Bild wählen"><input type="file" id="bgfile2" accept="image/*" hidden></label><label class="btn small bgnew">Anderes Bild<input type="file" id="bgfile3" accept="image/*" hidden></label></div>
+function bgReset(){try{[BG_KEY,BG_OP,BG_MAT,BG_ON,"aborea-cardop"].forEach(k=>localStorage.removeItem(k));}catch(e){}bgSure=false;bgApply();renderAll();showMsg("Bild gelöscht.");}
+function bgCard(){const img=bgGet(),src=bgShow(),op=Math.round(bgOp()*100),mat=bgMat();
+  const own=img?`<button class="${src?"on":""}" id="bgon" aria-pressed="${!!src}">Eigenes Bild</button>`:`<label aria-pressed="false">Eigenes Bild<input type="file" id="bgfile" accept="image/*" hidden></label>`;
+  const seg=`<div class="seg" role="group" aria-label="Darstellung"><button class="${src?"":"on"}" id="bgorig" aria-pressed="${!src}">Original</button>${own}</div>`;
+  if(!img)return seg+`<p class="hint" style="margin:10px 0 0">Original ist das Design der App ohne Bild. Mit „Eigenes Bild“ wählst du ein Foto als Hintergrund, am besten im Hochformat 9:16, z. B. 1080 × 1920 Pixel. Das Bild bleibt nur auf diesem Gerät.</p>`;
+  const prev=`<div class="bgpcol"><label class="bgprev" style="background-image:url(${img})" aria-label="Anderes Bild wählen"><input type="file" id="bgfile2" accept="image/*" hidden></label><label class="btn small bgnew">Anderes Bild<input type="file" id="bgfile3" accept="image/*" hidden></label><button class="btn small bgnew danger" id="bgdel">${bgSure?"Wirklich löschen?":"Bild löschen"}</button></div>`;
+  if(!src)return seg+`<div class="bgrow" style="margin-top:12px">${prev}<p class="hint" style="margin:0">Gerade siehst du das Original. Dein Bild bleibt gespeichert, mit „Eigenes Bild“ ist es sofort wieder da, samt deinen Einstellungen.</p></div>`;
+  return seg+`<div class="bgrow" style="margin-top:12px">${prev}
     <div class="bgctl"><label class="fld"><span class="lab">Bild <b id="bgopv">${op} %</b></span><input type="range" id="bgop" min="15" max="100" step="5" value="${op}" aria-label="Wie kräftig das Bild zu sehen ist"></label>
     <div class="fld"><span class="lab">Karten</span><div class="seg sm" role="group" aria-label="Karten">${BG_MATS.map(([k,t])=>`<button data-bgmat="${k}" class="${k===mat?"on":""}" aria-pressed="${k===mat}">${t}</button>`).join("")}</div></div></div></div>
-    <p class="hint" style="margin:10px 0 0">Klar: Karten wie im Original. Milchglas: Das Bild schimmert durch. Glas: Das Bild ist deutlich zu sehen. „Original“ setzt alles zurück. Das Bild bleibt nur auf diesem Gerät.</p>`;}
+    <p class="hint" style="margin:10px 0 0">Klar: Karten wie im Original. Milchglas: Das Bild schimmert durch. Glas: Das Bild ist deutlich zu sehen. „Original“ blendet das Bild nur aus, es bleibt gespeichert. Das Bild bleibt nur auf diesem Gerät.</p>`;}
 function bgLoad(f){
   if(!f)return;
   if(f.type&&!/^image\//.test(f.type)){showMsg("Das ist kein Bild. Bitte ein Foto oder Bild wählen, z. B. JPG oder PNG.");return;}
@@ -2152,8 +2159,10 @@ function bgLoad(f){
   img.src=url;}
 document.addEventListener("change",e=>{const t=e.target;if(t&&/^bgfile\d?$/.test(t.id)){bgSure=false;bgLoad(t.files&&t.files[0]);t.value="";}});
 document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bgop"){const v=num(t.value)/100;try{localStorage.setItem(BG_OP,String(v));}catch(x){}const el=document.getElementById("bgimg");if(el)el.style.opacity=v;document.body.style.setProperty("--bgop",v);const o=document.getElementById("bgopv");if(o)o.textContent=Math.round(v*100)+" %";}});
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#bgorig,[data-bgmat]");if(!b)return;
-  if(b.id==="bgorig"){if(!bgGet())return;if(!bgSure){bgSure=true;renderAll();return;}bgReset();return;}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#bgorig,#bgon,#bgdel,[data-bgmat]");if(!b)return;
+  if(b.id==="bgorig"){bgSure=false;if(bgShow())bgSwitch(false);return;}
+  if(b.id==="bgon"){bgSure=false;if(!bgShow())bgSwitch(true);return;}
+  if(b.id==="bgdel"){if(!bgSure){bgSure=true;renderAll();return;}bgReset();return;}
   try{localStorage.setItem(BG_MAT,b.dataset.bgmat);}catch(x){}bgApply();renderAll();});
 if(document.body)bgApply();else document.addEventListener("DOMContentLoaded",bgApply);
 
