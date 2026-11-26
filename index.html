@@ -564,6 +564,10 @@ body.kampf .wrap{padding-bottom:250px}
 .cup b{color:#f3e6cf;font-size:1.25rem;font-variant-numeric:tabular-nums;position:relative}
 .field .cup .cupcv{position:absolute;inset:auto;left:12px;top:12px;width:64px;height:64px;border-radius:50%;pointer-events:none}
 .cup.shake.dev{animation:none;scale:1.06}
+/* Würfeltisch für einen Wurf aus dem Spiel: liegt auch über Zauber-Fenstern */
+#table.req{z-index:34}
+#table.req .tbar h1{font-size:1.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.cchip.fix{cursor:default}.cchip.neg{color:var(--danger,#a3322a)}
 .cup.empty{opacity:.55}
 .cup.shake{cursor:grabbing;animation:cupshake .11s linear infinite;scale:1.08}
 .cup.home{transition:transform .3s cubic-bezier(.2,.8,.3,1)}
@@ -1025,6 +1029,9 @@ const LS="aborea-chars-v1",LSS="aborea-settings-v1";
 let settings={explode:true,patzer:true};
 try{const s=JSON.parse(localStorage.getItem(LSS)||"null");if(s)settings=Object.assign(settings,s)}catch(e){}
 settings.explode=true;settings.patzer=true;
+if(settings.rollMode!=="tisch")settings.rollMode="schnell";
+/* Würfeln im Spiel: „schnell“ = Würfel rollen im Ergebnisfeld; „tisch“ = jeder Wurf öffnet den Würfeltisch mit den passenden Würfeln */
+const useTable=()=>settings.rollMode==="tisch";
 function saveSettings(){try{localStorage.setItem(LSS,JSON.stringify(settings))}catch(e){}}
 function lsLoad(){try{return JSON.parse(localStorage.getItem(LS)||"[]")}catch(e){return []}}
 function lsSave(){try{localStorage.setItem(LS,JSON.stringify(chars))}catch(e){}}
@@ -1293,6 +1300,7 @@ function renderBogen(){
       <button class="btn small" id="newc">Neuer Charakter</button></div>
   </div>
   <h2>Darstellung</h2><div class="card">${bgCard()}</div>
+  <h2>Würfeln</h2><div class="card">${rollModeCard()}</div>
   <h2>Sichern</h2><div class="card">
     <div class="row-actions"><button class="btn small" id="expfile">Als Datei senden, z. B. per E-Mail</button><button class="btn small" id="exp">Charakter als Text kopieren</button><button class="btn small" id="imp">Charakter einfügen</button></div>
     <div id="impbox" hidden style="margin-top:10px"><label class="btn small" style="display:inline-flex;align-items:center;margin-bottom:8px;cursor:pointer">Sicherungsdatei öffnen<input type="file" id="impfile" accept=".txt,.json,text/plain,application/json" hidden></label><textarea id="imptext" placeholder="… oder kopierten Charakter hier einfügen"></textarea><div class="row-actions" style="margin-top:8px"><button class="btn small pri" id="impgo">Als neuen Charakter anlegen</button></div></div>
@@ -1505,7 +1513,7 @@ function refreshComputed(){
 /* ---------- dice ---------- */
 let rollTimer;
 function d(n){return 1+Math.floor(Math.random()*n)}
-function doRoll(what,base,key){animateRoll(what,[d(10)],10,base,0,"",key);}
+function doRoll(what,base,key){if(useTable()){tRequest(what,[{s:10}],v=>animateRoll(what,[v?v[0]:d(10)],10,base,0,"",key,!!v));return;}animateRoll(what,[d(10)],10,base,0,"",key);}
 function markAgain(){
   document.querySelectorAll(".again").forEach(e=>e.classList.remove("again"));
   const R=curRoll;if(!R||!R.waiting)return;
@@ -1523,7 +1531,7 @@ function shape(sides){
 }
 let anim=[],runId=0,curRoll=null;
 const calmMotion=()=>window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-function animateRoll(what,dice,sides,base,mod,tag,key){
+function animateRoll(what,dice,sides,base,mod,tag,key,instant){
   anim.forEach(clearInterval);anim=[];clearTimeout(rollTimer);
   const R={what,dice:[],sides,base,mod,tag,key,run:++runId,targets:[],done:false,waiting:false};
   curRoll=R;markAgain();
@@ -1533,9 +1541,9 @@ function animateRoll(what,dice,sides,base,mod,tag,key){
     <div class="calc" id="rcalc" hidden></div><span class="tag" id="rtag" hidden></span>
 </div>
     <div class="res wait" id="rres">…</div><button class="x rhbtn" data-rhopen aria-label="Würfel-Verlauf">${ICON_HIST}</button><button class="x" id="rollx" aria-label="Schließen">×</button></div></div>`;
-  rollIn(R,dice[0]);
+  rollIn(R,dice[0],instant);
 }
-function rollIn(R,v){
+function rollIn(R,v,instant){
   const track=$("#track");if(!track||R.run!==runId)return;
   const W=track.clientWidth,S=50,maxX=W-S-3;
   let tx,tries=0;
@@ -1550,7 +1558,7 @@ function rollIn(R,v){
     if(v===R.sides)el.classList.add("max");
     if(v===1&&R.sides===10&&settings.patzer&&R.dice.length===1)el.classList.add("min");
     afterLand(R);};
-  if(calmMotion()){el.style.transform=`translateX(${tx}px)`;land();return;}
+  if(calmMotion()||instant){el.style.transform=`translateX(${tx}px)`;land();return;}
   const t=setInterval(()=>{sp.textContent=d(R.sides)},60);anim.push(t);
   const start=performance.now(),T=1250,split=0.42,k=360/(Math.PI*S),x0=-S;
   function frame(now){
@@ -1594,6 +1602,7 @@ function rollAgain(){
   const tr=$("#track");if(tr)tr.classList.remove("waiting");
   const tg=$("#rtag");if(tg)tg.hidden=true;
   $("#rres").classList.add("wait");
+  if(useTable()){tRequest(R.what+": nochmal",[{s:10}],v=>rollIn(R,v?v[0]:d(10),!!v));return;}
   rollIn(R,d(10));
 }
 
@@ -1763,14 +1772,17 @@ function poolChips(g){
 function unequip(i){if(cur.kampf.main===i)cur.kampf.main=null;if(cur.kampf.off===i)cur.kampf.off=null;}
 
 /* pool roll: all dice roll in together, bounce off the right edge and settle */
-function rollPool(title,spec,onDone){
+function rollPool(title,spec,onDone,pre){
+  if(!pre&&useTable()){const its=[];spec.groups.filter(g=>g.n>0).forEach(g=>{for(let i=0;i<g.n;i++)its.push({s:g.s,neg:!!g.neg});});
+    if(its.length){tRequest(title,its,v=>rollPool(title,spec,onDone,v||"quick"));return;}}
+  const pv=Array.isArray(pre)?pre:null;let pi=0;
   anim.forEach(clearInterval);anim=[];clearTimeout(rollTimer);
   curRoll=null;markAgain();
   const run=++runId;
   const groups=spec.groups.filter(g=>g.n>0).map(g=>Object.assign({},g,{vals:[]}));
   const items=[];
   const lab=(it,v)=>it.tens&&spec.wx?String(v):it.ones&&spec.wx?String(v%10):it.tens?String((v%10)*10).padStart(2,"0"):it.ones?String(v%10):String(v);
-  groups.forEach(g=>{for(let i=0;i<g.n;i++){const v=d(g.s);g.vals.push(v);items.push({s:g.s,v,neg:!!g.neg,tens:!!g.tens,ones:!!g.ones});}});
+  groups.forEach(g=>{for(let i=0;i<g.n;i++){const v=pv?pv[pi++]:d(g.s);g.vals.push(v);items.push({s:g.s,v,neg:!!g.neg,tens:!!g.tens,ones:!!g.ones});}});
   let total=items.reduce((a,x)=>a+(x.neg?-x.v:x.v),0)+num(spec.flat);
   if(spec.wx){const tn=items.find(x=>x.tens).v,on=items.find(x=>x.ones).v%10;total=tn*10+on;}
   if(spec.d100){const tn=items.find(x=>x.tens).v%10,on=items.find(x=>x.ones).v%10;total=(tn*10+on||100)+items.filter(x=>!x.tens&&!x.ones).reduce((a,x)=>a+(x.neg?-x.v:x.v),0)+num(spec.flat);}
@@ -1787,7 +1799,7 @@ function rollPool(title,spec,onDone){
     inRow.sort(()=>Math.random()-.5).forEach((x,j)=>{x.tx=5+slots[j]*(S+G)+Math.random()*3;x.ty=3+r*(S+G);});
   }
   let landed=0;
-  const calm=calmMotion(),maxX=W-S-3,kRot=360/(Math.PI*S);
+  const calm=calmMotion()||!!pv,maxX=W-S-3,kRot=360/(Math.PI*S);
   if(!items.length){finish();return;}
   items.forEach((it,i)=>{
     const el=document.createElement("div");el.className="dz sm"+(it.neg?" neg":"");
@@ -2158,6 +2170,9 @@ function sbStyleSync(){const f=document.getElementById("sbframe"),d=f&&f.content
 function bgSet(data){try{data?localStorage.setItem(BG_KEY,data):localStorage.removeItem(BG_KEY);if(data)localStorage.setItem(BG_ON,"1");}catch(e){showMsg("Das Bild ist zu groß zum Speichern. Bitte ein kleineres Bild nehmen.");return false;}
   bgApply();renderAll();return true;}
 function bgReset(){try{[BG_KEY,BG_OP,BG_MAT,BG_ON,"aborea-cardop"].forEach(k=>localStorage.removeItem(k));}catch(e){}bgSure=false;bgApply();renderAll();showMsg("Bild gelöscht.");}
+function rollModeCard(){const m=useTable();
+  return `<div class="seg" role="group" aria-label="Würfeln"><button class="${m?"":"on"}" data-rollmode="schnell" aria-pressed="${!m}">Schnell</button><button class="${m?"on":""}" data-rollmode="tisch" aria-pressed="${m}">Am Würfeltisch</button></div>
+  <p class="hint" style="margin:10px 0 0">${m?"Jeder Wurf im Spiel, also Fertigkeiten, Attribute, Initiative, Kampf und Zauber, öffnet den Würfeltisch mit genau den passenden Würfeln im Becher. Handy schütteln oder Becher ziehen und loslassen. Es zählt, was oben liegt, die App rechnet danach wie gewohnt weiter. Mit „Ohne Tisch“ geht ein Wurf auch mal schnell.":"Ein Tipp aufs Würfel-Symbol würfelt sofort, die Würfel rollen unten im Ergebnisfeld. Mit „Am Würfeltisch“ würfelst du jeden Wurf selbst mit Becher und Schütteln."}</p>`;}
 function bgCard(){const img=bgGet(),src=bgShow(),op=Math.round(bgOp()*100),mat=bgMat();
   const own=img?`<button class="${src?"on":""}" id="bgon" aria-pressed="${!!src}">Eigenes Bild</button>`:`<label aria-pressed="false">Eigenes Bild<input type="file" id="bgfile" accept="image/*" hidden></label>`;
   const seg=`<div class="seg" role="group" aria-label="Darstellung"><button class="${src?"":"on"}" id="bgorig" aria-pressed="${!src}">Original</button>${own}</div>`;
@@ -2183,6 +2198,8 @@ function bgLoad(f){
   img.src=url;}
 document.addEventListener("change",e=>{const t=e.target;if(t&&/^bgfile\d?$/.test(t.id)){bgSure=false;bgLoad(t.files&&t.files[0]);t.value="";}});
 document.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="bgop"){const v=num(t.value)/100;try{localStorage.setItem(BG_OP,String(v));}catch(x){}const el=document.getElementById("bgimg");if(el)el.style.opacity=v;document.body.style.setProperty("--bgop",v);const o=document.getElementById("bgopv");if(o)o.textContent=Math.round(v*100)+" %";}});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-rollmode]");if(!b)return;
+  settings.rollMode=b.dataset.rollmode==="tisch"?"tisch":"schnell";saveSettings();renderAll();});
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#bgorig,#bgon,#bgdel,[data-bgmat]");if(!b)return;
   if(b.id==="bgorig"){bgSure=false;if(bgShow())bgSwitch(false);return;}
   if(b.id==="bgon"){bgSure=false;if(!bgShow())bgSwitch(true);return;}
@@ -4316,7 +4333,7 @@ function saveCup(){try{localStorage.setItem("aborea-cup",JSON.stringify(cup))}ca
 let tb=null,tmod=0;
 let tmode="free";try{if(localStorage.getItem("aborea-tmode")==="4218")tmode="4218";}catch(e){}
 let g42={kept:[],sel:new Set(),phase:"throw",turns:[]};
-const throwSet=()=>tmode==="4218"?Array(Math.max(0,5-g42.kept.length)).fill(6):cup;
+const throwSet=()=>tb&&tb.req?tb.req.items.map(x=>x.s):tmode==="4218"?Array(Math.max(0,5-g42.kept.length)).fill(6):cup;
 
 function tBuild(){
   const el=document.createElement("div");el.id="table";el.hidden=true;
@@ -4343,6 +4360,7 @@ function tBuild(){
   tb.cupEl.addEventListener("pointerdown",tGrab);
   tb.field.addEventListener("pointerdown",e=>{
     if(e.target!==tb.cv||tb.grab)return;
+    if(tb.req){if(tb.reqWait){tReqAccept();return;}tGrab(e);return;}
     if(tmode==="4218"&&g42.phase==="choose"){
       const r=tb.field.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
       const i=tb.dice.findIndex(d=>Math.hypot(d.x-x,d.y-y)<tb.R*1.3);
@@ -4416,7 +4434,9 @@ window.addEventListener("devicemotion",e=>{
   if(!SHK.on){if(now>SHK.cool&&SHK.hits.length>=3&&tCanThrow()&&throwSet().length)shkStart();return;}
   if(now-SHK.quiet>420)shkThrow();
 });
-function tClose(){if(!tb)return;if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}if(CIN.dice.length&&!tb.grab)cinEnd();histClose();tb.el.hidden=true;document.documentElement.style.overflow="";cancelAnimationFrame(tb.raf);tb.raf=0;}
+function tClose(keepHist){if(!tb)return;
+  if(tb.req){const R=tb.req;tReqEnd();if(!R.ownHist)keepHist=true;tb.el.hidden=true;document.documentElement.style.overflow="";if(!keepHist)histClose();cancelAnimationFrame(tb.raf);tb.raf=0;setTimeout(()=>R.cb(null),0);return;}
+if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}if(CIN.dice.length&&!tb.grab)cinEnd();histClose();tb.el.hidden=true;document.documentElement.style.overflow="";cancelAnimationFrame(tb.raf);tb.raf=0;}
 function tResize(){
   const r=tb.field.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
   tb.W=Math.max(200,r.width||320);tb.H=Math.max(200,r.height||360);
@@ -4431,6 +4451,7 @@ function tResize(){
 function tCupHome(){tb.cx=tb.W/2;tb.cy=tb.H-58;tCupPos();}
 function tCupPos(){tb.cupEl.style.transform=`translate(${tb.cx}px,${tb.cy}px)`;}
 function tCupUI(){
+  if(tb.req){tReqUI();return;}
   const counts={};cup.forEach(s=>counts[s]=(counts[s]||0)+1);
   tb.el.querySelectorAll(".tdie").forEach(b=>{const n=counts[b.dataset.add]||0,em=b.querySelector("em");em.hidden=!n;em.textContent=n;b.classList.toggle("on",!!n);});
   $("#cchips").innerHTML=T_TYPES.filter(s=>counts[s]).map(s=>`<button class="cchip" data-rem="${s}" aria-label="Einen W${s} herausnehmen">${counts[s]}× W${s} <span aria-hidden="true">−</span></button>`).join("")||'<span class="hint">leer</span>';
@@ -4441,6 +4462,8 @@ function tCupUI(){
   tModeUI();
 }
 function tModeUI(){
+  if(tb.req){tReqUI();return;}
+  tb.el.classList.remove("req");tb.el.querySelector(".tbar h1").textContent="Würfeltisch";$("#tclose").textContent="Schließen";tb.el.querySelector(".tmoderow .chips").hidden=false;$("#tclear").hidden=false;
   const m4=tmode==="4218";
   tb.el.querySelectorAll("[data-tmode]").forEach(b=>b.classList.toggle("on",b.dataset.tmode===tmode));
   $("#tray").hidden=m4;tb.el.querySelector(".cuprow").hidden=m4;$("#g42row").hidden=!m4;tb.el.querySelector(".tmod").hidden=m4;
@@ -4463,6 +4486,7 @@ function tModeUI(){
   else{sum.textContent=pts==null?"–":pts;det.textContent=k.length?`Noch ${left} Würfel im Becher. Schütteln und werfen.`:"Alle 5 Würfel im Becher. Schütteln und werfen.";}
 }
 function tCanThrow(){
+  if(tb&&tb.req)return !tb.reqWait;
   if(tmode==="4218"){
     if(g42.phase==="choose"){tFlash("Erst mindestens einen Würfel rauslegen: antippen, dann „Rauslegen“.");return false;}
     if(g42.phase==="done")g42New();
@@ -4691,6 +4715,7 @@ function tThrow(x,y,vx,vy){
     const px=m?x+m.x*1.3:x+(Math.random()-.5)*R*1.6,py=m?y+m.y*1.3:y+(Math.random()-.5)*R*1.6;
     const d=dieNew(s,Math.min(tb.W-R,Math.max(R,px)),Math.min(tb.H-R,Math.max(R,py)),Math.cos(a)*v+(m?m.vx*.6:0),Math.sin(a)*v+(m?m.vy*.6:0));
     if(m){const ms=Math.hypot(m.vx,m.vy);d.w=V3.sc(d.w,1+Math.min(1.2,ms/600));}
+    if(tb.req&&tb.req.items[i]&&tb.req.items[i].neg)d.neg=true;
     return d;
   });
   cinEnd();
@@ -4723,7 +4748,7 @@ function tTick(now){
   tb.dice.forEach(d=>{if(d.pop>0)d.pop=Math.max(0,d.pop-dt*2.5);});
   tDraw();
   const all=tb.dice.length&&tb.dice.every(d=>d.done);
-  if(all&&!tb.shown){tb.shown=true;tmode==="4218"?g42Landed():tResult();}
+  if(all&&!tb.shown){tb.shown=true;tb.req?tReqLanded():tmode==="4218"?g42Landed():tResult();}
   if(tb.grab||SHK.on||!all||tb.dice.some(d=>d.pop>0))tb.raf=requestAnimationFrame(tTick);
 }
 function tStep(dt){
@@ -4823,8 +4848,9 @@ function tDrawDie(ctx,d){
     ctx.restore();
   });
   ring(1,`rgba(${cI[0]},${cI[1]},${cI[2]},.85)`,1.4);
-  if(tmode==="4218"&&g42.sel.has(tb.dice.indexOf(d)))ring(1.14,"#ffffff",4);
-  else if(d.done&&d.face===d.s&&tmode!=="4218")ring(1.1,"#e8b93c",3);
+  if(d.neg)ring(1.12,"#c23b2b",3);
+  else if(!tb.req&&tmode==="4218"&&g42.sel.has(tb.dice.indexOf(d)))ring(1.14,"#ffffff",4);
+  else if(d.done&&d.face===d.s&&(tb.req||tmode!=="4218"))ring(1.1,"#e8b93c",3);
 }
 function tDraw(){
   const {ctx,W,H}=tb;
@@ -4838,6 +4864,40 @@ function tDraw(){
     ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r*1.15,0,Math.PI*2);ctx.fill();}
   for(const d of ds)tDrawDie(ctx,d);
 }
+/* ---- Wurf aus dem Spiel am Würfeltisch: passende Würfel in den Becher, Ergebnis an die App zurück ---- */
+function tRequest(title,items,cb){
+  if(!tb)tBuild();
+  const had=ovHist,open=!tb.el.hidden;
+  if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}
+  tb.req={title,items,cb,ownHist:!had&&!open};tb.reqWait=false;tb.dice=[];tb.shown=false;
+  if(open){tCupUI();tDraw();}else tOpen();
+  $("#tsum").textContent="–";$("#tsum").classList.remove("pop");$("#fhint").hidden=false;
+}
+function tReqUI(){const R=tb.req;if(!R)return;
+  tb.el.classList.add("req");
+  tb.el.querySelector(".tbar h1").textContent=R.title;$("#tclose").textContent="Ohne Tisch";
+  tb.el.querySelector(".tmoderow .chips").hidden=true;$("#tray").hidden=true;$("#g42row").hidden=true;tb.el.querySelector(".tmod").hidden=true;
+  tb.el.querySelector(".cuprow").hidden=false;$("#tclear").hidden=true;
+  const key=it=>it.s+(it.neg?"n":""),counts={},order=[];R.items.forEach(it=>{const k=key(it);if(!counts[k]){counts[k]=0;order.push(it);}counts[k]++;});
+  $("#cchips").innerHTML=order.map(it=>`<span class="cchip fix${it.neg?" neg":""}">${counts[key(it)]}× ${it.neg?"Minus-":""}W${it.s}</span>`).join("");
+  $("#cupn").textContent=R.items.length;tb.cupEl.classList.remove("empty");
+  $("#t42keep").hidden=true;$("#t42new").hidden=true;$("#tthrow").hidden=!!tb.reqWait;
+  if(!tb.reqWait&&!tb.dice.length)$("#tdet").textContent="Handy schütteln oder Becher ziehen und loslassen.";}
+function tReqLanded(){const R=tb.req;if(!R)return;
+  tb.reqWait=true;
+  const vals=tb.dice.map(d=>d.face),tot=tb.dice.reduce((a,d)=>a+(d.neg?-d.face:d.face),0);
+  const sum=$("#tsum");sum.textContent=tot;sum.classList.remove("pop");void sum.offsetWidth;sum.classList.add("pop");
+  $("#tdet").textContent=R.items.map((it,i)=>`${it.neg?"−":""}W${it.s}: ${vals[i]}`).join(" · ")+" · wird übernommen";
+  $("#tthrow").hidden=true;clack(.35,1.4);buzz(25);
+  clearTimeout(tb.reqT);tb.reqT=setTimeout(tReqAccept,1400);}
+function tReqAccept(){const R=tb.req;if(!R||!tb.reqWait)return;
+  clearTimeout(tb.reqT);const vals=tb.dice.map(d=>d.face);
+  tReqEnd();tb.el.hidden=true;document.documentElement.style.overflow="";if(R.ownHist)histClose();cancelAnimationFrame(tb.raf);tb.raf=0;
+  R.cb(vals);}
+function tReqEnd(){clearTimeout(tb.reqT);tb.req=null;tb.reqWait=false;tb.dice=[];tb.shown=false;if(CIN.dice.length)cinEnd();
+  tb.el.classList.remove("req");$("#tsum").textContent="–";$("#tdet").textContent="Tipp oben auf die Würfel, um sie in den Becher zu legen.";
+  if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}
+  tCupUI();}
 function tResult(noHist){
   const by={};tb.dice.forEach(d=>{(by[d.s]=by[d.s]||[]).push(d.face);});
   const total=tb.dice.reduce((a,d)=>a+d.face,0)+tmod;
