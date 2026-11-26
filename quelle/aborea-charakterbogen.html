@@ -548,6 +548,8 @@ body.kampf .wrap{padding-bottom:250px}
 .cup.shake.dev{animation:none;scale:1.06}
 /* Würfeltisch für einen Wurf aus dem Spiel: liegt auch über Zauber-Fenstern */
 #table.req{z-index:34}
+#table .cup{display:none}
+#table .fhint{top:auto;bottom:12px}
 #table.req .tbar h1{font-size:1.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
 .cchip.fix{cursor:default}.cchip.neg{color:var(--danger,#a3322a)}
 .cup.empty{opacity:.55}
@@ -2154,7 +2156,7 @@ function bgSet(data){try{data?localStorage.setItem(BG_KEY,data):localStorage.rem
 function bgReset(){try{[BG_KEY,BG_OP,BG_MAT,BG_ON,"aborea-cardop"].forEach(k=>localStorage.removeItem(k));}catch(e){}bgSure=false;bgApply();renderAll();showMsg("Bild gelöscht.");}
 function rollModeCard(){const m=useTable();
   return `<div class="seg" role="group" aria-label="Würfeln"><button class="${m?"":"on"}" data-rollmode="schnell" aria-pressed="${!m}">Schnell</button><button class="${m?"on":""}" data-rollmode="tisch" aria-pressed="${m}">Am Würfeltisch</button></div>
-  <p class="hint" style="margin:10px 0 0">${m?"Jeder Wurf im Spiel, also Fertigkeiten, Attribute, Initiative, Kampf und Zauber, öffnet den Würfeltisch mit genau den passenden Würfeln im Becher. Handy schütteln oder Becher ziehen und loslassen. Es zählt, was oben liegt, die App rechnet danach wie gewohnt weiter. Mit „Ohne Tisch“ geht ein Wurf auch mal schnell.":"Ein Tipp aufs Würfel-Symbol würfelt sofort, die Würfel rollen unten im Ergebnisfeld. Mit „Am Würfeltisch“ würfelst du jeden Wurf selbst mit Becher und Schütteln."}</p>`;}
+  <p class="hint" style="margin:10px 0 0">${m?"Jeder Wurf im Spiel, also Fertigkeiten, Attribute, Initiative, Kampf und Zauber, öffnet den Würfeltisch mit genau den passenden Würfeln. Handy schütteln oder aufs Feld drücken, schütteln und loslassen. Es zählt, was oben liegt, die App rechnet danach wie gewohnt weiter. Mit „Ohne Tisch“ geht ein Wurf auch mal schnell.":"Ein Tipp aufs Würfel-Symbol würfelt sofort, die Würfel rollen unten im Ergebnisfeld. Mit „Am Würfeltisch“ würfelst du jeden Wurf selbst durch Schütteln."}</p>`;}
 function bgCard(){const img=bgGet(),src=bgShow(),op=Math.round(bgOp()*100),mat=bgMat();
   const own=img?`<button class="${src?"on":""}" id="bgon" aria-pressed="${!!src}">Eigenes Bild</button>`:`<label aria-pressed="false">Eigenes Bild<input type="file" id="bgfile" accept="image/*" hidden></label>`;
   const seg=`<div class="seg" role="group" aria-label="Darstellung"><button class="${src?"":"on"}" id="bgorig" aria-pressed="${!src}">Original</button>${own}</div>`;
@@ -4324,13 +4326,13 @@ function tBuild(){
       <button class="btn small" id="tsound" aria-pressed="${settings.sound}">${settings.sound?"Ton an":"Ton aus"}</button>
       <button class="btn small" id="tclose">Schließen</button></div>
     <div class="tmoderow"><div class="chips"><button class="chip" data-tmode="free">Freier Wurf</button><button class="chip" data-tmode="4218">42/18</button></div><button class="btn small" id="tshake" hidden></button></div>
-    <div class="tray" id="tray">${T_TYPES.map(s=>`<button class="tdie" data-add="${s}" aria-label="W${s} in den Becher"><svg viewBox="0 0 50 50">${shape(s)}</svg><span>W${s}</span><em hidden></em></button>`).join("")}</div>
-    <div class="cuprow"><span class="lab">Im Becher</span><div class="cchips" id="cchips"></div><button class="btn small" id="tclear">Leeren</button></div>
+    <div class="tray" id="tray">${T_TYPES.map(s=>`<button class="tdie" data-add="${s}" aria-label="W${s} auf den Tisch legen"><svg viewBox="0 0 50 50">${shape(s)}</svg><span>W${s}</span><em hidden></em></button>`).join("")}</div>
+    <div class="cuprow"><span class="lab">Auf dem Tisch</span><div class="cchips" id="cchips"></div><button class="btn small" id="tclear">Leeren</button></div>
     <div class="g42row" id="g42row" hidden></div>
     <div class="field" id="field"><canvas id="tcv"></canvas>
-      <div class="fhint" id="fhint">Becher gedrückt halten zum Schütteln,<br>dann übers Feld schleudern und loslassen<span id="fhshake" hidden><br>oder das Handy schütteln und kurz stillhalten</span></div>
+      <div class="fhint" id="fhint">Aufs Feld drücken, schütteln und loslassen<span id="fhshake" hidden><br>oder das Handy schütteln und kurz stillhalten</span></div>
       <div class="cup" id="cup" aria-label="Würfelbecher"><canvas class="cupcv" id="cupcv" width="128" height="128"></canvas><b id="cupn"></b></div></div>
-    <div class="tres"><div class="tsum" id="tsum">–</div><div class="tdet" id="tdet">Tipp oben auf die Würfel, um sie in den Becher zu legen.</div>
+    <div class="tres"><div class="tsum" id="tsum">–</div><div class="tdet" id="tdet">Tipp oben auf die Würfel, um sie auf den Tisch zu legen.</div>
       <div class="tmod"><span class="lab">Mod</span><div class="step"><button id="tmodm" aria-label="Modifikator senken">−</button><output id="tmodv">0</output><button id="tmodp" aria-label="Modifikator erhöhen">+</button></div></div>
       <button class="btn pri" id="t42keep" hidden>Rauslegen</button><button class="btn" id="t42new" hidden>Neuer Zug</button>
       <button class="btn pri" id="tthrow">Werfen</button></div>`;
@@ -4362,7 +4364,7 @@ window.addEventListener("popstate",()=>{if(!ovHist)return;ovHist=false;
 function tOpen(){histOpen();
   if(!tb)tBuild();
   tb.el.hidden=false;document.documentElement.style.overflow="hidden";
-  tResize();tCupUI();tDraw();shkUI();
+  tResize();tCupUI();if(!tb.dice.length||tb.idle)tRowLay();tDraw();shkUI();
 }
 /* Schütteln zum Würfeln: Bewegungssensor des Handys. Android liefert die Daten direkt,
    iOS erst nach einer Erlaubnis, die nur auf einen Tipp hin abgefragt werden darf (Knopf „Schütteln aktivieren“). */
@@ -4386,19 +4388,19 @@ function shkAsk(){
     .catch(()=>{tFlash("Schütteln ließ sich nicht aktivieren. Tippen und Ziehen geht weiter.");shkUI();});
     return;}
   settings.shake=!settings.shake;saveSettings();shkUI();}
-/* Umrechnung Handy-Beschleunigung (m/s²) in Pixel im Becher; Neigung wirkt sanft mit */
+/* Umrechnung Handy-Beschleunigung (m/s²) in Pixel in der Blase; Neigung wirkt sanft mit */
 const SHK_PX=520,SHK_G=110;
 Object.assign(SHK,{ax:0,ay:0,az:0,gx:0,gy:0,glx:0,gly:0,glz:9.81,e:0,lat:0});
 function shkStart(){
-  SHK.on=true;tAudio();tb.dice=[];$("#fhint").hidden=true;$("#tsum").textContent="…";$("#tsum").classList.remove("pop");
-  $("#tdet").textContent="Schütteln … zum Werfen kurz stillhalten";
-  tCupHome();tb.cupEl.classList.add("shake","dev");SHK.e=0;SHK.lat=0;cinStart();tLoop();}
+  tAudio();SHK.e=0;SHK.lat=0;
+  if(calmMotion()){SHK.cool=performance.now()+900;tThrowNow();return;}
+  SHK.on=tBubStart(tb.W/2,tb.H/2,true);}
 function shkThrow(){
-  SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";
-  /* Wurf: Stärke aus dem Schütteln, Richtung nach oben ins Feld, seitlich wie zuletzt geschwenkt */
-  const k=Math.min(1,SHK.e/22),sp=850+k*1700,ang=-Math.PI/2+Math.max(-.9,Math.min(.9,SHK.lat*.05))+(Math.random()-.5)*.5;
+  SHK.on=false;
+  /* Wurf: Stärke aus dem Schütteln, Richtung wie zuletzt geschwenkt */
+  const k=Math.min(1,SHK.e/22),sp=850+k*1700,ang=(SHK.lat>=0?0:Math.PI)+(Math.random()-.5)*2.2;
   SHK.hits=[];SHK.cool=performance.now()+900;
-  tThrow(tb.cx,tb.cy,Math.cos(ang)*sp,Math.sin(ang)*sp);}
+  tBubRelease(Math.cos(ang)*sp,Math.sin(ang)*sp);}
 window.addEventListener("devicemotion",e=>{
   const a0=e.acceleration&&e.acceleration.x!=null?e.acceleration:null,g=e.accelerationIncludingGravity;
   if(!a0&&!(g&&g.x!=null))return;
@@ -4418,7 +4420,7 @@ window.addEventListener("devicemotion",e=>{
 });
 function tClose(keepHist){if(!tb)return;
   if(tb.req){const R=tb.req;tReqEnd();if(!R.ownHist)keepHist=true;tb.el.hidden=true;document.documentElement.style.overflow="";if(!keepHist)histClose();cancelAnimationFrame(tb.raf);tb.raf=0;setTimeout(()=>R.cb(null),0);return;}
-if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}if(CIN.dice.length&&!tb.grab)cinEnd();histClose();tb.el.hidden=true;document.documentElement.style.overflow="";cancelAnimationFrame(tb.raf);tb.raf=0;}
+if(SHK.on)SHK.on=false;if(tb.bub){tb.bub=null;tb.grab=null;tb.dice=[];}histClose();tb.el.hidden=true;document.documentElement.style.overflow="";cancelAnimationFrame(tb.raf);tb.raf=0;}
 function tResize(){
   const r=tb.field.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
   tb.W=Math.max(200,r.width||320);tb.H=Math.max(200,r.height||360);
@@ -4427,9 +4429,12 @@ function tResize(){
   tb.ctx.setTransform(dpr,0,0,dpr,0,0);
   tb.R=Math.max(19,Math.min(30,tb.W/13));
   if(!tb.grab)tCupHome();
-  tb.dice.forEach(d=>{d.x=Math.min(tb.W-tb.R,Math.max(tb.R,d.x));d.y=Math.min(tb.H-tb.R,Math.max(tb.R,d.y));tAvoidCup(d,false);});
+  if(tb.idle&&!tb.bub){tRowLay();return;}
+  tb.dice.forEach(d=>{d.x=Math.min(tb.W-tb.R,Math.max(tb.R,d.x));d.y=Math.min(tb.H-tb.R,Math.max(tb.R,d.y));});
   tDraw();
 }
+/* Würfelauswahl geändert: Ergebnis weg, neue Würfel aufreihen */
+function tRowReset(){if(tb.bub||tb.grab)return;$("#tsum").textContent="–";$("#tsum").classList.remove("pop");tRowLay();}
 function tCupHome(){tb.cx=tb.W/2;tb.cy=tb.H-58;tCupPos();}
 function tCupPos(){tb.cupEl.style.transform=`translate(${tb.cx}px,${tb.cy}px)`;}
 function tCupUI(){
@@ -4439,7 +4444,7 @@ function tCupUI(){
   $("#cchips").innerHTML=T_TYPES.filter(s=>counts[s]).map(s=>`<button class="cchip" data-rem="${s}" aria-label="Einen W${s} herausnehmen">${counts[s]}× W${s} <span aria-hidden="true">−</span></button>`).join("")||'<span class="hint">leer</span>';
   $("#cupn").textContent=cup.length||"";
   tb.cupEl.classList.toggle("empty",!cup.length);
-  $("#fhint").hidden=!!tb.dice.length;
+  $("#fhint").hidden=!tb.idle||!tb.dice.length;
   $("#tmodv").textContent=tmod>0?"+"+tmod:tmod;
   tModeUI();
 }
@@ -4463,9 +4468,9 @@ function tModeUI(){
   const sum=$("#tsum"),det=$("#tdet");
   if(g42.phase==="done"){
     sum.textContent=pts==null?"Bock":pts;sum.classList.remove("pop");void sum.offsetWidth;sum.classList.add("pop");
-    det.textContent=pts==null?"Keine 2 und 4 rausgelegt: 0 Punkte.":pts===18?"Drei Sechsen, das Maximum!":`${pts} Punkte. Becher nehmen für den nächsten Zug.`;}
+    det.textContent=pts==null?"Keine 2 und 4 rausgelegt: 0 Punkte.":pts===18?"Drei Sechsen, das Maximum!":`${pts} Punkte. Schütteln für den nächsten Zug.`;}
   else if(g42.phase==="choose"){sum.textContent=pts==null?"–":pts;det.textContent="Tipp die Würfel an, die du rauslegen willst (mindestens einen).";}
-  else{sum.textContent=pts==null?"–":pts;det.textContent=k.length?`Noch ${left} Würfel im Becher. Schütteln und werfen.`:"Alle 5 Würfel im Becher. Schütteln und werfen.";}
+  else{sum.textContent=pts==null?"–":pts;det.textContent=k.length?`Noch ${left} Würfel übrig. Schütteln und werfen.`:"Alle 5 Würfel bereit. Schütteln und werfen.";}
 }
 function tCanThrow(){
   if(tb&&tb.req)return !tb.reqWait;
@@ -4473,7 +4478,7 @@ function tCanThrow(){
     if(g42.phase==="choose"){tFlash("Erst mindestens einen Würfel rauslegen: antippen, dann „Rauslegen“.");return false;}
     if(g42.phase==="done")g42New();
     return true;}
-  if(!cup.length){tFlash("Leg erst oben Würfel in den Becher.");return false;}
+  if(!cup.length){tFlash("Wähl erst oben Würfel aus.");return false;}
   return true;
 }
 function g42Landed(){
@@ -4491,7 +4496,7 @@ function g42Keep(){
   else g42.phase="throw";
   tDraw();tModeUI();
 }
-function g42New(){g42.kept=[];g42.sel=new Set();g42.phase="throw";tb.dice=[];tDraw();tModeUI();}
+function g42New(){g42.kept=[];g42.sel=new Set();g42.phase="throw";tb.dice=[];tModeUI();tRowLay();}
 
 /* sound: short filtered noise clicks, made on the fly */
 let actx=null,noiseBuf=null,lastClack=0;
@@ -4523,8 +4528,6 @@ const toneOf=s=>s===20||s===12?.8:s===4?1.25:1;
 
 /* cup gesture: hold to shake, drag to aim, release to throw */
 /* ===== Würfeln wie echt =====
-   Becher: Die Würfel liegen als kleine Körper im Becher und werden von der echten Bewegung herumgeworfen
-   (Finger oder Handy-Sensor). Jedes Klackern und jedes Vibrieren ist ein Aufprall an der Becherwand.
    Tisch: Jeder Würfel ist ein 3D-Körper (W4 Tetraeder … W20 Ikosaeder), der fliegt, aufschlägt, über die Kanten rollt
    und auf einer Fläche liegen bleibt. Das Ergebnis ist die Fläche, die dann oben liegt (beim W4 die obere Ecke). */
 const Q3={
@@ -4592,146 +4595,151 @@ function dieNew(s,x,y,vx,vy){
   const d={s,sz,x,y,vx,vy,z:sz+30+Math.random()*40,vz:250+Math.random()*350,q:Q3.rand(),w:V3.sc(ax,sp),done:false,rest:0,pop:0,face:1,mz:-sz};
   return d;}
 
-/* ---- Becher: kleine Würfel, die von der Bewegung herumgeworfen werden ---- */
-const CIN={dice:[],rin:30,rd:8,lastBuzz:0,ph:0,jx:1,jy:0,pcx:0,pcy:0,pvx:0,pvy:0,ax:0,ay:0};
-function cinStart(){
-  const set=throwSet(),n=Math.min(set.length,9);CIN.rd=n>6?6:n>3?7:8.5;CIN.rin=31;
-  CIN.dice=set.slice(0,n).map(s=>({s,x:(Math.random()-.5)*24,y:(Math.random()-.5)*24,vx:(Math.random()-.5)*80,vy:(Math.random()-.5)*80,ang:Math.random()*6.28,face:1+Math.floor(Math.random()*s)}));
-  CIN.pcx=tb.cx;CIN.pcy=tb.cy;CIN.pvx=CIN.pvy=0;CIN.ax=CIN.ay=0;
-  const n2=$("#cupn");if(n2)n2.hidden=true;cinDraw();}
-function cinEnd(){CIN.dice=[];const n2=$("#cupn");if(n2)n2.hidden=false;const c=$("#cupcv");if(c)c.getContext("2d").clearRect(0,0,c.width,c.height);}
-function cinHit(v,s){if(v<70)return;clack(Math.min(.7,.06+v/1100),toneOf(s)*(.9+Math.random()*.2));
-  const now=performance.now();if(v>380&&now-CIN.lastBuzz>65){CIN.lastBuzz=now;buzz(Math.round(Math.min(16,4+v/110)));}}
-function cinStep(dt,ax,ay,kick){
-  const L=CIN.rin-CIN.rd,ds=CIN.dice;
-  for(const d of ds){
-    d.vx+=ax*dt;d.vy+=ay*dt;
-    if(kick>0&&Math.random()<kick*dt*8){d.vx+=(Math.random()-.5)*kick*60;d.vy+=(Math.random()-.5)*kick*60;d.ang+=(Math.random()-.5)*2;if(kick>4){d.face=1+Math.floor(Math.random()*d.s);clack(Math.min(.35,kick/40),toneOf(d.s)*.8);}}
-    const f=Math.exp(-1.2*dt);d.vx*=f;d.vy*=f;
-    d.x+=d.vx*dt;d.y+=d.vy*dt;
-    const r=Math.hypot(d.x,d.y);
-    if(r>L){const nx=d.x/r,ny=d.y/r;d.x=nx*L;d.y=ny*L;const vn=d.vx*nx+d.vy*ny;
-      if(vn>0){d.vx-=1.5*vn*nx;d.vy-=1.5*vn*ny;const tx=-ny,ty=nx,vt=d.vx*tx+d.vy*ty;d.vx-=vt*.25*tx;d.vy-=vt*.25*ty;
-        d.ang+=(Math.random()-.5)*vn*.012;if(vn>160)d.face=1+Math.floor(Math.random()*d.s);cinHit(vn,d.s);}}
-  }
-  const min=CIN.rd*1.9;
-  for(let i=0;i<ds.length;i++)for(let j=i+1;j<ds.length;j++){const a=ds[i],b=ds[j],dx=b.x-a.x,dy=b.y-a.y,dd=Math.hypot(dx,dy);
-    if(dd>=min||dd===0)continue;const nx=dx/dd,ny=dy/dd,ov=(min-dd)/2;a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
-    const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(rv<0){const jj=-.85*rv;a.vx-=jj*nx;a.vy-=jj*ny;b.vx+=jj*nx;b.vy+=jj*ny;cinHit(-rv*.7,a.s);}}
+/* ---- Ohne Becher: Die Würfel liegen aufgereiht auf dem Feld. Beim Schütteln (Finger oder Handy) schweben sie
+   in einer unsichtbaren Blase und werden von der echten Bewegung herumgeworfen. Jedes Klackern und Vibrieren ist ein
+   Aufprall an der Blasenwand oder an einem anderen Würfel. Loslassen bzw. Stillhalten wirft sie aufs Feld. ---- */
+let lastHitBuzz=0;
+function tHit(v,s){if(v<60)return;clack(Math.min(.7,.06+v/1200),toneOf(s)*(.9+Math.random()*.2));
+  const now=performance.now();if(v>420&&now-lastHitBuzz>65){lastHitBuzz=now;buzz(Math.round(Math.min(16,4+v/120)));}}
+/* Würfel für den nächsten Wurf aufgereiht hinlegen (noch kein Ergebnis) */
+function tRowLay(){
+  const set=throwSet(),R=tb.R,W=tb.W,H=tb.H;tb.bub=null;
+  if(!set.length){tb.dice=[];tb.idle=true;tb.shown=true;$("#fhint").hidden=true;tDraw();return;}
+  const gap=R*2.55,per=Math.max(1,Math.floor((W-R*.8)/gap)),rows=Math.ceil(set.length/per),y0=H/2-(rows-1)*gap/2;
+  tb.dice=set.map((s,i)=>{const r=Math.floor(i/per),inRow=Math.min(per,set.length-r*per),c=i-r*per;
+    const d=dieNew(s,W/2+(c-(inRow-1)/2)*gap,Math.max(R*1.3,Math.min(H-R*1.3,y0+r*gap)),0,0);
+    d.q=Q3.rand();dieSnap(d);d.done=true;d.face=dieFace(d);d.w=[0,0,0];
+    if(tb.req&&tb.req.items[i]&&tb.req.items[i].neg)d.neg=true;return d;});
+  tb.idle=true;tb.shown=true;$("#fhint").hidden=false;tDraw();
 }
-/* Beschleunigung, die die Würfel im Becher spüren: Finger (Becher wird gezogen) oder Handy-Sensor */
-function cinTick(dt){
-  if(!CIN.dice.length||dt<=0)return;
-  let ax=0,ay=0,kick=0;
-  if(tb.grab){
-    const vx=(tb.cx-CIN.pcx)/dt,vy=(tb.cy-CIN.pcy)/dt,Ax=(vx-CIN.pvx)/dt,Ay=(vy-CIN.pvy)/dt;
-    CIN.pcx=tb.cx;CIN.pcy=tb.cy;CIN.pvx=vx;CIN.pvy=vy;
-    const cl=v=>Math.max(-24000,Math.min(24000,v));CIN.ax+=(cl(Ax)-CIN.ax)*.5;CIN.ay+=(cl(Ay)-CIN.ay)*.5;
-    ax=-CIN.ax;ay=-CIN.ay;
-    /* Becher wird nur gehalten: die Hand zittert, wie die Wackel-Animation zeigt */
-    if(Math.hypot(vx,vy)<120){CIN.ph+=dt*2*Math.PI*8.5;const a=Math.sin(CIN.ph)*5200;CIN.jx=Math.cos(CIN.ph*.13);CIN.jy=Math.sin(CIN.ph*.13);ax+=a*CIN.jx;ay+=a*CIN.jy;}
-  }else if(SHK.on){
-    ax=-SHK.ax*SHK_PX+SHK.gx*SHK_G;ay=SHK.ay*SHK_PX-SHK.gy*SHK_G;kick=Math.abs(SHK.az);
-    const rot=Math.max(-14,Math.min(14,SHK.ax*1.1));tb.cupEl.style.rotate=rot.toFixed(1)+"deg";
-  }
-  const n=4;for(let i=0;i<n;i++)cinStep(dt/n,ax,ay,kick);
-  cinDraw();
+/* Passen die Würfel auf dem Feld zum nächsten Wurf? Sonst neu hinlegen */
+function tEnsureDice(){const set=throwSet();if(tb.dice.length!==set.length||tb.dice.some((d,i)=>d.s!==set[i]))tRowLay();}
+function bubR(n){const R=tb.R;return Math.min(Math.min(tb.W,tb.H)/2-4,R*1.5+Math.sqrt(n)*R*1.15);}
+function tBubStart(x,y,dev){
+  tEnsureDice();if(!tb.dice.length)return false;
+  const r=bubR(tb.dice.length);
+  tb.bub={x:Math.min(tb.W-r,Math.max(r,x)),y:Math.min(tb.H-r,Math.max(r,y)),r,vx:0,vy:0,tx:x,ty:y,ax:0,ay:0,kick:0,ph:0,dev:!!dev};
+  tb.dice.forEach(d=>{d.done=false;d.inB=false;d.rest=0;d.age=0;d.pop=0;d.vz=Math.max(d.vz||0,220+Math.random()*160);if(Math.hypot(d.w[0],d.w[1],d.w[2])<3)d.w=V3.sc(V3.nrm([Math.random()-.5,Math.random()-.5,Math.random()-.5]),4+Math.random()*5);});
+  tb.idle=false;tb.shown=false;
+  $("#fhint").hidden=true;$("#tsum").textContent="…";$("#tsum").classList.remove("pop");
+  $("#tdet").textContent=dev?"Schütteln … zum Werfen kurz stillhalten":"Schütteln … loslassen zum Werfen";
+  tLoop();return true;
 }
-function cinDraw(){
-  const c=$("#cupcv");if(!c)return;const ctx=c.getContext("2d"),S=c.width/64;
-  ctx.setTransform(S,0,0,S,0,0);ctx.clearRect(0,0,64,64);
-  if(!CIN.dice.length)return;
-  ctx.save();ctx.beginPath();ctx.arc(32,32,31.5,0,Math.PI*2);ctx.clip();
-  for(const d of CIN.dice){const [fill,hi,ink]=T_COL[d.s],r=CIN.rd;
-    ctx.save();ctx.translate(32+d.x,32+d.y);ctx.rotate(d.ang);
-    ctx.shadowColor="rgba(0,0,0,.6)";ctx.shadowBlur=3;ctx.shadowOffsetY=1.5;
-    tPath(ctx,d.s,r);const g=ctx.createLinearGradient(-r,-r,r,r);g.addColorStop(0,hi);g.addColorStop(.6,fill);g.addColorStop(1,fill);ctx.fillStyle=g;ctx.fill();
-    ctx.shadowColor="transparent";ctx.lineWidth=.8;ctx.strokeStyle=ink;ctx.stroke();
-    if(d.s===6){ctx.fillStyle=ink;const q=r*.42;PIPS[d.face].forEach(([px,py])=>{ctx.beginPath();ctx.arc(px*q,py*q,r*.13,0,Math.PI*2);ctx.fill();});}
-    else{ctx.rotate(-d.ang);ctx.fillStyle=ink;ctx.font=`700 ${Math.round(r*1.05)}px system-ui,sans-serif`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(d.face),0,d.s===4?r*.2:r*.05);}
-    ctx.restore();}
-  const rim=ctx.createRadialGradient(32,32,20,32,32,32);rim.addColorStop(0,"rgba(0,0,0,0)");rim.addColorStop(1,"rgba(0,0,0,.55)");
-  ctx.fillStyle=rim;ctx.fillRect(0,0,64,64);ctx.restore();
+/* Blase loslassen: die Würfel fliegen mit ihrem Schwung plus Wurf aufs Feld */
+function tBubRelease(vx,vy){
+  const B=tb.bub;if(!B)return;tb.bub=null;
+  const sp=Math.hypot(vx,vy);
+  tb.dice.forEach(d=>{
+    let tx,ty;
+    if(sp<450){const a=Math.random()*Math.PI*2,v=700+Math.random()*700;tx=Math.cos(a)*v+(tb.W/2-B.x)*1.3;ty=Math.sin(a)*v+(tb.H/2-B.y)*1.3;}
+    else{const a=Math.atan2(vy,vx)+(Math.random()-.5)*.7,v=sp*(.8+Math.random()*.4);tx=Math.cos(a)*v;ty=Math.sin(a)*v;}
+    d.vx=d.vx*.5+tx;d.vy=d.vy*.5+ty;d.vz=Math.max(d.vz,250+Math.random()*350);d.done=false;d.rest=0;d.age=0;
+    d.w=V3.sc(d.w,1.6+Math.random());if(Math.hypot(d.w[0],d.w[1],d.w[2])<8)d.w=V3.sc(V3.nrm([Math.random()-.5,Math.random()-.5,Math.random()-.5]),9+Math.random()*12);});
+  clack(.4,1);buzz(12);
+  $("#tdet").textContent="Rollt …";tb.shown=false;tLoop();
 }
-
-function tGrab(e){
-  if(!tCanThrow())return;
-  if(SHK.on)return;
-  e.preventDefault();tAudio();
-  const r=tb.field.getBoundingClientRect();
-  tb.dice=[];$("#fhint").hidden=true;$("#tsum").textContent="…";$("#tdet").textContent="Schütteln …";
-  tb.grab={id:e.pointerId,ox:r.left,oy:r.top,hist:[],t0:performance.now(),moved:0};
-  tb.cx=e.clientX-r.left;tb.cy=e.clientY-r.top;tCupPos();
-  tb.grab.hist.push({x:tb.cx,y:tb.cy,t:performance.now()});
-  tb.cupEl.classList.add("shake");
-  try{tb.cupEl.setPointerCapture(e.pointerId)}catch(x){}
-  cinStart();
-  tLoop();
-}
-document.addEventListener("pointermove",e=>{
-  const g=tb&&tb.grab;if(!g||e.pointerId!==g.id)return;
-  const x=Math.max(30,Math.min(tb.W-30,e.clientX-g.ox)),y=Math.max(30,Math.min(tb.H-30,e.clientY-g.oy));
-  g.moved+=Math.hypot(x-tb.cx,y-tb.cy);tb.cx=x;tb.cy=y;tCupPos();
-  const now=performance.now();g.hist.push({x,y,t:now});while(g.hist.length>2&&now-g.hist[0].t>90)g.hist.shift();
-});
-function tRelease(e){
-  const g=tb&&tb.grab;if(!g||(e&&e.pointerId!==g.id))return;
-  tb.grab=null;tb.cupEl.classList.remove("shake");
-  const h=g.hist,a=h[0],b=h[h.length-1],dt=Math.max(16,b.t-a.t);
-  let vx=(b.x-a.x)/dt*1000,vy=(b.y-a.y)/dt*1000;
-  if(performance.now()-b.t>120){vx=0;vy=0;} // finger came to rest before letting go
-  tThrow(tb.cx,tb.cy,vx,vy);
-  tb.cupEl.classList.add("home");tCupHome();setTimeout(()=>tb.cupEl.classList.remove("home"),320);
-}
-document.addEventListener("pointerup",tRelease);document.addEventListener("pointercancel",tRelease);
-
-function tThrow(x,y,vx,vy){
-  if(!tCanThrow()){cinEnd();return;}
-  const set=throwSet();if(!set.length){cinEnd();return;}
-  let sp=Math.hypot(vx,vy);
-  if(sp<500){const ang=-Math.PI/2+(Math.random()-.5)*1.4;sp=900+Math.random()*700;vx=Math.cos(ang)*sp;vy=Math.sin(ang)*sp;}
-  if(sp>2800){vx*=2800/sp;vy*=2800/sp;sp=2800;}
-  const base=Math.atan2(vy,vx),R=tb.R,inn=CIN.dice;
-  tb.dice=set.map((s,i)=>{
-    const a=base+(Math.random()-.5)*.7,v=sp*(.75+Math.random()*.45),m=inn.length?inn[i%inn.length]:null;
-    const px=m?x+m.x*1.3:x+(Math.random()-.5)*R*1.6,py=m?y+m.y*1.3:y+(Math.random()-.5)*R*1.6;
-    const d=dieNew(s,Math.min(tb.W-R,Math.max(R,px)),Math.min(tb.H-R,Math.max(R,py)),Math.cos(a)*v+(m?m.vx*.6:0),Math.sin(a)*v+(m?m.vy*.6:0));
-    if(m){const ms=Math.hypot(m.vx,m.vy);d.w=V3.sc(d.w,1+Math.min(1.2,ms/600));}
-    if(tb.req&&tb.req.items[i]&&tb.req.items[i].neg)d.neg=true;
-    return d;
-  });
-  cinEnd();
+/* Werfen-Knopf: die Würfel springen von ihrem Platz aus los */
+function tThrowNow(){
+  if(!tCanThrow())return;tEnsureDice();if(!tb.dice.length)return;
+  tb.bub=null;tb.idle=false;
+  tb.dice.forEach(d=>{const a=Math.random()*Math.PI*2,v=800+Math.random()*700;
+    d.vx=Math.cos(a)*v+(tb.W/2-d.x)*1.5;d.vy=Math.sin(a)*v+(tb.H/2-d.y)*1.5;d.vz=300+Math.random()*350;d.z=Math.max(d.z,d.sz+5);
+    d.w=V3.sc(V3.nrm([Math.random()-.5,Math.random()-.5,Math.random()-.5]),8+Math.random()*14);d.done=false;d.rest=0;d.age=0;d.pop=0;});
   clack(.5,1);buzz(15);
   $("#fhint").hidden=true;$("#tsum").textContent="…";$("#tsum").classList.remove("pop");$("#tdet").textContent="Rollt …";
   tb.shown=false;tLoop();
 }
-/* Würfel dürfen nie unter dem Becher (Ruheplatz unten Mitte) liegen bleiben */
-function tAvoidCup(d,bounce){
-  const ox=tb.W/2,oy=tb.H-58,rad=46+tb.R*1.25;
-  let dx=d.x-ox,dy=d.y-oy,dist=Math.hypot(dx,dy);
-  if(dist>=rad)return false;
-  let nx,ny;
-  if(dy>0||dist<1){nx=dx>=0?1:-1;ny=0;d.x=ox+nx*rad;}            // unterhalb der Mitte: zur Seite raus
-  else{nx=dx/dist;ny=dy/dist;d.x=ox+nx*rad;d.y=oy+ny*rad;}
-  if(bounce){const vn=d.vx*nx+d.vy*ny;if(vn<0){d.vx-=1.5*vn*nx;d.vy-=1.5*vn*ny;}}
-  d.x=Math.min(tb.W-tb.R,Math.max(tb.R,d.x));d.y=Math.min(tb.H-tb.R,Math.max(tb.R,d.y));
-  return true;
+function tGrab(e){
+  if(!tCanThrow())return;
+  if(SHK.on)return;
+  e.preventDefault();tAudio();
+  const r=tb.field.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(calmMotion()){tThrowNow();return;}
+  if(!tBubStart(x,y,false))return;
+  tb.grab={id:e.pointerId,ox:r.left,oy:r.top,hist:[{x,y,t:performance.now()}]};
+  try{tb.field.setPointerCapture(e.pointerId)}catch(x){}
 }
+document.addEventListener("pointermove",e=>{
+  const g=tb&&tb.grab;if(!g||e.pointerId!==g.id||!tb.bub)return;
+  const x=e.clientX-g.ox,y=e.clientY-g.oy;tb.bub.tx=x;tb.bub.ty=y;
+  const now=performance.now();g.hist.push({x,y,t:now});while(g.hist.length>2&&now-g.hist[0].t>90)g.hist.shift();
+});
+function tRelease(e){
+  const g=tb&&tb.grab;if(!g||(e&&e.pointerId!==g.id))return;
+  tb.grab=null;
+  const h=g.hist,a=h[0],b=h[h.length-1],dt=Math.max(16,b.t-a.t);
+  let vx=(b.x-a.x)/dt*1000,vy=(b.y-a.y)/dt*1000;
+  if(performance.now()-b.t>120){vx=0;vy=0;} // Finger stand vor dem Loslassen still
+  const sp=Math.hypot(vx,vy);if(sp>2600){vx*=2600/sp;vy*=2600/sp;}
+  tBubRelease(vx,vy);
+}
+document.addEventListener("pointerup",tRelease);document.addEventListener("pointercancel",tRelease);
+/* Kein Becher mehr: nichts auszuweichen */
+function tAvoidCup(){return false;}
 function tLoop(){if(!tb.raf){tb.last=performance.now();tb.raf=requestAnimationFrame(tTick);}}
+/* Blase pro Bild: wohin sie sich bewegt (Finger) bzw. welche Kraft die Würfel spüren (Handy) */
+function tBubFrame(dt){const B=tb.bub;if(!B||dt<=0)return;
+  let nx,ny;B.kick=0;B.ax=B.ay=0;
+  if(B.dev){nx=tb.W/2;ny=tb.H/2;B.ax=-SHK.ax*SHK_PX+SHK.gx*SHK_G;B.ay=SHK.ay*SHK_PX-SHK.gy*SHK_G;B.kick=Math.abs(SHK.az);}
+  else{nx=B.tx;ny=B.ty;
+    /* Finger hält still: die Hand zittert ein wenig, die Würfel klappern weiter */
+    const g=tb.grab,still=!g||performance.now()-g.hist[g.hist.length-1].t>60;
+    if(still){B.ph+=dt*2*Math.PI*8.5;const a=B.r*.1;nx+=Math.sin(B.ph)*a*Math.cos(B.ph*.11);ny+=Math.sin(B.ph)*a*Math.sin(B.ph*.11);}}
+  nx=Math.min(tb.W-B.r,Math.max(B.r,nx));ny=Math.min(tb.H-B.r,Math.max(B.r,ny));
+  B.vx=(nx-B.x)/dt;B.vy=(ny-B.y)/dt;
+}
+function tStepBub(dt){
+  const B=tb.bub,ds=tb.dice;B.x+=B.vx*dt;B.y+=B.vy*dt;
+  for(const d of ds){
+    const L=B.r-d.sz*.8;
+    let dx=d.x-B.x,dy=d.y-B.y,r=Math.hypot(dx,dy)||1;
+    if(!d.inB){if(r<L)d.inB=true;else{d.vx+=(-dx/r*5200-(d.vx-B.vx)*3)*dt;d.vy+=(-dy/r*5200-(d.vy-B.vy)*3)*dt;}}
+    d.vx+=B.ax*dt;d.vy+=B.ay*dt;
+    if(B.kick>2&&Math.random()<B.kick*dt*5){d.vz+=B.kick*22;d.w[0]+=(Math.random()-.5)*B.kick*.9;d.w[1]+=(Math.random()-.5)*B.kick*.9;tHit(B.kick*25,d.s);}
+    /* Schweben: Höhe in der Blase federt um eine Mittellage; die Blase ist flach, oben ist eine Decke */
+    const zt=d.sz+20,ztop=zt+tb.R*.9;d.vz+=((zt-d.z)*45-d.vz*3.5)*dt;
+    const f=Math.exp(-.7*dt);d.vx*=f;d.vy*=f;
+    d.x+=d.vx*dt;d.y+=d.vy*dt;d.z+=d.vz*dt;
+    dx=d.x-B.x;dy=d.y-B.y;r=Math.hypot(dx,dy)||1;
+    if(d.inB&&r>L){const nx=dx/r,ny=dy/r;d.x=B.x+nx*L;d.y=B.y+ny*L;
+      const vn=(d.vx-B.vx)*nx+(d.vy-B.vy)*ny;
+      if(vn>0){d.vx-=1.45*vn*nx;d.vy-=1.45*vn*ny;tHit(vn,d.s);
+        /* Aufprall bringt den Würfel ins Taumeln */
+        const m=vn*.028;d.w[0]+=-ny*m*.6+(Math.random()-.5)*m;d.w[1]+=nx*m*.6+(Math.random()-.5)*m;d.w[2]+=(Math.random()-.5)*m*.6;if(vn>220)d.vz+=Math.min(260,vn*.08);}}
+    const wd=Math.exp(-.6*dt);d.w[0]*=wd;d.w[1]*=wd;d.w[2]*=wd;
+    d.q=Q3.norm(Q3.mul([1,.5*dt*d.w[0],.5*dt*d.w[1],.5*dt*d.w[2]],d.q));
+    let mz=Infinity;for(const v of dieRV(d))if(v[2]<mz)mz=v[2];d.mz=mz;
+    if(d.z+mz<3){d.z=3-mz;if(d.vz<0)d.vz=-d.vz*.4;}
+    if(d.z>ztop){d.z=ztop;if(d.vz>0){tHit(d.vz*.6,d.s);d.vz=-d.vz*.45;}}
+    d.x=Math.min(tb.W-d.sz*.6,Math.max(d.sz*.6,d.x));d.y=Math.min(tb.H-d.sz*.6,Math.max(d.sz*.6,d.y));
+  }
+  tPairs(ds,true);
+}
+/* Würfel stoßen aneinander */
+function tPairs(ds,inBub){const R=tb.R;
+  for(let i=0;i<ds.length;i++)for(let j=i+1;j<ds.length;j++){
+    const a=ds[i],b=ds[j],dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),min=(a.sz+b.sz)*.72;
+    if(dist>=min||dist===0||Math.abs(a.z-b.z)>R*1.2)continue;
+    const nx=dx/dist,ny=dy/dist,ov=(min-dist)/2;
+    a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
+    const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+    if(rv<0){const j2=-(inBub?1.8:1.7)*rv/2;a.vx-=j2*nx;a.vy-=j2*ny;b.vx+=j2*nx;b.vy+=j2*ny;
+      const m=Math.abs(rv)*.02;a.w[0]+=(Math.random()-.5)*m;a.w[1]+=(Math.random()-.5)*m;b.w[0]+=(Math.random()-.5)*m;b.w[1]+=(Math.random()-.5)*m;
+      if(Math.abs(rv)>50){if(inBub)tHit(Math.abs(rv)*.8,a.s);else clack(Math.min(.55,Math.abs(rv)/1500),toneOf(a.s));if(!inBub){a.done=b.done=false;a.rest=b.rest=0;}}}
+  }
+}
 function tTick(now){
   tb.raf=0;
   let dt=Math.min(1/30,(now-tb.last)/1000);tb.last=now;
   const calm=calmMotion();
-  if(tb.grab||SHK.on)cinTick(dt);
-  if(calm){tb.dice.forEach((d,i)=>{if(d.done)return;d.vx=d.vy=d.vz=0;d.w=[0,0,0];
-    d.q=Q3.rand();dieSnap(d);d.face=dieFace(d);d.done=true;
-    if(tAvoidCup(d,false)){d.y=Math.max(tb.R,tb.H-58-44-tb.R*1.2-(i%3)*tb.R*2.1);d.x=tb.R+((i*2.3*tb.R)%(tb.W-2*tb.R));}});}
-  else{const steps=3;for(let i=0;i<steps;i++)tStep(dt/steps);}
+  if(tb.bub)tBubFrame(dt);
+  if(calm){tb.dice.forEach(d=>{if(d.done)return;d.vx=d.vy=d.vz=0;d.w=[0,0,0];d.q=Q3.rand();dieSnap(d);d.face=dieFace(d);d.done=true;});}
+  else{const steps=3;for(let i=0;i<steps;i++)tb.bub?tStepBub(dt/steps):tStep(dt/steps);}
   tb.dice.forEach(d=>{if(d.pop>0)d.pop=Math.max(0,d.pop-dt*2.5);});
   tDraw();
   const all=tb.dice.length&&tb.dice.every(d=>d.done);
-  if(all&&!tb.shown){tb.shown=true;tb.req?tReqLanded():tmode==="4218"?g42Landed():tResult();}
-  if(tb.grab||SHK.on||!all||tb.dice.some(d=>d.pop>0))tb.raf=requestAnimationFrame(tTick);
+  if(!tb.bub&&all&&!tb.shown){tb.shown=true;tb.req?tReqLanded():tmode==="4218"?g42Landed():tResult();}
+  if(tb.bub||tb.grab||SHK.on||!all||tb.dice.some(d=>d.pop>0))tb.raf=requestAnimationFrame(tTick);
 }
 function tStep(dt){
   const W=tb.W,H=tb.H,g=2600,ds=tb.dice,R=tb.R;
@@ -4770,17 +4778,7 @@ function tStep(dt){
     if(d.y<rr){d.y=rr;d.vy=wall(d.vy);}else if(d.y>H-rr){d.y=H-rr;d.vy=-wall(d.vy);}
     if(!tb.grab&&d.z+d.mz<R*1.5&&tAvoidCup(d,true))d.rest=0;
   }
-  // Würfel stoßen aneinander
-  for(let i=0;i<ds.length;i++)for(let j=i+1;j<ds.length;j++){
-    const a=ds[i],b=ds[j],dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),min=(a.sz+b.sz)*.72;
-    if(dist>=min||dist===0||Math.abs(a.z-b.z)>R*1.2)continue;
-    const nx=dx/dist,ny=dy/dist,ov=(min-dist)/2;
-    a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;
-    const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
-    if(rv<0){const j2=-(1.7)*rv/2;a.vx-=j2*nx;a.vy-=j2*ny;b.vx+=j2*nx;b.vy+=j2*ny;
-      const m=Math.abs(rv)*.02;a.w[0]+=(Math.random()-.5)*m;a.w[1]+=(Math.random()-.5)*m;b.w[0]+=(Math.random()-.5)*m;b.w[1]+=(Math.random()-.5)*m;
-      if(Math.abs(rv)>50){clack(Math.min(.55,Math.abs(rv)/1500),toneOf(a.s));a.done=b.done=false;a.rest=b.rest=0;}}
-  }
+  tPairs(ds,false);
 }
 function tPath(ctx,s,R){
   ctx.beginPath();
@@ -4832,7 +4830,7 @@ function tDrawDie(ctx,d){
   ring(1,`rgba(${cI[0]},${cI[1]},${cI[2]},.85)`,1.4);
   if(d.neg)ring(1.12,"#c23b2b",3);
   else if(!tb.req&&tmode==="4218"&&g42.sel.has(tb.dice.indexOf(d)))ring(1.14,"#ffffff",4);
-  else if(d.done&&d.face===d.s&&(tb.req||tmode!=="4218"))ring(1.1,"#e8b93c",3);
+  else if(d.done&&!tb.idle&&d.face===d.s&&(tb.req||tmode!=="4218"))ring(1.1,"#e8b93c",3);
 }
 function tDraw(){
   const {ctx,W,H}=tb;
@@ -4846,14 +4844,14 @@ function tDraw(){
     ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r*1.15,0,Math.PI*2);ctx.fill();}
   for(const d of ds)tDrawDie(ctx,d);
 }
-/* ---- Wurf aus dem Spiel am Würfeltisch: passende Würfel in den Becher, Ergebnis an die App zurück ---- */
+/* ---- Wurf aus dem Spiel am Würfeltisch: passende Würfel auf den Tisch, Ergebnis an die App zurück ---- */
 function tRequest(title,items,cb){
   if(!tb)tBuild();
   const had=ovHist,open=!tb.el.hidden;
-  if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}
+  if(SHK.on)SHK.on=false;tb.bub=null;tb.grab=null;
   tb.req={title,items,cb,ownHist:!had&&!open};tb.reqWait=false;tb.dice=[];tb.shown=false;
   if(open){tCupUI();tDraw();}else tOpen();
-  $("#tsum").textContent="–";$("#tsum").classList.remove("pop");$("#fhint").hidden=false;
+  tRowLay();$("#tsum").textContent="–";$("#tsum").classList.remove("pop");
 }
 function tReqUI(){const R=tb.req;if(!R)return;
   tb.el.classList.add("req");
@@ -4864,7 +4862,7 @@ function tReqUI(){const R=tb.req;if(!R)return;
   $("#cchips").innerHTML=order.map(it=>`<span class="cchip fix${it.neg?" neg":""}">${counts[key(it)]}× ${it.neg?"Minus-":""}W${it.s}</span>`).join("");
   $("#cupn").textContent=R.items.length;tb.cupEl.classList.remove("empty");
   $("#t42keep").hidden=true;$("#t42new").hidden=true;$("#tthrow").hidden=!!tb.reqWait;
-  if(!tb.reqWait&&!tb.dice.length)$("#tdet").textContent="Handy schütteln oder Becher ziehen und loslassen.";}
+  if(!tb.reqWait&&!tb.dice.length)$("#tdet").textContent="Bereit zum Würfeln.";}
 function tReqLanded(){const R=tb.req;if(!R)return;
   tb.reqWait=true;
   const vals=tb.dice.map(d=>d.face),tot=tb.dice.reduce((a,d)=>a+(d.neg?-d.face:d.face),0);
@@ -4876,9 +4874,9 @@ function tReqAccept(){const R=tb.req;if(!R||!tb.reqWait)return;
   clearTimeout(tb.reqT);const vals=tb.dice.map(d=>d.face);
   tReqEnd();tb.el.hidden=true;document.documentElement.style.overflow="";if(R.ownHist)histClose();cancelAnimationFrame(tb.raf);tb.raf=0;
   R.cb(vals);}
-function tReqEnd(){clearTimeout(tb.reqT);tb.req=null;tb.reqWait=false;tb.dice=[];tb.shown=false;if(CIN.dice.length)cinEnd();
-  tb.el.classList.remove("req");$("#tsum").textContent="–";$("#tdet").textContent="Tipp oben auf die Würfel, um sie in den Becher zu legen.";
-  if(SHK.on){SHK.on=false;tb.cupEl.classList.remove("shake","dev");tb.cupEl.style.rotate="";}
+function tReqEnd(){clearTimeout(tb.reqT);tb.req=null;tb.reqWait=false;tb.dice=[];tb.bub=null;tb.grab=null;tb.shown=false;
+  tb.el.classList.remove("req");$("#tsum").textContent="–";$("#tdet").textContent="Tipp oben auf die Würfel, um sie auf den Tisch zu legen.";
+  if(SHK.on)SHK.on=false;
   tCupUI();}
 function tResult(noHist){
   const by={};tb.dice.forEach(d=>{(by[d.s]=by[d.s]||[]).push(d.face);});
@@ -4898,17 +4896,17 @@ function tFlash(t){const d=$("#tdet");d.textContent=t;clearTimeout(flashT);tb.el
 document.addEventListener("click",e=>{
   if(!tb||tb.el.hidden)return;
   const b=e.target.closest("button");if(!b||!tb.el.contains(b))return;
-  if(b.dataset.add){if(cup.length>=30){tFlash("Mehr als 30 Würfel passen nicht in den Becher.");return;}cup.push(+b.dataset.add);saveCup();tCupUI();clack(.25,toneOf(+b.dataset.add));return;}
-  if(b.dataset.rem){const i=cup.lastIndexOf(+b.dataset.rem);if(i>=0)cup.splice(i,1);saveCup();tCupUI();return;}
-  if(b.id==="tclear"){cup=[];saveCup();tCupUI();return;}
+  if(b.dataset.add){if(cup.length>=30){tFlash("Mehr als 30 Würfel gehen nicht auf einmal.");return;}cup.push(+b.dataset.add);saveCup();tCupUI();tRowReset();clack(.25,toneOf(+b.dataset.add));return;}
+  if(b.dataset.rem){const i=cup.lastIndexOf(+b.dataset.rem);if(i>=0)cup.splice(i,1);saveCup();tCupUI();tRowReset();return;}
+  if(b.id==="tclear"){cup=[];saveCup();tCupUI();tRowReset();return;}
   if(b.dataset.tmode){tmode=b.dataset.tmode;try{localStorage.setItem("aborea-tmode",tmode)}catch(x){}
     tb.dice=[];g42.sel=new Set();if(g42.phase==="choose")g42.phase="throw";$("#tsum").textContent="–";
-    $("#tdet").textContent="Tipp oben auf die Würfel, um sie in den Becher zu legen.";tCupUI();tDraw();return;}
+    $("#tdet").textContent="Tipp oben auf die Würfel, um sie auf den Tisch zu legen.";tCupUI();tRowLay();return;}
   if(b.id==="t42keep"){g42Keep();return;}
   if(b.id==="t42new"){g42New();return;}
   if(b.id==="tclose"){tClose();return;}
-  if(b.id==="tthrow"){tAudio();tThrow(tb.W/2,tb.H-60,0,0);return;}
-  if(b.id==="tmodm"||b.id==="tmodp"){tmod+=b.id==="tmodp"?1:-1;tCupUI();if(tb.shown)tResult(true);return;}
+  if(b.id==="tthrow"){tAudio();tThrowNow();return;}
+  if(b.id==="tmodm"||b.id==="tmodp"){tmod+=b.id==="tmodp"?1:-1;tCupUI();if(tb.shown&&!tb.idle)tResult(true);return;}
   if(b.id==="tshake"){shkAsk();return;}
   if(b.id==="tsound"){settings.sound=!settings.sound;saveSettings();b.textContent=settings.sound?"Ton an":"Ton aus";b.setAttribute("aria-pressed",settings.sound);return;}
 });
