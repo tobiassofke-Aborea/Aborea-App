@@ -555,7 +555,7 @@ body.kampf .wrap{padding-bottom:250px}
 .tdet{flex:1;min-width:140px;font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .tmod{display:grid;gap:2px}
 .tmod output{min-width:34px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
-.tmoderow{max-width:760px;width:100%;margin:0 auto;padding:0 16px 2px}
+.tmoderow{max-width:760px;width:100%;margin:0 auto;padding:0 16px 2px;display:flex;align-items:center;gap:8px}.tmoderow .chips{flex:1;min-width:0}#tshake{flex:none}
 .g42row{max-width:760px;width:100%;margin:0 auto;padding:8px 16px;display:grid;gap:8px}
 .kept{display:flex;gap:6px}
 .kd{width:42px;height:42px;border-radius:9px;background:#efe8da;color:#4a3720;border:2px solid #4a3720;display:grid;place-items:center;font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums}
@@ -4304,12 +4304,12 @@ function tBuild(){
   el.innerHTML=`<div class="tbar"><h1>Würfeltisch</h1><button class="btn small rhtb" data-rhopen aria-label="Würfel-Verlauf" title="Würfel-Verlauf">${ICON_HIST}</button>
       <button class="btn small" id="tsound" aria-pressed="${settings.sound}">${settings.sound?"Ton an":"Ton aus"}</button>
       <button class="btn small" id="tclose">Schließen</button></div>
-    <div class="tmoderow"><div class="chips"><button class="chip" data-tmode="free">Freier Wurf</button><button class="chip" data-tmode="4218">42/18</button></div></div>
+    <div class="tmoderow"><div class="chips"><button class="chip" data-tmode="free">Freier Wurf</button><button class="chip" data-tmode="4218">42/18</button></div><button class="btn small" id="tshake" hidden></button></div>
     <div class="tray" id="tray">${T_TYPES.map(s=>`<button class="tdie" data-add="${s}" aria-label="W${s} in den Becher"><svg viewBox="0 0 50 50">${shape(s)}</svg><span>W${s}</span><em hidden></em></button>`).join("")}</div>
     <div class="cuprow"><span class="lab">Im Becher</span><div class="cchips" id="cchips"></div><button class="btn small" id="tclear">Leeren</button></div>
     <div class="g42row" id="g42row" hidden></div>
     <div class="field" id="field"><canvas id="tcv"></canvas>
-      <div class="fhint" id="fhint">Becher gedrückt halten zum Schütteln,<br>dann übers Feld schleudern und loslassen</div>
+      <div class="fhint" id="fhint">Becher gedrückt halten zum Schütteln,<br>dann übers Feld schleudern und loslassen<span id="fhshake" hidden><br>oder einfach das Handy schütteln</span></div>
       <div class="cup" id="cup" aria-label="Würfelbecher"><b id="cupn"></b></div></div>
     <div class="tres"><div class="tsum" id="tsum">–</div><div class="tdet" id="tdet">Tipp oben auf die Würfel, um sie in den Becher zu legen.</div>
       <div class="tmod"><span class="lab">Mod</span><div class="step"><button id="tmodm" aria-label="Modifikator senken">−</button><output id="tmodv">0</output><button id="tmodp" aria-label="Modifikator erhöhen">+</button></div></div>
@@ -4342,9 +4342,54 @@ window.addEventListener("popstate",()=>{if(!ovHist)return;ovHist=false;
 function tOpen(){histOpen();
   if(!tb)tBuild();
   tb.el.hidden=false;document.documentElement.style.overflow="hidden";
-  tResize();tCupUI();tDraw();
+  tResize();tCupUI();tDraw();shkUI();
 }
-function tClose(){if(!tb)return;histClose();tb.el.hidden=true;document.documentElement.style.overflow="";cancelAnimationFrame(tb.raf);tb.raf=0;}
+/* Schütteln zum Würfeln: Bewegungssensor des Handys. Android liefert die Daten direkt,
+   iOS erst nach einer Erlaubnis, die nur auf einen Tipp hin abgefragt werden darf (Knopf „Schütteln aktivieren“). */
+const SHK={hasSensor:typeof window.DeviceMotionEvent!=="undefined",needsPerm:typeof window.DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function",
+  granted:false,seen:false,hits:[],on:false,last:0,peak:0,cool:0,rattle:0,quiet:0};
+if(settings.shake==null)settings.shake=true;
+/* Kommen Bewegungsdaten schon an (Android), ist keine Erlaubnis nötig, auch wenn der Browser die Abfrage anbietet */
+const shkOk=()=>SHK.granted||SHK.seen;
+function shkActive(){return SHK.hasSensor&&settings.shake&&shkOk();}
+function shkUI(){const b=$("#tshake");if(!b)return;
+  b.hidden=!SHK.hasSensor||(!SHK.needsPerm&&!SHK.seen);
+  if(!shkOk()){b.textContent="Schütteln aktivieren";b.setAttribute("aria-pressed","false");}
+  else{b.textContent=settings.shake?"Schütteln an":"Schütteln aus";b.setAttribute("aria-pressed",String(!!settings.shake));}
+  const h=$("#fhshake");if(h)h.hidden=!shkActive();}
+function shkAsk(){
+  if(!shkOk()&&SHK.needsPerm){
+    DeviceMotionEvent.requestPermission().then(r=>{if(r==="granted"){SHK.granted=true;settings.shake=true;saveSettings();tFlash("Schütteln ist an: Handy schütteln und kurz stillhalten, dann fallen die Würfel.");}
+      else tFlash("Ohne Erlaubnis für Bewegung geht Schütteln nicht. Tippen und Ziehen geht weiter.");shkUI();})
+    .catch(()=>{tFlash("Schütteln ließ sich nicht aktivieren. Tippen und Ziehen geht weiter.");shkUI();});
+    return;}
+  settings.shake=!settings.shake;saveSettings();shkUI();}
+function shkStart(){
+  SHK.on=true;tAudio();tb.dice=[];$("#fhint").hidden=true;$("#tsum").textContent="…";$("#tsum").classList.remove("pop");$("#tdet").textContent="Schütteln …";
+  tCupHome();tb.cupEl.classList.add("shake");
+  SHK.rattle=setInterval(()=>{if(!SHK.on)return;const k=Math.min(1,SHK.peak/40);
+    if(Math.random()<.4+k*.5){clack(.12+k*.35+Math.random()*.08,toneOf(cup[Math.floor(Math.random()*cup.length)]));if(Math.random()<.3)buzz(6);}},55);
+  tLoop();}
+function shkThrow(){
+  clearInterval(SHK.rattle);SHK.on=false;tb.cupEl.classList.remove("shake");
+  const sp=900+Math.min(1,SHK.peak/40)*1500,ang=-Math.PI/2+(Math.random()-.5)*1.2;
+  SHK.peak=0;SHK.hits=[];SHK.cool=performance.now()+900;
+  tThrow(tb.cx,tb.cy,Math.cos(ang)*sp,Math.sin(ang)*sp);}
+window.addEventListener("devicemotion",e=>{
+  const a=e.acceleration&&e.acceleration.x!=null?e.acceleration:null,g=e.accelerationIncludingGravity;
+  if(!a&&!(g&&g.x!=null))return;
+  if(!SHK.seen){SHK.seen=true;if(tb&&!tb.el.hidden)shkUI();}
+  if(!tb||tb.el.hidden||tb.grab||!shkActive())return;
+  let m;
+  if(a)m=Math.hypot(a.x||0,a.y||0,a.z||0);
+  else{m=Math.abs(Math.hypot(g.x||0,g.y||0,g.z||0)-9.81);}
+  const now=performance.now();
+  if(m>13){SHK.hits.push(now);SHK.peak=Math.max(SHK.peak,m);SHK.quiet=now;}
+  while(SHK.hits.length&&now-SHK.hits[0]>700)SHK.hits.shift();
+  if(!SHK.on){if(now>SHK.cool&&SHK.hits.length>=3&&tCanThrow()&&throwSet().length)shkStart();return;}
+  if(now-SHK.quiet>320)shkThrow();
+});
+function tClose(){if(!tb)return;if(SHK.on){clearInterval(SHK.rattle);SHK.on=false;tb.cupEl.classList.remove("shake");}histClose();tb.el.hidden=true;document.documentElement.style.overflow="";cancelAnimationFrame(tb.raf);tb.raf=0;}
 function tResize(){
   const r=tb.field.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
   tb.W=Math.max(200,r.width||320);tb.H=Math.max(200,r.height||360);
@@ -4638,6 +4683,7 @@ document.addEventListener("click",e=>{
   if(b.id==="tclose"){tClose();return;}
   if(b.id==="tthrow"){tAudio();tThrow(tb.W/2,tb.H-60,0,0);return;}
   if(b.id==="tmodm"||b.id==="tmodp"){tmod+=b.id==="tmodp"?1:-1;tCupUI();if(tb.shown)tResult(true);return;}
+  if(b.id==="tshake"){shkAsk();return;}
   if(b.id==="tsound"){settings.sound=!settings.sound;saveSettings();b.textContent=settings.sound?"Ton an":"Ton aus";b.setAttribute("aria-pressed",settings.sound);return;}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&tb&&!tb.el.hidden)tClose();});
